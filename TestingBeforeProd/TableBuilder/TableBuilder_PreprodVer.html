@@ -179,7 +179,6 @@ var DEFAULT_FLATTEN_FIELDS = [
   {cat:"common", raw:"traffic_type",      col:"TrafficType",       type:"string", tier:"rec",    sentinel:false},
   {cat:"common", raw:"policy",            col:"Policy",            type:"string", tier:"rec",    sentinel:true},  // DLP workbooks
   {cat:"common", raw:"severity",          col:"Severity",          type:"string", tier:"rec",    sentinel:true},  // Incident severity mapping
-  {cat:"alert",  raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"ext",    sentinel:true},  // Audit-log severity; alert-adjacent
   // ── Common: Extended ──
   {cat:"common", raw:"appcategory",       col:"AppCategory",       type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"ccl",               col:"CloudConfidence",   type:"string", tier:"ext",    sentinel:false},
@@ -192,8 +191,8 @@ var DEFAULT_FLATTEN_FIELDS = [
   // ── Common: Extended (cont.) ──
   {cat:"common", raw:"useragent",         col:"UserAgent",         type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"ur_normalized",     col:"UrlNormalized",     type:"string", tier:"ext",    sentinel:true},  // URL entity
-  // ── Common: Not Recommended ──
   {cat:"common", raw:"instance_id",       col:"InstanceId",        type:"string", tier:"ext",    sentinel:false},  // SaaS app instance identifier
+  // ── Common: Not Recommended ──
   {cat:"common", raw:"request_id",        col:"RequestId",         type:"string", tier:"notrec", sentinel:false},
   {cat:"common", raw:"transaction_id",    col:"TransactionId",     type:"string", tier:"notrec", sentinel:false},
   // ── Event: Recommended ──
@@ -214,6 +213,7 @@ var DEFAULT_FLATTEN_FIELDS = [
   {cat:"alert",  raw:"action",            col:"Action",            type:"string", tier:"rec",    sentinel:true},  // ASIM activity mapping
   {cat:"alert",  raw:"activity",          col:"Activity",          type:"string", tier:"rec",    sentinel:true},  // ASIM activity mapping
   // ── Alert: Extended ──
+  {cat:"alert",  raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"ext",    sentinel:true},  // Audit-log severity; alert-adjacent
   {cat:"alert",  raw:"object",            col:"Object",            type:"string", tier:"ext",    sentinel:false},
   {cat:"alert",  raw:"object_type",       col:"ObjectType",        type:"string", tier:"ext",    sentinel:false},
   {cat:"alert",  raw:"file_name",         col:"FileName",          type:"string", tier:"ext",    sentinel:true},  // File entity
