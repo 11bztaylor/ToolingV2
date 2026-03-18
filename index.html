@@ -38,6 +38,9 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .app-main{grid-area:main;overflow-y:auto;padding:20px;background:var(--bg-base)}
 .tab{display:none}
 .tab.active{display:block}
+.dv-collapsed .dv-body{display:none}
+.dv-collapsed .dv-chev{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
 .tab-title{font-size:20px;font-weight:600;margin-bottom:4px}
 .tab-subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:20px}
 .card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
@@ -242,6 +245,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     <button class="nav-btn" onclick="showTab('tables')">Table Builder</button>
     <button class="nav-btn" onclick="showTab('rls')">RLS Builder</button>
     <button class="nav-btn" onclick="showTab('retention')">Retention</button>
+    <button class="nav-btn" onclick="showTab('deploy')">Deploy &amp; Verify</button>
     <div class="nav-divider"></div>
     <div class="session-buttons">
       <button class="btn btn-sm" onclick="exportSession()">Save Session</button>
@@ -468,6 +472,61 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         <div id="retentionOutput"></div>
       </div>
     </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Deploy & Verify
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-deploy">
+      <div class="tab-title">Deployment &amp; Verification</div>
+      <div class="tab-subtitle">Full deployment runbook in execution order, plus verification queries to confirm everything applied correctly.</div>
+
+      <div class="card" id="cardRunbook">
+        <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="dot" style="background:var(--color-info)"></span> Deployment Runbook
+          <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="runbookCmdCount"></span>
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chevron">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:8px">All commands in correct execution order. Run each command one at a time in ADX Web UI.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" id="runbookCopyAllBtn" onclick="copyAllDVRunbook()">Copy All</button>
+            <button class="btn btn-sm" onclick="generateDVRunbook()">Refresh</button>
+          </div>
+          <div id="dvRunbookOutput"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cardVerifyQueries">
+        <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="dot" style="background:var(--color-teal)"></span> Verification Queries
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chevron">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" onclick="copyAllDVVerifyQueries()">Copy All Queries</button>
+            <button class="btn btn-sm" onclick="generateDVVerifyQueries()">Refresh</button>
+          </div>
+          <div id="dvVerifyQueriesOutput"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Verification Results</div>
+        <div class="text-sm text-muted" style="margin-bottom:8px">Paste the output from each verification query. The tool will parse it and show pass/fail for each check.</div>
+        <div id="dvVerifySummary" style="display:none;display:flex;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px;display:none">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-success)">&#10003;</span> <span id="dvPassCount">0</span> passed</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-error)">&#10007;</span> <span id="dvFailCount">0</span> failed</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--text-secondary)">&#9679;</span> <span id="dvPendingCount">0</span> pending</div>
+        </div>
+        <textarea style="width:100%;min-height:120px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5" id="dvVerifyPasteArea" placeholder="Paste .show command results here (one or more)..."></textarea>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-sm" onclick="parseDVVerifyResults()">Analyze Results</button>
+          <button class="btn btn-sm" onclick="clearDVVerifyResults()">Clear</button>
+        </div>
+        <div id="dvVerifyResultsGrid" style="margin-top:12px"></div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -575,6 +634,7 @@ function showTab(tabName){
   if(tabName==="tables")generateTableBuilder();
   if(tabName==="rls")generateRLS();
   if(tabName==="retention")generateRetention();
+  if(tabName==="deploy"){generateDVRunbook();generateDVVerifyQueries()}
 }
 
 function bindConfig(){
@@ -1681,6 +1741,14 @@ function resolveRet(tableName,cat){
   if(cat==="alert")return state.retention.alerts;
   return"365d";
 }
+function resolveCache(tableName,cat){
+  var c=state.retention.cache;if(!c)return"30d";
+  if(c.overrides&&c.overrides[tableName])return c.overrides[tableName];
+  if(cat==="staging")return c.staging||"10d";
+  if(cat==="event")return c.events||"30d";
+  if(cat==="alert")return c.alerts||"30d";
+  return"30d";
+}
 
 function buildRetentionOverrides(){
   var pack=getPack();if(!pack)return;
@@ -1777,6 +1845,237 @@ function generateRetention(){
   }
 
   renderRetKqlBlocks(out,blocks);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: Deploy & Verify
+// ═══════════════════════════════════════════════════════════════════
+var _dvRunbookBlocks=[];
+var _dvVerifyBlocks=[];
+
+function toggleDVSection(el){el.closest(".dv-section").classList.toggle("dv-collapsed")}
+
+function generateDVRunbook(){
+  var out=document.getElementById("dvRunbookOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var db=state.globalConfig.database||"{database}";
+  var cluster=state.globalConfig.clusterUri||"{cluster}";
+  var recover=state.retention.recoverability?"enabled":"disabled";
+  var blocks=[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  // Phase 1: Staging
+  blocks.push({section:"Phase 1 \u2014 Staging Table",sectionColor:"var(--color-info)",title:"Create staging table: "+pack.stagingTable,kql:".create-merge table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")"});
+  blocks.push({title:"Create ingestion mapping: "+pack.mappingName,kql:".create-or-alter table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+  // Phase 2: Typed tables
+  if(selectedTyped.length){
+    var first=true;
+    for(var i=0;i<selectedTyped.length;i++){
+      var tName=selectedTyped[i],tDef=null;
+      for(var j=0;j<pack.tables.length;j++){if(pack.tables[j].name===tName){tDef=pack.tables[j];break}}
+      if(!tDef)continue;
+      var cat=tDef.cat==="event"?"Events":"Alerts";
+      blocks.push({section:first?"Phase 2 \u2014 Typed Tables + Functions + Update Policies":undefined,sectionColor:first?"var(--color-success)":undefined,title:"Create table: "+tName,kql:"// Run these 3 commands for "+tName+" in order:\n\n// Step 1: Create table\n.create-merge table "+tName+" ("+pack.baseTypedSchema+")\n    with (folder=\""+pack.folder+"/"+cat+"\")\n\n// Step 2: Create transform function\n// (Use the full function from Table Builder \u2014 includes field extraction)\n.create-or-alter function\n    with (folder=\""+pack.folder+"/Functions/"+cat+"\", skipvalidation=\"true\")\nfn_"+tName.replace(/_CL$/,"")+"() {\n    "+pack.stagingTable+"\n    | where StreamType == \""+tDef.stream+"\"\n    // ... extend + project from Table Builder output\n}\n\n// Step 3: Attach update policy\n.alter table "+tName+" policy update\n@'[{\"IsEnabled\": true, \"Source\": \""+pack.stagingTable+"\", \"Query\": \"fn_"+tName.replace(/_CL$/,"")+"()\", \"IsTransactional\": false}]'"});
+      first=false;
+    }
+  }
+  // Phase 3: RLS
+  var rlsTables=state.rls.selectedTables||[];
+  if(state.rls.rlsFunction&&rlsTables.length){
+    var first=true;
+    for(var i=0;i<rlsTables.length;i++){
+      blocks.push({section:first?"Phase 3 \u2014 Row-Level Security":undefined,sectionColor:first?"var(--color-purple)":undefined,title:"RLS function + policy: "+rlsTables[i],kql:"// Step 1: Create RLS function\n.create-or-alter function\n    with (folder=\"Functions/RLS\", skipvalidation=\"true\")\nRLS_"+rlsTables[i]+"() {\n    "+rlsTables[i]+"\n    | where\n        // ... clauses from RLS Builder output\n}\n\n// Step 2: Enable RLS policy (run separately)\n.alter table "+rlsTables[i]+" policy row_level_security enable \"RLS_"+rlsTables[i]+"()\""});
+      first=false;
+    }
+  }
+  // Phase 4: Retention
+  if(state.retention.enableRetention!==false){
+    var rg={};var ro=[];
+    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveRet(t.name,t.cat);if(!rg[val]){rg[val]=[];ro.push(val)}rg[val].push(t.name)}
+    var first=true;
+    for(var v=0;v<ro.length;v++){
+      var val=ro[v],names=rg[val];
+      var cmd=names.length===1?".alter-merge table "+names[0]+" policy retention softdelete = "+val+" recoverability = "+recover:".alter-merge tables ("+names.join(", ")+")\n    policy retention softdelete = "+val+" recoverability = "+recover;
+      blocks.push({section:first?"Phase 4 \u2014 Retention Policies":undefined,sectionColor:first?"var(--color-warn)":undefined,title:"Retention "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",kql:cmd});
+      first=false;
+    }
+  }
+  // Phase 5: Caching
+  if(state.retention.enableCaching!==false){
+    var cg={};var co=[];
+    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveCache?resolveCache(t.name,t.cat):"30d";if(!cg[val]){cg[val]=[];co.push(val)}cg[val].push(t.name)}
+    var first=true;
+    for(var v=0;v<co.length;v++){
+      var val=co[v],names=cg[val];
+      var cmd=names.length===1?".alter table "+names[0]+" policy caching hot = "+val:".alter tables ("+names.join(", ")+")\n    policy caching hot = "+val;
+      blocks.push({section:first?"Phase 5 \u2014 Caching Policies":undefined,sectionColor:first?"var(--color-info)":undefined,title:"Cache hot "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",kql:cmd});
+      first=false;
+    }
+  }
+  // Phase 6: Batching
+  if(state.retention.batching&&state.retention.batching.enabled){
+    var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
+    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
+    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    var json=JSON.stringify(batchObj);var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
+    blocks.push({section:"Phase 6 \u2014 Ingestion Batching",sectionColor:"var(--color-purple)",title:"Batching ("+names.length+" tables)",kql:names.length===1?".alter table "+names[0]+" policy ingestionbatching @'"+json+"'":".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+json+"'"});
+  }
+  _dvRunbookBlocks=blocks;
+  renderDVSections(out,blocks);
+  var badge=document.getElementById("runbookCmdCount");if(badge)badge.textContent="("+blocks.length+" commands)";
+}
+
+function generateDVVerifyQueries(){
+  var out=document.getElementById("dvVerifyQueriesOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  var allTableNames=[pack.stagingTable].concat(selectedTyped);
+  var rlsTables=state.rls.selectedTables||[];
+  var blocks=[];
+  // Tables
+  var tableList=allTableNames.map(function(t){return"'"+t+"'"}).join(", ");
+  blocks.push({section:"Schema Verification",sectionColor:"var(--color-info)",title:"Verify all tables exist",kql:".show tables\n| where TableName in ("+tableList+")\n| project TableName, Folder\n| order by TableName asc"});
+  blocks.push({title:"Verify ingestion mapping",kql:".show table "+pack.stagingTable+" ingestion json mapping\n| where Name == '"+pack.mappingName+"'\n| project Name, Mapping"});
+  // Update policies
+  if(selectedTyped.length){
+    blocks.push({section:"Update Policy Verification",sectionColor:"var(--color-success)",title:"Verify update policies",kql:".show tables ("+selectedTyped.join(", ")+") policy update\n| project TableName, IsEnabled, Source, Query\n| order by TableName asc"});
+  }
+  // RLS
+  if(rlsTables.length){
+    var funcNames=rlsTables.map(function(t){return"'RLS_"+t+"'"}).join(", ");
+    blocks.push({section:"RLS Verification",sectionColor:"var(--color-purple)",title:"Verify RLS functions exist",kql:".show functions\n| where Name in ("+funcNames+")\n| project Name, Folder, Body\n| order by Name asc"});
+    if(state.rls.applyPolicies){
+      blocks.push({title:"Verify RLS policies enabled",kql:".show tables ("+rlsTables.join(", ")+") policy row_level_security\n| project TableName, IsEnabled, Query\n| order by TableName asc"});
+    }
+  }
+  // Retention + Caching
+  if(state.retention.enableRetention!==false){
+    blocks.push({section:"Retention & Caching Verification",sectionColor:"var(--color-warn)",title:"Verify retention policies",kql:".show tables ("+allTableNames.join(", ")+") policy retention\n| project TableName, SoftDeletePeriod, Recoverability\n| order by TableName asc"});
+  }
+  if(state.retention.enableCaching!==false){
+    blocks.push({title:"Verify caching policies",kql:".show tables ("+allTableNames.join(", ")+") policy caching\n| project TableName, DataHotSpan\n| order by TableName asc"});
+  }
+  if(state.retention.batching&&state.retention.batching.enabled){
+    blocks.push({title:"Verify batching policies",kql:".show tables ("+allTableNames.join(", ")+") policy ingestionbatching\n| project TableName, MaximumBatchingTimeSpan\n| order by TableName asc"});
+  }
+  // Health check
+  blocks.push({section:"Quick Health Check",sectionColor:"var(--color-teal)",title:"Full deployment summary",kql:".show tables ("+allTableNames.join(", ")+") details\n| project TableName, Folder, TotalRowCount, TotalExtentSize,\n    HotExtentSize, RetentionPolicy, CachingPolicy\n| order by TableName asc"});
+  _dvVerifyBlocks=blocks;
+  renderDVSections(out,blocks);
+}
+
+function renderDVSections(container,blocks){
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var sections=[];var cur=null;
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){cur={name:b.section,color:b.sectionColor||"var(--color-info)",blocks:[]};sections.push(cur)}
+    if(cur)cur.blocks.push({b:b,idx:i});
+  }
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    html+='<div class="dv-section" style="margin-top:16px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle(\'dv-collapsed\')">';
+    html+='<span style="font-size:12px;font-weight:700;color:'+sec.color+'">'+esc(sec.name)+' <span style="font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:1px 8px;border-radius:10px">'+sec.blocks.length+'</span></span>';
+    html+='<span style="font-size:16px;color:var(--text-secondary);transition:transform .2s" class="dv-chev">&#9660;</span>';
+    html+='</div><div class="dv-body" style="padding-top:8px">';
+    for(var j=0;j<sec.blocks.length;j++){
+      var b=sec.blocks[j].b,id=container.id+"_kql_"+sec.blocks[j].idx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,3),20);
+      html+='<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'" style="width:100%;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5">'+esc(b.kql)+'</textarea></div>';
+    }
+    html+='</div></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllDVRunbook(){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_dvRunbookBlocks.length;i++){
+    var b=_dvRunbookBlocks[i];
+    parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"")+"\n// "+b.title+"\n"+b.kql);
+  }
+  var btn=document.getElementById("runbookCopyAllBtn");
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+function copyAllDVVerifyQueries(){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_dvVerifyBlocks.length;i++){
+    var b=_dvVerifyBlocks[i];
+    parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"")+"\n// "+b.title+"\n"+b.kql);
+  }
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){});
+}
+
+function parseDVVerifyResults(){
+  var text=document.getElementById("dvVerifyPasteArea").value.trim();
+  if(!text)return;
+  var pack=getPack();if(!pack)return;
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  var allTableNames=[pack.stagingTable].concat(selectedTyped);
+  var rlsTables=state.rls.selectedTables||[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var results=[];
+  for(var i=0;i<allTableNames.length;i++){
+    var found=text.indexOf(allTableNames[i])>-1;
+    results.push({name:allTableNames[i],check:"Table exists",status:found?"pass":"fail"});
+  }
+  if(text.indexOf(pack.mappingName)>-1)results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pass"});
+  else results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pending"});
+  for(var i=0;i<rlsTables.length;i++){
+    var found=text.indexOf("RLS_"+rlsTables[i])>-1;
+    results.push({name:"RLS_"+rlsTables[i],check:"RLS function",status:found?"pass":"pending"});
+  }
+  if(state.rls.applyPolicies){
+    for(var i=0;i<rlsTables.length;i++){
+      var re=new RegExp(rlsTables[i]+"[\\s\\S]{0,100}(True|true)","i");
+      results.push({name:rlsTables[i],check:"RLS policy enabled",status:re.test(text)?"pass":"pending"});
+    }
+  }
+  if(state.retention.enableRetention!==false){
+    for(var i=0;i<allTables.length;i++){
+      var found=text.indexOf(allTables[i].name)>-1;
+      results.push({name:allTables[i].name,check:"Retention = "+resolveRet(allTables[i].name,allTables[i].cat),status:found?"pass":"pending"});
+    }
+  }
+  renderDVVerifyResults(results);
+}
+
+function renderDVVerifyResults(results){
+  var grid=document.getElementById("dvVerifyResultsGrid");
+  var summary=document.getElementById("dvVerifySummary");
+  var pass=0,fail=0,pending=0;
+  for(var i=0;i<results.length;i++){if(results[i].status==="pass")pass++;else if(results[i].status==="fail")fail++;else pending++}
+  document.getElementById("dvPassCount").textContent=pass;
+  document.getElementById("dvFailCount").textContent=fail;
+  document.getElementById("dvPendingCount").textContent=pending;
+  summary.style.display="flex";
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  for(var i=0;i<results.length;i++){
+    var r=results[i];
+    var icon=r.status==="pass"?"&#10003;":r.status==="fail"?"&#10007;":"?";
+    var bgColor=r.status==="pass"?"rgba(34,197,94,.15)":r.status==="fail"?"rgba(239,68,68,.15)":"rgba(139,148,158,.15)";
+    var fgColor=r.status==="pass"?"var(--color-success)":r.status==="fail"?"var(--color-error)":"var(--text-secondary)";
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-raised);border-radius:var(--radius-md);font-size:12px">';
+    html+='<span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:'+bgColor+';color:'+fgColor+'">'+icon+'</span>';
+    html+='<span style="flex:1;font-family:var(--font-mono)">'+esc(r.name)+'</span>';
+    html+='<span style="font-size:10px;color:var(--text-secondary)">'+esc(r.check)+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+function clearDVVerifyResults(){
+  document.getElementById("dvVerifyPasteArea").value="";
+  document.getElementById("dvVerifyResultsGrid").innerHTML="";
+  document.getElementById("dvVerifySummary").style.display="none";
 }
 
 // ═══════════════════════════════════════════════════════════════════

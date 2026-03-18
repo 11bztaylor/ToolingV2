@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PREPROD — Retention Policies</title>
+<title>PREPROD — Storage Policies</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -57,83 +57,288 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .kql-block .block-title{font-size:13px;font-weight:600}
 .kql-block textarea{width:100%;min-height:60px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;outline:none;line-height:1.6}
-/* Time format hint */
-.time-hint{font-size:10px;color:var(--text-secondary);padding:2px 0 0 70px}
 /* Override row resolved value */
-.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:60px;text-align:right}
+.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:100px;text-align:right}
+/* Storage profile pills */
+.profile-pills{display:flex;gap:8px;flex-wrap:wrap}
+.profile-pill{padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.profile-pill:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.profile-pill.active{background:rgba(74,158,237,.15);border-color:var(--color-info);color:var(--color-info)}
+.profile-desc{font-size:10px;color:var(--text-secondary);margin-top:2px;font-weight:400}
+/* Dual column headers for overrides */
+.override-header{display:flex;align-items:center;gap:10px;padding:4px 10px;font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+.override-header .col-label{width:80px;text-align:center}
+/* Batching config */
+.batching-config{padding:8px 0}
+.batching-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.batching-row label{font-size:12px;min-width:180px}
+.batching-row input{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;width:120px;outline:none}
+.batching-row input:focus{border-color:var(--border-focus)}
+/* Collapsible cards */
+.card-title.collapsible{cursor:pointer;user-select:none}
+.card-title.collapsible:hover{opacity:.85}
+.card-title .chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s;margin-left:auto;line-height:1}
+.card.collapsed .chevron{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
+/* Collapsible KQL sections */
+.kql-section{margin-top:16px}
+.kql-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;user-select:none;transition:background .15s}
+.kql-section-header:hover{background:var(--bg-hover)}
+.kql-section-title{font-size:12px;font-weight:700;color:var(--color-info);display:flex;align-items:center;gap:8px}
+.kql-section-badge{font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:1px 8px;border-radius:10px}
+.kql-section-chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s}
+.kql-section.collapsed .kql-section-chevron{transform:rotate(-90deg)}
+.kql-section.collapsed .kql-section-body{display:none}
+.kql-section-body{padding-top:8px}
+/* Policy toggle row within presets card */
+.policy-toggle-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-base);border-radius:var(--radius-md);margin-bottom:8px}
+.policy-toggle-row .toggle-switch{flex-shrink:0}
+.policy-toggle-row .policy-label{font-size:13px;font-weight:600;flex:1}
+.policy-toggle-row .policy-hint{font-size:11px;color:var(--text-secondary)}
+/* Sub-section divider */
+.sub-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.sub-section-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+/* Disabled state for dropdowns */
+.preset-row.disabled{opacity:.35;pointer-events:none}
 </style>
 </head>
 <body>
-<div class="test-banner">PREPROD — Retention Policies panel. Edit here, merge to index.html when stable.</div>
+<div class="test-banner">PREPROD — Storage Policies panel. Edit here, merge to index.html when stable.</div>
 <div style="max-width:960px">
-  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Retention Policies</h2>
-  <p class="text-sm text-muted" style="margin-bottom:20px">Configure soft-delete retention periods per category or per table.</p>
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Storage Policies</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Configure retention, hot cache, and ingestion batching policies per category or per table.</p>
 
-  <div class="alert alert-info">
-    <span>i</span>
-    <div><strong>ADX timespan format:</strong> Use <code>d</code> for days, <code>h</code> for hours, <code>m</code> for minutes. No month shorthand — convert to days (e.g., 6 months = <code>180d</code>, 1 year = <code>365d</code>). Full format also supported: <code>90.00:00:00</code></div>
+  <!-- Explainer card — collapsible -->
+  <div class="card" id="cardExplainer" style="border-color:rgba(74,158,237,.3)">
+    <div class="card-title collapsible" onclick="toggleCard('cardExplainer')"><span class="dot" style="background:var(--color-info)"></span> How ADX Storage Actually Works <span class="chevron">&#9660;</span></div>
+    <div class="card-body text-sm" style="line-height:1.8;color:var(--text-secondary)">
+      <div style="margin-bottom:12px">
+        Here's the thing that trips people up: <strong style="color:var(--text-primary)">ALL your data always lives in cold storage (Azure blob)</strong>. That's the baseline. Cold storage is cheap — pennies per GB. The question is whether a <em>copy</em> of that data also lives somewhere faster.
+      </div>
+      <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Data lifecycle — what happens to a log after it's ingested</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="background:var(--color-success);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">INGESTED</span>
+            <span>Data arrives &rarr; stored in <strong style="color:var(--color-info)">hot cache (SSD)</strong> AND <strong style="color:var(--text-secondary)">cold storage (blob)</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-left:10px;color:var(--text-secondary)">
+            <span style="font-family:var(--font-mono)">&#9474;</span>
+            <span style="font-size:11px">Your analysts query this data in seconds — it's on fast SSD right on the cluster nodes</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="background:var(--color-warn);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">CACHE&nbsp;EXPIRES</span>
+            <span>Hot cache copy evicted &rarr; data now <strong style="color:var(--text-secondary)">cold-only</strong>. Still queryable, just slower (pulls from blob)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-left:10px;color:var(--text-secondary)">
+            <span style="font-family:var(--font-mono)">&#9474;</span>
+            <span style="font-size:11px">Cold queries still work — all operators, all filters, full KQL. Just slower: think 10-30s vs 1-3s. For a targeted forensic query that's fine. For a dashboard refreshing every 60 seconds, it's not.</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="background:var(--color-error);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">RETENTION&nbsp;EXPIRES</span>
+            <span>Data deleted from <em>everywhere</em> &rarr; <strong style="color:var(--color-error)">gone</strong>. Can't query it, can't recover it (unless recoverability is on)</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-warn)">
+          <strong style="color:var(--color-warn)">Retention</strong> <span style="color:var(--text-secondary)">&mdash; "how long does data exist?"</span>
+          <div style="margin-top:4px">This is your compliance knob. Legal says keep security logs for 1 year? Set retention to <code style="color:var(--color-success)">365d</code>. Need 2 years for audit? <code style="color:var(--color-success)">730d</code>. Once this expires the data is permanently deleted. Staging tables get short retention (7-30d) because data flows to typed tables almost immediately — no reason to keep the raw copy long.</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-info)">
+          <strong style="color:var(--color-info)">Hot Cache</strong> <span style="color:var(--text-secondary)">&mdash; "how long are queries fast?"</span>
+          <div style="margin-top:4px">This is your <em>cost vs speed</em> knob — and it's the biggest one you have. Hot cache keeps a copy of data on SSDs bolted to the cluster nodes. More hot cache = bigger SSDs needed = bigger VMs = bigger bill. For SOC work, you usually want the last 14-30 days hot (active investigation window). Older data for compliance? Let it go cold — your analysts aren't querying 8-month-old Netskope logs every day. <strong style="color:var(--text-primary)">Cache must be &le; retention</strong> (can't cache data that doesn't exist).</div>
+          <div style="margin-top:6px;font-size:11px;padding:6px 8px;background:var(--bg-base);border-radius:var(--radius-sm)"><strong style="color:var(--text-primary)">Searchability impact:</strong> Hot and cold data are both fully searchable — same KQL, same operators, same results. The difference is <em>speed</em>. Hot queries scan data already on local SSD (1-3s). Cold queries pull data from Azure blob first, then scan it (10-30s for a focused time range, longer for broad scans). If you have dashboards, alerts, or scheduled queries hitting a table regularly — keep that window hot. If it's just occasional forensic lookups, cold is fine.</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-purple)">
+          <strong style="color:var(--color-purple)">Ingestion Batching</strong> <span style="color:var(--text-secondary)">&mdash; "how fast does data show up?"</span>
+          <div style="margin-top:4px">ADX doesn't write data one row at a time — it batches it up and writes in chunks. By default it waits up to 5 minutes (or 1 GB, or 1000 items — whichever comes first). That means there's up to a 5-minute gap between "event happened" and "data is queryable." For most event tables that's fine. For alerts where your SOC is actively triaging? Drop it to 30 seconds. Just know: smaller batches = more cluster work = higher cost.</div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:rgba(74,158,237,.06);border:1px solid rgba(74,158,237,.15);border-radius:var(--radius-md);margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--color-info);margin-bottom:6px">Example — Netskope alert table with typical SOC settings</div>
+        <div style="font-size:12px">
+          Retention = <code style="color:var(--color-success)">365d</code>, Hot Cache = <code style="color:var(--color-success)">30d</code>, Batching = <code style="color:var(--color-success)">00:00:30</code><br>
+          <span style="color:var(--text-secondary)">&rarr; Alert data shows up within 30 seconds of ingestion. Analysts can query the last 30 days instantly. Older alerts (31-365 days) are still queryable for investigations/compliance but take a few seconds longer. After 1 year, data is deleted.</span>
+        </div>
+      </div>
+      <div style="padding:8px 10px;background:var(--bg-base);border-radius:var(--radius-md);font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">
+        <strong style="color:var(--text-primary)">Format:</strong> Use <code style="color:var(--color-success)">d</code> for days, <code style="color:var(--color-success)">h</code> for hours. No month shorthand — 6 months = <code style="color:var(--color-success)">180d</code>, 1 year = <code style="color:var(--color-success)">365d</code>. Batching uses <code style="color:var(--color-success)">HH:MM:SS</code>.
+      </div>
+    </div>
   </div>
 
+  <!-- Combined: Profiles + Presets + Batching -->
   <div class="card">
-    <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Category Presets</div>
-    <div class="text-sm text-muted mb-12">Set defaults by table category. Per-table overrides below take priority.</div>
-    <div class="preset-row">
-      <span class="preset-label" style="color:var(--color-info)">Staging</span>
-      <select id="retStaging" onchange="updateRetention()">
-        <option value="7d">7 days</option>
-        <option value="10d" selected>10 days</option>
-        <option value="14d">14 days</option>
-        <option value="30d">30 days</option>
-        <option value="custom">Custom</option>
-      </select>
-      <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="updateRetention()">
-      <span class="text-sm text-muted">Netskope_Raw — short retention, data flows to typed tables</span>
+    <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Storage Configuration</div>
+
+    <!-- Profiles sub-section -->
+    <div class="text-sm text-muted mb-8">Quick presets that configure both retention and hot cache, or customize below.</div>
+    <div class="profile-pills" style="margin-bottom:14px">
+      <div class="profile-pill" onclick="applyStorageProfile('operations')">
+        Operations<div class="profile-desc">Active SOC, long hot cache</div>
+      </div>
+      <div class="profile-pill" onclick="applyStorageProfile('investigative')">
+        Investigative<div class="profile-desc">Moderate cache, standard retention</div>
+      </div>
+      <div class="profile-pill" onclick="applyStorageProfile('compliance')">
+        Compliance<div class="profile-desc">Minimal cache, long-term storage</div>
+      </div>
+      <div class="profile-pill active" onclick="applyStorageProfile('custom')">
+        Custom<div class="profile-desc">Manual configuration</div>
+      </div>
     </div>
-    <div class="preset-row">
-      <span class="preset-label" style="color:var(--color-success)">Events</span>
-      <select id="retEvents" onchange="updateRetention()">
-        <option value="90d">90 days (3 mo)</option>
-        <option value="180d" selected>180 days (6 mo)</option>
-        <option value="365d">365 days (1 yr)</option>
-        <option value="730d">730 days (2 yr)</option>
-        <option value="custom">Custom</option>
-      </select>
-      <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="updateRetention()">
-      <span class="text-sm text-muted">8 event tables</span>
+
+    <!-- Policy toggles -->
+    <div class="sub-section" style="margin-top:0;padding-top:0;border-top:none">
+      <div class="sub-section-title">Enable / Disable Policy Types</div>
+      <div class="policy-toggle-row">
+        <div class="toggle-switch on" id="togRetention" onclick="togglePolicy(this,'retention')"><div class="knob"></div></div>
+        <span class="policy-label" style="color:var(--color-warn)">Retention</span>
+        <span class="policy-hint">Soft-delete + recoverability</span>
+      </div>
+      <div class="policy-toggle-row">
+        <div class="toggle-switch on" id="togCaching" onclick="togglePolicy(this,'caching')"><div class="knob"></div></div>
+        <span class="policy-label" style="color:var(--color-info)">Hot Cache</span>
+        <span class="policy-hint">SSD cache duration</span>
+      </div>
+      <div class="policy-toggle-row">
+        <div class="toggle-switch" id="togBatching" onclick="togglePolicy(this,'batching')"><div class="knob"></div></div>
+        <span class="policy-label" style="color:var(--color-purple)">Ingestion Batching</span>
+        <span class="policy-hint">Override default 5 min batch window</span>
+      </div>
     </div>
-    <div class="preset-row">
-      <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
-      <select id="retAlerts" onchange="updateRetention()">
-        <option value="180d">180 days (6 mo)</option>
-        <option value="365d" selected>365 days (1 yr)</option>
-        <option value="730d">730 days (2 yr)</option>
-        <option value="1095d">1095 days (3 yr)</option>
-        <option value="custom">Custom</option>
-      </select>
-      <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="updateRetention()">
-      <span class="text-sm text-muted">13 alert tables</span>
+
+    <!-- Retention presets -->
+    <div class="sub-section" id="retentionPresetsSection">
+      <div class="sub-section-title" style="color:var(--color-warn)">Retention Presets</div>
+      <div class="preset-row" id="retStagingRow">
+        <span class="preset-label" style="color:var(--color-info)">Staging</span>
+        <select id="retStaging" onchange="onPresetChange()">
+          <option value="7d">7 days</option>
+          <option value="10d" selected>10 days</option>
+          <option value="14d">14 days</option>
+          <option value="30d">30 days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="onPresetChange()">
+        <span class="text-sm text-muted">Netskope_Raw</span>
+      </div>
+      <div class="preset-row" id="retEventsRow">
+        <span class="preset-label" style="color:var(--color-success)">Events</span>
+        <select id="retEvents" onchange="onPresetChange()">
+          <option value="90d">90 days (3 mo)</option>
+          <option value="180d" selected>180 days (6 mo)</option>
+          <option value="365d">365 days (1 yr)</option>
+          <option value="730d">730 days (2 yr)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="onPresetChange()">
+        <span class="text-sm text-muted">8 event tables</span>
+      </div>
+      <div class="preset-row" id="retAlertsRow">
+        <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+        <select id="retAlerts" onchange="onPresetChange()">
+          <option value="180d">180 days (6 mo)</option>
+          <option value="365d" selected>365 days (1 yr)</option>
+          <option value="730d">730 days (2 yr)</option>
+          <option value="1095d">1095 days (3 yr)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="onPresetChange()">
+        <span class="text-sm text-muted">13 alert tables</span>
+      </div>
+      <div class="toggle-row" style="margin-top:6px">
+        <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
+        <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')" style="font-size:12px">Enable recoverability</label>
+        <span class="text-sm text-muted" style="flex:none">Adds storage overhead</span>
+      </div>
+    </div>
+
+    <!-- Caching presets -->
+    <div class="sub-section" id="cachingPresetsSection">
+      <div class="sub-section-title" style="color:var(--color-info)">Hot Cache Presets</div>
+      <div class="preset-row" id="cacheStagingRow">
+        <span class="preset-label" style="color:var(--color-info)">Staging</span>
+        <select id="cacheStaging" onchange="onPresetChange()">
+          <option value="3d">3 days</option>
+          <option value="7d">7 days</option>
+          <option value="10d" selected>10 days</option>
+          <option value="14d">14 days</option>
+          <option value="30d">30 days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="cacheStagingCustom" type="text" placeholder="e.g. 5d" style="display:none" onchange="onPresetChange()">
+      </div>
+      <div class="preset-row" id="cacheEventsRow">
+        <span class="preset-label" style="color:var(--color-success)">Events</span>
+        <select id="cacheEvents" onchange="onPresetChange()">
+          <option value="3d">3 days</option>
+          <option value="7d">7 days</option>
+          <option value="14d">14 days</option>
+          <option value="30d" selected>30 days</option>
+          <option value="90d">90 days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="cacheEventsCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="onPresetChange()">
+      </div>
+      <div class="preset-row" id="cacheAlertsRow">
+        <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+        <select id="cacheAlerts" onchange="onPresetChange()">
+          <option value="3d">3 days</option>
+          <option value="7d">7 days</option>
+          <option value="14d">14 days</option>
+          <option value="30d" selected>30 days</option>
+          <option value="90d">90 days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="cacheAlertsCustom" type="text" placeholder="e.g. 45d" style="display:none" onchange="onPresetChange()">
+      </div>
+      <div style="font-size:10px;color:var(--text-secondary);margin-top:6px">Cache &le; retention. Data on fast SSD for cache duration, then cold (blob).</div>
+    </div>
+
+    <!-- Batching config -->
+    <div class="sub-section" id="batchingPresetsSection" style="display:none">
+      <div class="sub-section-title" style="color:var(--color-purple)">Batching Configuration</div>
+      <div class="batching-row">
+        <label>Max batching time span</label>
+        <input type="text" id="batchTimeSpan" value="00:00:30" placeholder="HH:MM:SS" onchange="updateBatching()">
+        <span class="text-sm text-muted">Default: 00:05:00 (5 min)</span>
+      </div>
+      <div class="batching-row">
+        <label>Max number of items <span class="text-muted">(optional)</span></label>
+        <input type="text" id="batchMaxItems" placeholder="default" onchange="updateBatching()">
+        <span class="text-sm text-muted">Default: 1000</span>
+      </div>
+      <div class="batching-row">
+        <label>Max raw data size MB <span class="text-muted">(optional)</span></label>
+        <input type="text" id="batchMaxSize" placeholder="default" onchange="updateBatching()">
+        <span class="text-sm text-muted">Default: 1024 (1 GB)</span>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides</div>
-    <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset. Enter a timespan like <code>90d</code>, <code>365d</code>, or <code>730d</code>.</div>
-    <div id="retentionOverrides"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Options</div>
-    <div class="toggle-row">
-      <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
-      <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')">Enable recoverability</label>
-      <span class="text-sm text-muted" style="flex:none">Allows recovery of deleted data. Adds storage overhead.</span>
+  <!-- Per-Table Overrides — collapsible -->
+  <div class="card" id="cardOverrides">
+    <div class="card-title collapsible" onclick="toggleCard('cardOverrides')"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="overrideCountBadge"></span> <span class="chevron">&#9660;</span></div>
+    <div class="card-body">
+      <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset.</div>
+      <div class="override-header" id="overrideHeaderRow">
+        <span style="min-width:32px"></span>
+        <span style="flex:1">Table</span>
+        <span class="col-label" id="overrideRetCol">Retention</span>
+        <span class="col-label" id="overrideCacheCol">Hot Cache</span>
+        <span style="min-width:100px;text-align:right">Resolved</span>
+      </div>
+      <div id="retentionOverrides"></div>
     </div>
   </div>
 
+  <!-- Generated KQL -->
   <div class="card">
     <div class="card-title" style="justify-content:space-between">
       <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
-      <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateRetention()">Refresh</button></div>
+      <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateStoragePolicies()">Refresh</button></div>
     </div>
     <div id="retentionOutput"></div>
   </div>
@@ -148,7 +353,22 @@ var SCHEMA_PACKS = {netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",
 var state = {
   globalConfig: { clusterUri:"https://testcluster.westus2.kusto.windows.net", database:"NetskopeDB", tenantId:"" },
   activePack: "netskope",
-  retention: { staging:"10d", events:"180d", alerts:"365d", recoverability:false, overrides:{} }
+  retention: {
+    storageProfile: "custom",
+    enableRetention: true,
+    enableCaching: true,
+    staging:"10d", events:"180d", alerts:"365d",
+    recoverability: false,
+    overrides: {},
+    cache: { staging:"10d", events:"30d", alerts:"30d", overrides:{} },
+    batching: { enabled:false, maxTimeSpan:"00:00:30", maxItems:"", maxRawDataSize:"", overrides:{} }
+  }
+};
+
+var STORAGE_PROFILES = {
+  operations:     { retStaging:"10d", retEvents:"365d",  retAlerts:"365d",  cacheStaging:"10d", cacheEvents:"30d", cacheAlerts:"30d" },
+  investigative:  { retStaging:"10d", retEvents:"365d",  retAlerts:"365d",  cacheStaging:"10d", cacheEvents:"14d", cacheAlerts:"14d" },
+  compliance:     { retStaging:"10d", retEvents:"730d",  retAlerts:"1095d", cacheStaging:"10d", cacheEvents:"3d",  cacheAlerts:"3d" }
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -165,32 +385,142 @@ function copyToClipboard(btn,taId){
   });
 }
 
+function toggleCard(id){
+  var card=document.getElementById(id);
+  if(card)card.classList.toggle("collapsed");
+}
+
+function updateOverrideCountBadge(){
+  var retCount=Object.keys(state.retention.overrides).length;
+  var cacheCount=Object.keys(state.retention.cache.overrides).length;
+  var badge=document.getElementById("overrideCountBadge");
+  if(!badge)return;
+  var total=retCount+cacheCount;
+  badge.textContent=total>0?"("+total+" override"+(total>1?"s":"")+" set)":"(22 tables)";
+}
+
 function toggleSwitch(el,key){
   var isOn=!el.classList.contains("on");
   if(isOn)el.classList.add("on");else el.classList.remove("on");
   if(key==="recoverability")state.retention.recoverability=isOn;
-  generateRetention();
+  generateStoragePolicies();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Policy type toggles (retention/caching/batching on/off)
+// ═══════════════════════════════════════════════════════════════════
+function togglePolicy(el,policy){
+  var isOn=!el.classList.contains("on");
+  if(isOn)el.classList.add("on");else el.classList.remove("on");
+
+  if(policy==="retention"){
+    state.retention.enableRetention=isOn;
+    document.getElementById("retentionPresetsSection").style.display=isOn?"":"none";
+  }
+  if(policy==="caching"){
+    state.retention.enableCaching=isOn;
+    document.getElementById("cachingPresetsSection").style.display=isOn?"":"none";
+  }
+  if(policy==="batching"){
+    state.retention.batching.enabled=isOn;
+    document.getElementById("batchingPresetsSection").style.display=isOn?"":"none";
+  }
+  updateOverrideColumns();
+  generateStoragePolicies();
+}
+
+function updateOverrideColumns(){
+  // Show/hide override columns based on enabled policies
+  var retOn=state.retention.enableRetention;
+  var cacheOn=state.retention.enableCaching;
+  document.getElementById("overrideRetCol").style.display=retOn?"":"none";
+  document.getElementById("overrideCacheCol").style.display=cacheOn?"":"none";
+  // Rebuild overrides to match
+  buildStoragePolicyOverrides();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Storage Profiles
+// ═══════════════════════════════════════════════════════════════════
+function applyStorageProfile(profile){
+  state.retention.storageProfile=profile;
+  updateProfilePills();
+  if(profile==="custom")return;
+  var p=STORAGE_PROFILES[profile];
+  if(!p)return;
+  setDropdown("retStaging",p.retStaging);
+  setDropdown("retEvents",p.retEvents);
+  setDropdown("retAlerts",p.retAlerts);
+  setDropdown("cacheStaging",p.cacheStaging);
+  setDropdown("cacheEvents",p.cacheEvents);
+  setDropdown("cacheAlerts",p.cacheAlerts);
+  syncPresetsToState();
+  updateAllResolvedValues();
+  generateStoragePolicies();
+}
+
+function setDropdown(id,value){
+  var sel=document.getElementById(id);
+  var custom=document.getElementById(id+"Custom");
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].value===value){sel.selectedIndex=i;if(custom)custom.style.display="none";return}
+  }
+  sel.value="custom";
+  if(custom){custom.style.display="";custom.value=value}
+}
+
+function updateProfilePills(){
+  var pills=document.querySelectorAll(".profile-pill");
+  for(var i=0;i<pills.length;i++)pills[i].classList.remove("active");
+  var idx={operations:0,investigative:1,compliance:2,custom:3}[state.retention.storageProfile];
+  if(idx!==undefined&&pills[idx])pills[idx].classList.add("active");
+}
+
+function detectStorageProfile(){
+  var r=state.retention,c=r.cache;
+  for(var name in STORAGE_PROFILES){
+    var p=STORAGE_PROFILES[name];
+    if(r.staging===p.retStaging&&r.events===p.retEvents&&r.alerts===p.retAlerts&&
+       c.staging===p.cacheStaging&&c.events===p.cacheEvents&&c.alerts===p.cacheAlerts)return name;
+  }
+  return"custom";
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // Category presets
 // ═══════════════════════════════════════════════════════════════════
-function updateRetention(){
+function onPresetChange(){
+  syncPresetsToState();
+  state.retention.storageProfile=detectStorageProfile();
+  updateProfilePills();
+  updateAllResolvedValues();
+  generateStoragePolicies();
+}
+
+function syncPresetsToState(){
   var cats=["Staging","Events","Alerts"];
   for(var i=0;i<cats.length;i++){
-    var cat=cats[i];
+    var cat=cats[i],key=cat.toLowerCase();
     var sel=document.getElementById("ret"+cat);
     var custom=document.getElementById("ret"+cat+"Custom");
-    if(sel.value==="custom"){
-      custom.style.display="";
-      state.retention[cat.toLowerCase()]=custom.value.trim()||"365d";
-    }else{
-      custom.style.display="none";
-      state.retention[cat.toLowerCase()]=sel.value;
-    }
+    if(sel.value==="custom"){custom.style.display="";state.retention[key]=custom.value.trim()||"365d"}
+    else{custom.style.display="none";state.retention[key]=sel.value}
+    var csel=document.getElementById("cache"+cat);
+    var ccustom=document.getElementById("cache"+cat+"Custom");
+    if(csel.value==="custom"){ccustom.style.display="";state.retention.cache[key]=ccustom.value.trim()||"30d"}
+    else{ccustom.style.display="none";state.retention.cache[key]=csel.value}
   }
-  updateOverrideResolvedValues();
-  generateRetention();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Batching
+// ═══════════════════════════════════════════════════════════════════
+function updateBatching(){
+  var b=state.retention.batching;
+  b.maxTimeSpan=document.getElementById("batchTimeSpan").value.trim()||"00:00:30";
+  b.maxItems=document.getElementById("batchMaxItems").value.trim();
+  b.maxRawDataSize=document.getElementById("batchMaxSize").value.trim();
+  generateStoragePolicies();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -204,21 +534,38 @@ function resolveRet(tableName,cat){
   return"365d";
 }
 
-function buildRetentionOverrides(){
+function resolveCache(tableName,cat){
+  if(state.retention.cache.overrides[tableName])return state.retention.cache.overrides[tableName];
+  if(cat==="staging")return state.retention.cache.staging;
+  if(cat==="event")return state.retention.cache.events;
+  if(cat==="alert")return state.retention.cache.alerts;
+  return"30d";
+}
+
+function buildStoragePolicyOverrides(){
   var pack=getPack();if(!pack)return;
   var cont=document.getElementById("retentionOverrides");if(!cont)return;
   var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var retOn=state.retention.enableRetention;
+  var cacheOn=state.retention.enableCaching;
   var html="";
   for(var i=0;i<allTables.length;i++){
     var t=allTables[i];
     var catClass=t.cat==="event"?"cat-event":(t.cat==="alert"?"cat-alert":"cat-staging");
     var catLabel=t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"STG");
-    var resolved=resolveRet(t.name,t.cat);
+    var retResolved=resolveRet(t.name,t.cat);
+    var cacheResolved=resolveCache(t.name,t.cat);
+    var retOverride=state.retention.overrides[t.name]||"";
+    var cacheOverride=state.retention.cache.overrides[t.name]||"";
+    var resolvedParts=[];
+    if(retOn)resolvedParts.push("ret:"+retResolved);
+    if(cacheOn)resolvedParts.push("cache:"+cacheResolved);
     html+='<div class="preset-row" style="padding:4px 10px">';
     html+='<span class="cat '+catClass+'" style="min-width:32px;text-align:center">'+catLabel+'</span>';
     html+='<span class="text-mono text-sm" style="flex:1">'+t.name+'</span>';
-    html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+(t.cat||"staging")+'" placeholder="'+resolved+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
-    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+resolved+'</span>';
+    if(retOn)html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+t.cat+'" placeholder="'+retResolved+'" value="'+retOverride+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
+    if(cacheOn)html+='<input type="text" data-cache-table="'+t.name+'" data-cache-cat="'+t.cat+'" placeholder="'+cacheResolved+'" value="'+cacheOverride+'" style="width:80px;font-size:11px" onchange="updateCacheOverride(this)">';
+    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+(resolvedParts.join(" | ")||"—")+'</span>';
     html+='</div>';
   }
   cont.innerHTML=html;
@@ -227,23 +574,32 @@ function buildRetentionOverrides(){
 function updateRetentionOverride(input){
   var table=input.getAttribute("data-ret-table");
   var val=input.value.trim();
-  if(val)state.retention.overrides[table]=val;
-  else delete state.retention.overrides[table];
-  updateOverrideResolvedValues();
-  generateRetention();
+  if(val)state.retention.overrides[table]=val;else delete state.retention.overrides[table];
+  updateAllResolvedValues();updateOverrideCountBadge();generateStoragePolicies();
 }
 
-function updateOverrideResolvedValues(){
+function updateCacheOverride(input){
+  var table=input.getAttribute("data-cache-table");
+  var val=input.value.trim();
+  if(val)state.retention.cache.overrides[table]=val;else delete state.retention.cache.overrides[table];
+  updateAllResolvedValues();updateOverrideCountBadge();generateStoragePolicies();
+}
+
+function updateAllResolvedValues(){
   var pack=getPack();if(!pack)return;
   var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var retOn=state.retention.enableRetention,cacheOn=state.retention.enableCaching;
   for(var i=0;i<allTables.length;i++){
     var t=allTables[i];
-    var resolved=resolveRet(t.name,t.cat);
+    var parts=[];
+    if(retOn)parts.push("ret:"+resolveRet(t.name,t.cat));
+    if(cacheOn)parts.push("cache:"+resolveCache(t.name,t.cat));
     var el=document.querySelector('[data-resolved-for="'+t.name+'"]');
-    if(el)el.textContent=resolved;
-    // Update placeholder to reflect current category default
-    var inp=document.querySelector('[data-ret-table="'+t.name+'"]');
-    if(inp&&!inp.value.trim())inp.placeholder=resolved;
+    if(el)el.textContent=parts.join(" | ")||"\u2014";
+    var retInp=document.querySelector('[data-ret-table="'+t.name+'"]');
+    if(retInp&&!retInp.value.trim())retInp.placeholder=resolveRet(t.name,t.cat);
+    var cacheInp=document.querySelector('[data-cache-table="'+t.name+'"]');
+    if(cacheInp&&!cacheInp.value.trim())cacheInp.placeholder=resolveCache(t.name,t.cat);
   }
 }
 
@@ -251,15 +607,45 @@ function updateOverrideResolvedValues(){
 // KQL rendering + Copy All
 // ═══════════════════════════════════════════════════════════════════
 var _lastRetBlocks=[];
+function toggleKqlSection(el){
+  var section=el.closest(".kql-section");
+  if(section)section.classList.toggle("collapsed");
+}
+
 function renderRetKqlBlocks(container,blocks){
   _lastRetBlocks=blocks;
   var copyAllBtn=document.getElementById("retCopyAllBtn");
   if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
-  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
-  var html="";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No policies enabled. Toggle at least one policy type above.</div>';return}
+
+  var sections=[];var currentSection=null;
   for(var i=0;i<blocks.length;i++){
-    var b=blocks[i],id="ret_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
-    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    var b=blocks[i];
+    if(b.section){currentSection={name:b.section,blocks:[]};sections.push(currentSection)}
+    if(currentSection)currentSection.blocks.push({block:b,globalIdx:i});
+    else sections.push({name:null,blocks:[{block:b,globalIdx:i}]});
+  }
+
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    if(!sec.name){
+      var b=sec.blocks[0].block,id="ret_kql_"+sec.blocks[0].globalIdx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    }else{
+      html+='<div class="kql-section">';
+      html+='<div class="kql-section-header" onclick="toggleKqlSection(this)">';
+      html+='<span class="kql-section-title">'+esc(sec.name)+' <span class="kql-section-badge">'+sec.blocks.length+' command'+(sec.blocks.length>1?"s":"")+'</span></span>';
+      html+='<span class="kql-section-chevron">&#9660;</span>';
+      html+='</div><div class="kql-section-body">';
+      for(var j=0;j<sec.blocks.length;j++){
+        var b=sec.blocks[j].block,id="ret_kql_"+sec.blocks[j].globalIdx;
+        var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+        html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+      }
+      html+='</div></div>';
+    }
   }
   container.innerHTML=html;
 }
@@ -270,38 +656,120 @@ function copyAllRetKql(){
   for(var i=0;i<_lastRetBlocks.length;i++){
     parts.push("\n"+sep+"\n// "+_lastRetBlocks[i].title+"\n// Run separately in ADX Web UI\n"+sep+"\n"+_lastRetBlocks[i].kql);
   }
-  var all=parts.join("\n");
   var btn=document.getElementById("retCopyAllBtn");
-  navigator.clipboard.writeText(all).then(function(){
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
     btn.classList.add("btn-copied");btn.textContent="Copied All!";
     setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
   });
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Retention generation
+// KQL generation — batched by value to reduce command count
 // ═══════════════════════════════════════════════════════════════════
-function generateRetention(){
+function groupTablesByValue(allTables,resolveFn){
+  // Groups tables that share the same resolved value into one command
+  var groups={};var order=[];
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i];
+    var val=resolveFn(t.name,t.cat);
+    if(!groups[val]){groups[val]=[];order.push(val)}
+    groups[val].push(t.name);
+  }
+  return{groups:groups,order:order};
+}
+
+function generateStoragePolicies(){
   var out=document.getElementById("retentionOutput");if(!out)return;
   var pack=getPack();
   if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
   var db=state.globalConfig.database||"{database}";
   var cluster=state.globalConfig.clusterUri||"{cluster}";
   var recover=state.retention.recoverability?"enabled":"disabled";
+  var profileLabel=state.retention.storageProfile==="custom"?"Custom":
+    state.retention.storageProfile.charAt(0).toUpperCase()+state.retention.storageProfile.slice(1);
   var blocks=[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
 
-  // Header block
-  blocks.push({title:"Retention \u2014 run each separately",kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Recoverability: "+recover+"\n// Run each .alter-merge command separately in ADX Web UI"});
+  var retOn=state.retention.enableRetention;
+  var cacheOn=state.retention.enableCaching;
+  var batchOn=state.retention.batching.enabled;
 
-  // Staging table
-  var stagingRet=resolveRet(pack.stagingTable,"staging");
-  blocks.push({title:pack.stagingTable+" \u2014 "+stagingRet,kql:".alter-merge table "+pack.stagingTable+" policy retention softdelete = "+stagingRet+" recoverability = "+recover});
+  if(!retOn&&!cacheOn&&!batchOn){
+    renderRetKqlBlocks(out,[]);return;
+  }
 
-  // Typed tables
-  for(var i=0;i<pack.tables.length;i++){
-    var t=pack.tables[i];
-    var ret=resolveRet(t.name,t.cat);
-    blocks.push({title:t.name+" \u2014 "+ret,kql:".alter-merge table "+t.name+" policy retention softdelete = "+ret+" recoverability = "+recover});
+  // Header
+  var enabledList=[];
+  if(retOn)enabledList.push("Retention");
+  if(cacheOn)enabledList.push("Caching");
+  if(batchOn)enabledList.push("Batching");
+  blocks.push({title:"Storage Policies \u2014 "+enabledList.join(" + "),kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Storage Profile: "+profileLabel+"\n// Policies: "+enabledList.join(", ")+"\n"+(retOn?"// Recoverability: "+recover+"\n":"")+"// Run each .alter command separately in ADX Web UI"});
+
+  // ── Retention (batched by value) ──
+  if(retOn){
+    var rg=groupTablesByValue(allTables,resolveRet);
+    for(var v=0;v<rg.order.length;v++){
+      var val=rg.order[v],tables=rg.groups[val];
+      var title="Retention \u2014 "+val+" ("+tables.length+" table"+(tables.length>1?"s":"")+")";
+      var kql;
+      if(tables.length===1){
+        kql=".alter-merge table "+tables[0]+" policy retention softdelete = "+val+" recoverability = "+recover;
+      }else{
+        kql=".alter-merge tables ("+tables.join(", ")+")\n    policy retention softdelete = "+val+" recoverability = "+recover;
+      }
+      var sectionTag=v===0?"\u2500\u2500 Retention Policies \u2500\u2500":undefined;
+      blocks.push({section:sectionTag,title:title,kql:kql});
+    }
+  }
+
+  // ── Caching (batched by value) ──
+  if(cacheOn){
+    var cg=groupTablesByValue(allTables,resolveCache);
+    for(var v=0;v<cg.order.length;v++){
+      var val=cg.order[v],tables=cg.groups[val];
+      var title="Caching \u2014 hot "+val+" ("+tables.length+" table"+(tables.length>1?"s":"")+")";
+      var kql;
+      if(tables.length===1){
+        kql=".alter table "+tables[0]+" policy caching hot = "+val;
+      }else{
+        kql=".alter tables ("+tables.join(", ")+")\n    policy caching hot = "+val;
+      }
+      var sectionTag=v===0?"\u2500\u2500 Caching Policies (Hot Cache) \u2500\u2500":undefined;
+      blocks.push({section:sectionTag,title:title,kql:kql});
+    }
+  }
+
+  // ── Batching (all tables get same config unless overridden) ──
+  if(batchOn){
+    var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
+    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
+    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    var batchJson=JSON.stringify(batchObj);
+
+    // Group: tables with no override all share the same JSON
+    var defaultTables=[];var overrideTables=[];
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      if(state.retention.batching.overrides[t.name])overrideTables.push(t);
+      else defaultTables.push(t);
+    }
+
+    if(defaultTables.length>0){
+      var names=[];for(var i=0;i<defaultTables.length;i++)names.push(defaultTables[i].name);
+      var title="Batching \u2014 "+defaultTables.length+" table"+(defaultTables.length>1?"s":"");
+      var kql;
+      if(names.length===1) kql=".alter table "+names[0]+" policy ingestionbatching @'"+batchJson+"'";
+      else kql=".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+batchJson+"'";
+      blocks.push({section:"\u2500\u2500 Ingestion Batching \u2500\u2500",title:title,kql:kql});
+    }
+    for(var i=0;i<overrideTables.length;i++){
+      var t=overrideTables[i],ov=state.retention.batching.overrides[t.name];
+      var tObj={MaximumBatchingTimeSpan:ov.maxTimeSpan||batchObj.MaximumBatchingTimeSpan};
+      if(ov.maxItems||batchObj.MaximumNumberOfItems)tObj.MaximumNumberOfItems=parseInt(ov.maxItems||batchObj.MaximumNumberOfItems,10);
+      if(ov.maxRawDataSize||batchObj.MaximumRawDataSizeMB)tObj.MaximumRawDataSizeMB=parseInt(ov.maxRawDataSize||batchObj.MaximumRawDataSizeMB,10);
+      var sTag=defaultTables.length===0&&i===0?"\u2500\u2500 Ingestion Batching \u2500\u2500":undefined;
+      blocks.push({section:sTag,title:"Batching \u2014 "+t.name+" (override)",kql:".alter table "+t.name+" policy ingestionbatching @'"+JSON.stringify(tObj)+"'"});
+    }
   }
 
   renderRetKqlBlocks(out,blocks);
@@ -311,8 +779,10 @@ function generateRetention(){
 // Init
 // ═══════════════════════════════════════════════════════════════════
 function init(){
-  buildRetentionOverrides();
-  generateRetention();
+  buildStoragePolicyOverrides();
+  updateProfilePills();
+  updateOverrideCountBadge();
+  generateStoragePolicies();
 }
 document.addEventListener("DOMContentLoaded",init);
 </script>
