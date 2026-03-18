@@ -276,17 +276,15 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="config-field">
         <label>Schema Pack</label>
         <select id="cfgPack" onchange="bindConfig()">
-          <option value="netskope">Netskope N2Av2</option>
+          <!-- Populated by buildPackSelector() from PACK_REGISTRY -->
         </select>
       </div>
     </div>
   </div>
   <div class="app-nav">
-    <button class="nav-btn active" onclick="showTab('data')">Data & Mapping</button>
-    <button class="nav-btn" onclick="showTab('tables')">Table Builder</button>
-    <button class="nav-btn" onclick="showTab('rls')">RLS Builder</button>
-    <button class="nav-btn" onclick="showTab('retention')">Storage Policies</button>
-    <button class="nav-btn" onclick="showTab('deploy')">Deploy &amp; Verify</button>
+    <div id="navTabs">
+      <!-- Populated by buildNav() from TAB_REGISTRY -->
+    </div>
     <div class="nav-divider"></div>
     <div class="session-buttons">
       <button class="btn btn-sm" onclick="exportSession()">Save Session</button>
@@ -866,6 +864,29 @@ function showTab(tabName){
   event.target.classList.add("active");
   var entry=getTabEntry(tabName);
   if(entry&&entry.onShow)entry.onShow();
+}
+
+function buildNav(){
+  var container=document.getElementById("navTabs");if(!container)return;
+  var sorted=TAB_REGISTRY.slice().sort(function(a,b){return a.position-b.position});
+  var html="";
+  for(var i=0;i<sorted.length;i++){
+    var t=sorted[i];
+    html+='<button class="nav-btn'+(i===0?" active":"")+'" onclick="showTab(\''+t.id+'\')">'+esc(t.label)+'</button>';
+  }
+  container.innerHTML=html;
+}
+
+function buildPackSelector(){
+  var sel=document.getElementById("cfgPack");if(!sel)return;
+  var packs=PACK_REGISTRY.list();
+  var html="";
+  for(var i=0;i<packs.length;i++){
+    var p=PACK_REGISTRY.get(packs[i]);
+    html+='<option value="'+packs[i]+'">'+esc(p.name)+'</option>';
+  }
+  sel.innerHTML=html;
+  sel.value=state.activePack;
 }
 
 function bindConfig(){
@@ -2541,6 +2562,8 @@ function init(){
     return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
   });
   state.tableBuilder.activePreset="rec";
+  buildNav();
+  buildPackSelector();
   bindConfig();
   syncEmailFieldPlaceholder();
   // Init all tabs via registry
