@@ -809,9 +809,68 @@ var STORAGE_PROFILES={
   compliance:    {retStaging:"10d",retEvents:"730d", retAlerts:"1095d",cacheStaging:"10d",cacheEvents:"3d", cacheAlerts:"3d"}
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// PACK REGISTRY
+// ═══════════════════════════════════════════════════════════════════
+var PACK_REGISTRY={
+  _packs:{},
+  register:function(id,packDef){this._packs[id]=packDef},
+  get:function(id){return this._packs[id]||null},
+  list:function(){return Object.keys(this._packs)}
+};
+PACK_REGISTRY.register("netskope",SCHEMA_PACKS.netskope);
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB REGISTRY
+// ═══════════════════════════════════════════════════════════════════
+var TAB_REGISTRY=[
+  {
+    id:"data",label:"Data & Mapping",position:0,panelId:"tab-data",
+    mappingDeps:[],
+    init:function(){setupDropZone()},
+    onShow:function(){},
+    generate:null
+  },
+  {
+    id:"tables",label:"Table Builder",position:1,panelId:"tab-tables",
+    mappingDeps:[],
+    init:function(){initTBChecklists();setPhase("staging")},
+    onShow:function(){generateTableBuilder()},
+    generate:function(){generateTableBuilder()}
+  },
+  {
+    id:"rls",label:"RLS Builder",position:2,panelId:"tab-rls",
+    mappingDeps:[
+      {key:"groupName",label:"Group Name (AAD)",required:true},
+      {key:"domainFilter",label:"Domain Filter (Agency)",required:true},
+      {key:"tenantId",label:"Tenant ID",required:false},
+      {key:"customField",label:"Display Name / Custom",required:false}
+    ],
+    init:function(){syncRLSMappingsFromData();initRLSChecklists();makeRLSCardsCollapsible()},
+    onShow:function(){generateRLS()},
+    generate:function(){generateRLS()}
+  },
+  {
+    id:"retention",label:"Storage Policies",position:3,panelId:"tab-retention",
+    mappingDeps:[],
+    init:function(){buildStoragePolicyOverrides();updateProfilePills();updateOverrideCountBadge()},
+    onShow:function(){generateStoragePolicies()},
+    generate:function(){generateStoragePolicies()}
+  },
+  {
+    id:"deploy",label:"Deploy & Verify",position:4,panelId:"tab-deploy",
+    mappingDeps:[],
+    init:function(){},
+    onShow:function(){generateDVRunbook();generateDVVerifyQueries()},
+    generate:null
+  }
+];
+
+function getTabEntry(id){for(var i=0;i<TAB_REGISTRY.length;i++){if(TAB_REGISTRY[i].id===id)return TAB_REGISTRY[i]}return null}
+
 var fileIdCounter=1;
 
-function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function getPack(){return PACK_REGISTRY.get(state.activePack)}
 function getAllTables(){var p=getPack();return p?p.tables:[]}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function jsStrEsc(s){return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[\r\n]/g," ")}
@@ -828,10 +887,8 @@ function showTab(tabName){
   var btns=document.querySelectorAll(".nav-btn");
   for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
   event.target.classList.add("active");
-  if(tabName==="tables")generateTableBuilder();
-  if(tabName==="rls")generateRLS();
-  if(tabName==="retention")generateStoragePolicies();
-  if(tabName==="deploy"){generateDVRunbook();generateDVVerifyQueries()}
+  var entry=getTabEntry(tabName);
+  if(entry&&entry.onShow)entry.onShow();
 }
 
 function bindConfig(){
@@ -2481,23 +2538,21 @@ function clearDVVerifyResults(){
 // Init
 // ═══════════════════════════════════════════════════════════════════
 function init(){
+  // Initialize flatten fields for Table Builder
   state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
     return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
   });
   state.tableBuilder.activePreset="rec";
   bindConfig();
-  makeRLSCardsCollapsible();
-  setupDropZone();
-  initTBChecklists();
-  syncRLSMappingsFromData();
-  initRLSChecklists();
-  buildStoragePolicyOverrides();
-  updateProfilePills();
-  updateOverrideCountBadge();
   syncEmailFieldPlaceholder();
-  setPhase("staging");
-  generateRLS();
-  generateStoragePolicies();
+  // Init all tabs via registry
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    if(TAB_REGISTRY[i].init)TAB_REGISTRY[i].init();
+  }
+  // Generate outputs for tabs that have generators
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    if(TAB_REGISTRY[i].generate)TAB_REGISTRY[i].generate();
+  }
   renderMappingSummary();
 }
 
