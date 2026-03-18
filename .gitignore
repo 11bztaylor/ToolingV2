@@ -1,6 +1,15 @@
 # Claude Code local settings
 .claude/
 
+# Session docs (internal notes, not public)
+CLAUDE.md
+HOW-TO.md
+LIVING_FINDINGS.md
+
+# Test/sample data
+TESTDATA_*.csv
+typed_commands.json
+
 # OS junk
 .DS_Store
 Thumbs.db
