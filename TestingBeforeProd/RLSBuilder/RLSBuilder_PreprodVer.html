@@ -90,6 +90,26 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .pair-row .group-name{color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pair-row .group-uuid{color:var(--text-secondary);font-size:10px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
 .pair-row .rls-id{color:var(--text-secondary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;flex-shrink:0}
+.field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.field-row label{font-size:12px;color:var(--text-secondary)}
+.input{background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);padding:7px 10px;font-size:12px;font-family:var(--font-ui);outline:none}
+.input:focus{border-color:var(--border-focus)}
+.input-sm{min-width:180px}
+.full-list{border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;background:rgba(255,255,255,.01)}
+.full-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:var(--radius-sm)}
+.full-row:hover{background:var(--bg-hover)}
+.full-row.disabled{opacity:.45}
+.full-meta{flex:1;min-width:0}
+.full-meta .name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.full-meta .sub{font-size:10px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid var(--border);color:var(--text-secondary)}
+.collapse-btn{margin-left:auto;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);border-radius:var(--radius-sm);font-size:11px;padding:2px 8px;cursor:pointer}
+.collapse-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+.card-body.collapsed{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{font-size:11px;font-family:var(--font-mono);padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg-raised);color:var(--text-primary);cursor:pointer}
+.chip-btn:hover{background:var(--bg-hover)}
+.chip-btn.active{border-color:var(--color-info);box-shadow:0 0 0 1px rgba(74,158,237,.25) inset}
 </style>
 </head>
 <body>
@@ -136,6 +156,29 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     <div id="rlsChecklist"></div>
   </div>
 
+  <div class="card" id="fullAccessCard">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-warn)"></span> Table Full-Access Groups (No Agency Filter)</span>
+      <span class="text-sm text-muted" id="fullAccessCountBadge"></span>
+    </div>
+    <div class="text-sm text-muted mb-8">Selected groups here can read every row in the selected table. Agency filter checks are bypassed for these groups on that table only.</div>
+    <div class="field-row"><label>Tables currently selected in scope:</label></div>
+    <div id="fullAccessSelectedTablesList" class="full-list mb-8"></div>
+    <div class="field-row">
+      <label>Agency groups (toggle full access):</label>
+    </div>
+    <div id="fullAccessMappedArea" class="full-list mb-8"></div>
+    <div class="divider"></div>
+    <div class="field-row">
+      <label for="fullAccessManualGroup">Manual group add:</label>
+      <input id="fullAccessManualGroup" class="input input-sm" placeholder="Group name or ID">
+      <input id="fullAccessManualTenant" class="input input-sm" placeholder="Tenant ID (optional)">
+      <button class="btn btn-sm" onclick="addManualFullAccessGroup()">Add Group</button>
+    </div>
+    <div class="field-row"><label id="fullAccessCurrentTableLabel">Selected for this table:</label></div>
+    <div id="fullAccessSelectedArea" class="full-list"></div>
+  </div>
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between">
       <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
@@ -174,6 +217,8 @@ var state = {
     rlsFunction: true,
     applyPolicies: true,
     selectedTables: [],
+    fullAccessTable: "",
+    fullAccessByTable: {},
     // Each mapping pair: {group, domain, tenantId, enabled}
     mappingPairs: []
   }
@@ -183,17 +228,20 @@ var state = {
 // Utilities
 // ═══════════════════════════════════════════════════════════════════
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function jsStrEsc(s){return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[\r\n]/g," ")}
+function kqlEsc(s){return String(s==null?"":s).replace(/'/g,"''").replace(/[\r\n]/g," ")}
 function getPack(){return SCHEMA_PACKS[state.activePack]||null}
 function getAllTables(){var p=getPack();return p?p.tables:[]}
 
 function getRlsGroupId(pair){
-  // Use displayName as the AAD group identifier when available.
-  // Fall back to group (raw ID) if no display name.
-  // Always append ;tenantId when available (AAD group format: name;tenantId).
-  var id = pair.displayName || pair.group;
+  var id = pair.group || pair.displayName;
   var tenantId = pair.tenantId || state.globalConfig.tenantId;
   if(tenantId) return id + ";" + tenantId;
   return id;
+}
+
+function getGroupKey(group, tenantId){
+  return String(group||"").trim() + "|" + String(tenantId||"").trim();
 }
 
 function copyToClipboard(btn, taId){
@@ -239,6 +287,7 @@ function renderMappingPairs(){
   if(!pairs.length){
     area.innerHTML = '<div class="alert alert-warn"><span>!</span><div>No mapping data loaded. In prod, upload a CSV on the Data &amp; Mapping tab with Group Name + Domain Filter columns.</div></div>';
     updatePairBadge();
+    renderFullAccessEditor();
     return;
   }
 
@@ -263,8 +312,8 @@ function renderMappingPairs(){
     html += '<span class="agency-label">' + esc(domain) + '</span>';
     html += '<span class="pair-count">' + enabledCount + '/' + entries.length + '</span>';
     html += '<span class="pair-actions" onclick="event.stopPropagation()">';
-    html += '<a onclick="toggleAgencyPairs(\'' + esc(domain) + '\',true)">All</a>';
-    html += '<a onclick="toggleAgencyPairs(\'' + esc(domain) + '\',false)">None</a>';
+    html += '<a onclick="toggleAgencyPairs(\'' + jsStrEsc(domain) + '\',true)">All</a>';
+    html += '<a onclick="toggleAgencyPairs(\'' + jsStrEsc(domain) + '\',false)">None</a>';
     html += '</span>';
     html += '</div>';
     html += '<div class="pair-group-body">';
@@ -289,6 +338,7 @@ function renderMappingPairs(){
 
   area.innerHTML = html;
   updatePairBadge();
+  renderFullAccessEditor();
 }
 
 function togglePair(idx){
@@ -335,6 +385,223 @@ function updatePairBadge(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Per-table full-access groups (no AgencyDomain filter)
+// ═══════════════════════════════════════════════════════════════════
+var _fullAccessOptionIndex = {};
+function ensureFullAccessState(){
+  if(!state.rls.fullAccessByTable || typeof state.rls.fullAccessByTable !== "object") state.rls.fullAccessByTable = {};
+}
+function getCurrentFullAccessTable(){
+  var scopeTables = state.rls.selectedTables && state.rls.selectedTables.length ? state.rls.selectedTables.slice() : [];
+  if(!scopeTables.length) return "";
+  if(!state.rls.fullAccessTable || scopeTables.indexOf(state.rls.fullAccessTable) < 0){
+    state.rls.fullAccessTable = scopeTables[0];
+  }
+  return state.rls.fullAccessTable;
+}
+function getTableFullAccess(tableName){
+  ensureFullAccessState();
+  if(!state.rls.fullAccessByTable[tableName]) state.rls.fullAccessByTable[tableName] = [];
+  return state.rls.fullAccessByTable[tableName];
+}
+function setTableFullAccess(tableName, list){
+  ensureFullAccessState();
+  state.rls.fullAccessByTable[tableName] = list;
+}
+function getMappedGroupOptions(){
+  var pairs = state.rls.mappingPairs || [];
+  var byKey = {};
+  for(var i=0;i<pairs.length;i++){
+    var p = pairs[i];
+    var key = getGroupKey(p.group, p.tenantId);
+    if(!key || key==="|") continue;
+    if(!byKey[key]){
+      byKey[key] = {
+        key: key,
+        group: String(p.group||"").trim(),
+        tenantId: String(p.tenantId||"").trim(),
+        displayName: String(p.displayName||p.group||"").trim(),
+        domains: [],
+        source: "mapped"
+      };
+    }
+    if(p.domain && byKey[key].domains.indexOf(p.domain)<0) byKey[key].domains.push(p.domain);
+  }
+  return Object.keys(byKey).sort().map(function(k){return byKey[k]});
+}
+function selectFullAccessTable(tableName){
+  state.rls.fullAccessTable = tableName || "";
+  renderFullAccessEditor();
+  generateRLS();
+}
+function renderFullAccessEditor(){
+  ensureFullAccessState();
+  var mappedArea = document.getElementById("fullAccessMappedArea");
+  var selectedArea = document.getElementById("fullAccessSelectedArea");
+  var selectedTablesArea = document.getElementById("fullAccessSelectedTablesList");
+  var currentLabel = document.getElementById("fullAccessCurrentTableLabel");
+  if(!mappedArea || !selectedArea || !selectedTablesArea || !currentLabel) return;
+
+  var scopeTables = state.rls.selectedTables && state.rls.selectedTables.length ? state.rls.selectedTables.slice() : [];
+  var tables = scopeTables;
+  var scopeHtml = "";
+  if(!scopeTables.length){
+    scopeHtml = '<div class="text-sm text-muted">No tables selected in Table Scope. Select at least one table above.</div>';
+    mappedArea.innerHTML = '<div class="text-sm text-muted">Select a table in scope first.</div>';
+    selectedArea.innerHTML = '<div class="text-sm text-muted">No table selected.</div>';
+    currentLabel.textContent = "Selected for this table:";
+    updateFullAccessBadge();
+    return;
+  }else{
+    scopeHtml = '<div class="chips">';
+    for(var st=0;st<scopeTables.length;st++) scopeHtml += '<button type="button" class="chip-btn'+(scopeTables[st]===state.rls.fullAccessTable?' active':'')+'" onclick="selectFullAccessTable(\''+jsStrEsc(scopeTables[st])+'\')">'+esc(scopeTables[st])+'</button>';
+    scopeHtml += '</div>';
+  }
+  selectedTablesArea.innerHTML = scopeHtml;
+  var currentTable = getCurrentFullAccessTable();
+  currentLabel.textContent = "Selected for table: " + currentTable;
+
+  var selectedList = getTableFullAccess(currentTable);
+
+  var mapped = getMappedGroupOptions();
+  _fullAccessOptionIndex = {};
+  var selectedKeys = {};
+  for(var sk=0;sk<selectedList.length;sk++) selectedKeys[getGroupKey(selectedList[sk].group, selectedList[sk].tenantId)] = 1;
+  if(!mapped.length)mappedArea.innerHTML = '<div class="text-sm text-muted">No mapped groups available yet.</div>';
+  else{
+    var mhtml = "";
+    for(var m=0;m<mapped.length;m++){
+      var opt = mapped[m], key = opt.key, label = opt.displayName || opt.group;
+      _fullAccessOptionIndex[key] = opt;
+      mhtml += '<label class="full-row'+(selectedKeys[key]?'':' disabled')+'">';
+      mhtml += '<input type="checkbox" '+(selectedKeys[key]?'checked':'')+' onchange="toggleMappedFullAccess(\''+jsStrEsc(key)+'\',this.checked)">';
+      mhtml += '<div class="full-meta"><div class="name">'+esc(label)+'</div><div class="sub">'+esc(opt.domains.join(", "))+'</div></div>';
+      mhtml += '<span class="pill">mapped</span></label>';
+    }
+    mappedArea.innerHTML = mhtml;
+  }
+
+  if(!selectedList.length){
+    selectedArea.innerHTML = '<div class="text-sm text-muted">No full-access groups selected for this table.</div>';
+  }else{
+    var shtml = "";
+    for(var i=0;i<selectedList.length;i++){
+      var e = selectedList[i], principalId = getRlsGroupId(e);
+      shtml += '<div class="full-row'+(e.enabled?'':' disabled')+'">';
+      shtml += '<input type="checkbox" '+(e.enabled?'checked':'')+' onchange="toggleFullAccessEnabled('+i+')">';
+      shtml += '<div class="full-meta"><div class="name">'+esc(e.displayName||e.group)+'</div><div class="sub">'+esc(principalId)+'</div></div>';
+      shtml += '<span class="pill">'+esc(e.source||"manual")+'</span>';
+      shtml += '<button class="btn btn-sm" onclick="removeFullAccessEntry('+i+')">Remove</button>';
+      shtml += '</div>';
+    }
+    selectedArea.innerHTML = shtml;
+  }
+  updateFullAccessBadge();
+}
+function toggleMappedFullAccess(key, checked){
+  var table = getCurrentFullAccessTable();
+  var list = getTableFullAccess(table).slice();
+  var opt = _fullAccessOptionIndex[key];
+  if(!opt) return;
+  var idx = -1;
+  for(var i=0;i<list.length;i++){
+    if(getGroupKey(list[i].group, list[i].tenantId)===key){idx=i;break;}
+  }
+  if(checked){
+    if(idx<0){
+      list.push({group:opt.group,tenantId:opt.tenantId,displayName:opt.displayName,source:"mapped",enabled:true});
+    }else{
+      list[idx].enabled = true;
+      list[idx].source = list[idx].source || "mapped";
+      list[idx].displayName = list[idx].displayName || opt.displayName;
+    }
+  }else if(idx>=0){
+    list.splice(idx,1);
+  }
+  setTableFullAccess(table, list);
+  renderFullAccessEditor();
+  generateRLS();
+}
+function addManualFullAccessGroup(){
+  var g = document.getElementById("fullAccessManualGroup");
+  var t = document.getElementById("fullAccessManualTenant");
+  if(!g) return;
+  var raw = (g.value||"").trim();
+  var tenant = t ? (t.value||"").trim() : "";
+  if(!raw) return;
+  var group = raw;
+  if(!tenant && raw.indexOf(";")>0){
+    var p = raw.split(";");
+    group = p.slice(0,p.length-1).join(";").trim();
+    tenant = (p[p.length-1]||"").trim();
+  }
+  if(!group) return;
+  var table = getCurrentFullAccessTable();
+  var list = getTableFullAccess(table).slice();
+  var key = getGroupKey(group, tenant);
+  var found = false;
+  for(var i=0;i<list.length;i++){
+    if(getGroupKey(list[i].group, list[i].tenantId)===key){
+      list[i].enabled = true;
+      list[i].source = list[i].source || "manual";
+      found = true;
+      break;
+    }
+  }
+  if(!found) list.push({group:group,tenantId:tenant,displayName:group,source:"manual",enabled:true});
+  setTableFullAccess(table, list);
+  g.value = "";
+  if(t) t.value = "";
+  renderFullAccessEditor();
+  generateRLS();
+}
+function toggleFullAccessEnabled(idx){
+  var table = getCurrentFullAccessTable();
+  var list = getTableFullAccess(table);
+  if(!list[idx]) return;
+  list[idx].enabled = !list[idx].enabled;
+  renderFullAccessEditor();
+  generateRLS();
+}
+function removeFullAccessEntry(idx){
+  var table = getCurrentFullAccessTable();
+  var list = getTableFullAccess(table).slice();
+  list.splice(idx,1);
+  setTableFullAccess(table, list);
+  renderFullAccessEditor();
+  generateRLS();
+}
+function getEnabledFullAccessByTable(){
+  ensureFullAccessState();
+  var out = {};
+  var tables = Object.keys(state.rls.fullAccessByTable);
+  for(var i=0;i<tables.length;i++){
+    var table = tables[i], src = state.rls.fullAccessByTable[table] || [], byKey = {};
+    for(var j=0;j<src.length;j++){
+      var e = src[j];
+      if(!e || !e.enabled || !e.group) continue;
+      var key = getGroupKey(e.group, e.tenantId);
+      if(!byKey[key]) byKey[key] = {group:String(e.group).trim(),tenantId:String(e.tenantId||"").trim(),displayName:String(e.displayName||e.group||"").trim(),source:e.source||"manual",enabled:true};
+    }
+    var arr = Object.keys(byKey).map(function(k){return byKey[k]});
+    if(arr.length) out[table] = arr;
+  }
+  return out;
+}
+function countFullAccessEntries(fullByTable){
+  var c = 0, tables = Object.keys(fullByTable);
+  for(var i=0;i<tables.length;i++) c += fullByTable[tables[i]].length;
+  return c;
+}
+function updateFullAccessBadge(){
+  var b = document.getElementById("fullAccessCountBadge");
+  if(!b) return;
+  var fullByTable = getEnabledFullAccessByTable();
+  var tableCount = Object.keys(fullByTable).length;
+  b.textContent = countFullAccessEntries(fullByTable) + " groups across " + tableCount + " table" + (tableCount===1?"":"s");
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Table scope checklist
 // ═══════════════════════════════════════════════════════════════════
 function initChecklist(){
@@ -358,6 +625,7 @@ function initChecklist(){
 
   container.innerHTML = html;
   onTableCheck();
+  renderFullAccessEditor();
 }
 
 function onTableCheck(){
@@ -367,6 +635,8 @@ function onTableCheck(){
   var badge = document.getElementById("tableCountBadge");
   var total = document.querySelectorAll('input[data-table]').length;
   if(badge) badge.textContent = sel.length + "/" + total + " selected";
+  renderFullAccessEditor();
+  generateRLS();
 }
 
 function toggleAllTables(c){ var cbs = document.querySelectorAll('input[data-table]'); for(var i=0;i<cbs.length;i++) cbs[i].checked=c; onTableCheck() }
@@ -420,72 +690,94 @@ function generateRLS(){
   var db = state.globalConfig.database || "{database}";
   var cluster = state.globalConfig.clusterUri || "{cluster}";
   var enabledPairs = getEnabledPairs();
+  var fullByTable = getEnabledFullAccessByTable();
+  var fullTables = Object.keys(fullByTable);
+  var fullClauseCount = countFullAccessEntries(fullByTable);
   var blocks = [];
 
   if(state.rls.rlsFunction){
     var lines = [];
-    if(!enabledPairs.length){
-      lines.push("// No group-to-domain mappings enabled.");
-      lines.push("// Check the Agency \u2192 Group Mappings card above.");
+    if(!enabledPairs.length && !fullClauseCount){
+      lines.push("// No group-to-domain mappings or table full-access groups enabled.");
+      lines.push("// Configure Agency -> Group mappings or Table Full-Access Groups above.");
       lines.push(".create-or-alter function RLS_AgencyFilter(TableName:string) {");
       lines.push("    table(TableName)");
       lines.push("    | where");
       lines.push("        (current_principal_is_member_of('aadgroup=PLACEHOLDER') and AgencyDomain == 'PLACEHOLDER')");
       lines.push("}");
     } else {
-      // Group enabled pairs by agency
       var byAgency = {}, agencyOrder = [];
       for(var i = 0; i < enabledPairs.length; i++){
         var p = enabledPairs[i];
         if(!byAgency[p.domain]){ byAgency[p.domain] = []; agencyOrder.push(p.domain); }
         byAgency[p.domain].push(p);
       }
-      var totalPairs = enabledPairs.length;
-
-      // Header
       lines.push("// Generated by ADX Schema Builder V2");
       lines.push("// Cluster: " + cluster + "  Database: " + db);
-      lines.push("// " + totalPairs + " mapping(s) across " + agencyOrder.length + " agencies");
+      lines.push("// Agency mappings: " + enabledPairs.length + " across " + agencyOrder.length + " agencies");
+      lines.push("// Table full-access clauses: " + fullClauseCount + " across " + fullTables.length + " table(s)");
       lines.push("//");
-      // Reference block — human-readable summary
-      lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
-      for(var a = 0; a < agencyOrder.length; a++){
-        var domain = agencyOrder[a];
-        var entries = byAgency[domain];
-        var names = [];
-        for(var e = 0; e < entries.length; e++){
-          names.push(entries[e].displayName || entries[e].group);
+      if(fullTables.length){
+        lines.push("// \u2500\u2500 Full Access (no AgencyDomain filter) \u2500\u2500");
+        for(var ft = 0; ft < fullTables.length; ft++){
+          var tableName = fullTables[ft];
+          var fullEntries = fullByTable[tableName];
+          var fullNames = [];
+          for(var fe = 0; fe < fullEntries.length; fe++) fullNames.push(kqlEsc(fullEntries[fe].displayName || fullEntries[fe].group));
+          lines.push("//   " + kqlEsc(tableName) + ": " + fullNames.join(", "));
         }
-        lines.push("//   " + domain + ": " + names.join(", "));
+      }
+      if(agencyOrder.length){
+        lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
+        for(var a = 0; a < agencyOrder.length; a++){
+          var domain = agencyOrder[a];
+          var entries = byAgency[domain];
+          var names = [];
+          for(var e = 0; e < entries.length; e++) names.push(kqlEsc(entries[e].displayName || entries[e].group));
+          lines.push("//   " + kqlEsc(domain) + ": " + names.join(", "));
+        }
       }
       lines.push("//");
-
-      // Function definition
       lines.push(".create-or-alter function");
       lines.push("    with (folder=\"Functions/RLS\", skipvalidation=\"true\")");
       lines.push("RLS_AgencyFilter(TableName:string) {");
       lines.push("    table(TableName)");
       lines.push("    | where");
 
-      // Agency-grouped OR clauses
       var clauseIdx = 0;
+      for(var ft = 0; ft < fullTables.length; ft++){
+        var tableName = fullTables[ft];
+        var fullEntries = fullByTable[tableName];
+        lines.push("        // \u2500\u2500 Full access: " + kqlEsc(tableName) + " (" + fullEntries.length + " group" + (fullEntries.length > 1 ? "s" : "") + ") \u2500\u2500");
+        for(var fe = 0; fe < fullEntries.length; fe++){
+          var fullEntry = fullEntries[fe];
+          var safeId = kqlEsc(getRlsGroupId(fullEntry));
+          var safeTable = kqlEsc(tableName);
+          var safeLabel = kqlEsc(fullEntry.displayName || "");
+          var fullPrefix = clauseIdx === 0 ? "        " : "        or ";
+          var fullComment = "  // Admin role for " + safeTable + (safeLabel ? ": " + safeLabel : "");
+          lines.push(fullPrefix + "(TableName == '" + safeTable + "' and current_principal_is_member_of('aadgroup=" + safeId + "'))" + fullComment);
+          clauseIdx++;
+        }
+      }
       for(var a = 0; a < agencyOrder.length; a++){
         var domain = agencyOrder[a];
         var entries = byAgency[domain];
-        // Agency section comment
-        lines.push("        // \u2500\u2500 " + domain + " (" + entries.length + " group" + (entries.length > 1 ? "s" : "") + ") \u2500\u2500");
+        lines.push("        // \u2500\u2500 " + kqlEsc(domain) + " (" + entries.length + " group" + (entries.length > 1 ? "s" : "") + ") \u2500\u2500");
         for(var e = 0; e < entries.length; e++){
           var p = entries[e];
-          var rlsId = getRlsGroupId(p);
+          var rlsId = kqlEsc(getRlsGroupId(p));
+          var safeDomain = kqlEsc(domain);
+          var safeDisplay = kqlEsc(p.displayName || "");
           var prefix = clauseIdx === 0 ? "        " : "        or ";
-          var comment = p.displayName ? "  // " + p.displayName : "";
-          lines.push(prefix + "(current_principal_is_member_of('aadgroup=" + rlsId + "') and AgencyDomain == '" + domain + "')" + comment);
+          var comment = "  // Agency role for " + safeDomain + (safeDisplay ? ": " + safeDisplay : "");
+          lines.push(prefix + "(current_principal_is_member_of('aadgroup=" + rlsId + "') and AgencyDomain == '" + safeDomain + "')" + comment);
           clauseIdx++;
         }
       }
       lines.push("}");
     }
-    blocks.push({ title: "Block 1 \u2014 RLS Function (" + enabledPairs.length + " clauses, " + countUniqueAgencies(enabledPairs) + " agencies)", kql: lines.join("\n") });
+    blocks.push({ title: "Block 1 \u2014 RLS Function (" + (enabledPairs.length + fullClauseCount) + " clauses, " + countUniqueAgencies(enabledPairs) + " agencies, " + fullTables.length + " full-access tables)", kql: lines.join("\n") });
   }
 
   if(state.rls.applyPolicies){
@@ -520,10 +812,41 @@ function countUniqueAgencies(pairs){
   return Object.keys(seen).length;
 }
 
+function makeCardsCollapsible(){
+  var cards = document.querySelectorAll(".card");
+  for(var i=0;i<cards.length;i++){
+    var card = cards[i];
+    if(card.getAttribute("data-collapsible") === "1") continue;
+    var title = card.querySelector(".card-title");
+    if(!title) continue;
+    var body = document.createElement("div");
+    body.className = "card-body";
+    var move = [];
+    for(var n=0;n<card.children.length;n++){
+      if(card.children[n]!==title) move.push(card.children[n]);
+    }
+    for(var m=0;m<move.length;m++) body.appendChild(move[m]);
+    card.appendChild(body);
+    var btn = document.createElement("button");
+    btn.className = "collapse-btn";
+    btn.type = "button";
+    btn.textContent = "Collapse";
+    btn.onclick = (function(b){
+      return function(){
+        var collapsed = b.classList.toggle("collapsed");
+        btn.textContent = collapsed ? "Expand" : "Collapse";
+      };
+    })(body);
+    title.appendChild(btn);
+    card.setAttribute("data-collapsible","1");
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════════════════════════════
 function init(){
+  makeCardsCollapsible();
   loadMappingPairs(TEST_MAPPING_DATA);
   initChecklist();
   generateRLS();
