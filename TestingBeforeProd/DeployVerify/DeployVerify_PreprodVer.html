@@ -106,7 +106,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     <div class="card-body">
       <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
       <div style="display:flex;gap:6px;margin-bottom:12px">
-        <button class="btn btn-sm" onclick="copyAllVerifyQueries()">Copy All Queries</button>
+        <button class="btn btn-sm" onclick="copyAllVerifyQueries(this)">Copy All Queries</button>
         <button class="btn btn-sm" onclick="generateVerifyQueries()">Refresh</button>
       </div>
       <div id="verifyQueriesOutput"></div>
@@ -500,7 +500,7 @@ function renderVerifyQueries(container,blocks){
   container.innerHTML=html;
 }
 
-function copyAllVerifyQueries(){
+function copyAllVerifyQueries(btnEl){
   var sep="////////////////////////////////////////";
   var parts=[];
   for(var i=0;i<_verifyBlocks.length;i++){
@@ -508,9 +508,8 @@ function copyAllVerifyQueries(){
     parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep+"\n":"")+"\n// "+b.title+"\n"+b.kql);
   }
   navigator.clipboard.writeText(parts.join("\n")).then(function(){
-    var btn=event.target;
-    btn.classList.add("btn-copied");btn.textContent="Copied!";
-    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Queries"},1500);
+    btnEl.classList.add("btn-copied");btnEl.textContent="Copied!";
+    setTimeout(function(){btnEl.classList.remove("btn-copied");btnEl.textContent="Copy All Queries"},1500);
   });
 }
 
@@ -560,27 +559,45 @@ function parseVerifyResults(){
     }
   }
 
-  // Check retention values
+  // Check retention values — parse actual SoftDeletePeriod from output
   if(state.retention.enableRetention){
     var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
     for(var i=0;i<allTables.length;i++){
       var t=allTables[i];
       var expected=resolveRet(t.name,t.cat);
-      // Look for the table name near a timespan-like value
-      var re=new RegExp(t.name+"[\\s\\S]{0,200}("+expected.replace("d","\\.?\\d*:?\\d*:?\\d*")+"|SoftDeletePeriod)","i");
-      var found=text.indexOf(t.name)>-1;
-      results.push({name:t.name,check:"Retention = "+expected,status:found?"pass":"pending",detail:found?"Found in output":"Run retention verification query"});
+      var expectedDays=parseInt(expected,10);
+      // Look for table row with SoftDeletePeriod value (format: "10.00:00:00" or similar)
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        var status=(actualDays===expectedDays)?"pass":"fail";
+        var detail=(actualDays===expectedDays)?"Correct ("+actualDays+"d)":"Expected "+expectedDays+"d, got "+actualDays+"d";
+        results.push({name:t.name,check:"Retention = "+expected,status:status,detail:detail});
+      }else{
+        results.push({name:t.name,check:"Retention = "+expected,status:"pending",detail:"Run retention verification query"});
+      }
     }
   }
 
-  // Check caching values
+  // Check caching values — parse actual DataHotSpan from output
   if(state.retention.enableCaching){
     var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
     for(var i=0;i<allTables.length;i++){
       var t=allTables[i];
       var expected=resolveCache(t.name,t.cat);
-      var found=text.indexOf(t.name)>-1;
-      results.push({name:t.name,check:"Cache hot = "+expected,status:found?"pass":"pending",detail:found?"Found in output":"Run caching verification query"});
+      var expectedDays=parseInt(expected,10);
+      // Look for table row with DataHotSpan value
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        var status=(actualDays===expectedDays)?"pass":"fail";
+        var detail=(actualDays===expectedDays)?"Correct ("+actualDays+"d)":"Expected "+expectedDays+"d, got "+actualDays+"d";
+        results.push({name:t.name,check:"Cache hot = "+expected,status:status,detail:detail});
+      }else{
+        results.push({name:t.name,check:"Cache hot = "+expected,status:"pending",detail:"Run caching verification query"});
+      }
     }
   }
 

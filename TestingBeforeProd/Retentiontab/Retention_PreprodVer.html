@@ -396,7 +396,8 @@ function updateOverrideCountBadge(){
   var badge=document.getElementById("overrideCountBadge");
   if(!badge)return;
   var total=retCount+cacheCount;
-  badge.textContent=total>0?"("+total+" override"+(total>1?"s":"")+" set)":"(22 tables)";
+  var pack=getPack();var tableCount=pack?pack.tables.length+1:22;
+  badge.textContent=total>0?"("+total+" override"+(total>1?"s":"")+" set)":"("+tableCount+" tables)";
 }
 
 function toggleSwitch(el,key){
@@ -503,11 +504,13 @@ function syncPresetsToState(){
     var cat=cats[i],key=cat.toLowerCase();
     var sel=document.getElementById("ret"+cat);
     var custom=document.getElementById("ret"+cat+"Custom");
-    if(sel.value==="custom"){custom.style.display="";state.retention[key]=custom.value.trim()||"365d"}
+    var retDefault=key==="staging"?"10d":key==="events"?"180d":"365d";
+    if(sel.value==="custom"){custom.style.display="";state.retention[key]=custom.value.trim()||retDefault}
     else{custom.style.display="none";state.retention[key]=sel.value}
     var csel=document.getElementById("cache"+cat);
     var ccustom=document.getElementById("cache"+cat+"Custom");
-    if(csel.value==="custom"){ccustom.style.display="";state.retention.cache[key]=ccustom.value.trim()||"30d"}
+    var cacheDefault=key==="staging"?"10d":"30d";
+    if(csel.value==="custom"){ccustom.style.display="";state.retention.cache[key]=ccustom.value.trim()||cacheDefault}
     else{ccustom.style.display="none";state.retention.cache[key]=csel.value}
   }
 }

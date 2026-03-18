@@ -40,6 +40,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .tab.active{display:block}
 .dv-collapsed .dv-body{display:none}
 .dv-collapsed .dv-chev{transform:rotate(-90deg)}
+.collapsed .dv-chevron{transform:rotate(-90deg)}
 .card.collapsed .card-body{display:none}
 .tab-title{font-size:20px;font-weight:600;margin-bottom:4px}
 .tab-subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:20px}
@@ -504,7 +505,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         <div class="card-body">
           <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
           <div style="display:flex;gap:6px;margin-bottom:12px">
-            <button class="btn btn-sm" onclick="copyAllDVVerifyQueries()">Copy All Queries</button>
+            <button class="btn btn-sm" onclick="copyAllDVVerifyQueries(this)">Copy All Queries</button>
             <button class="btn btn-sm" onclick="generateDVVerifyQueries()">Refresh</button>
           </div>
           <div id="dvVerifyQueriesOutput"></div>
@@ -514,7 +515,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Verification Results</div>
         <div class="text-sm text-muted" style="margin-bottom:8px">Paste the output from each verification query. The tool will parse it and show pass/fail for each check.</div>
-        <div id="dvVerifySummary" style="display:none;display:flex;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px;display:none">
+        <div id="dvVerifySummary" style="display:none;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-success)">&#10003;</span> <span id="dvPassCount">0</span> passed</div>
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-error)">&#10007;</span> <span id="dvFailCount">0</span> failed</div>
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--text-secondary)">&#9679;</span> <span id="dvPendingCount">0</span> pending</div>
@@ -609,7 +610,7 @@ var state={
   mapping:{groupName:{fileId:null,column:null},domainFilter:{fileId:null,column:null},tenantId:{fileId:null,column:null},customField:{fileId:null,column:null}},
   tableBuilder:{phase:"staging",selectedTables:[],emailFieldOverride:"",addAgencyFilter:true,flattenFields:true,fields:[],activePreset:"rec"},
   rls:{rlsFunction:true,applyPolicies:true,selectedTables:[],mappingPairs:[],fullAccessTable:"",fullAccessByTable:{}},
-  retention:{staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{}}
+  retention:{staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{},enableCaching:false,cache:{staging:"10d",events:"30d",alerts:"30d",overrides:{}},batching:{enabled:false}}
 };
 
 var fileIdCounter=1;
@@ -2004,13 +2005,16 @@ function copyAllDVRunbook(){
   });
 }
 
-function copyAllDVVerifyQueries(){
+function copyAllDVVerifyQueries(btnEl){
   var sep="////////////////////////////////////////";var parts=[];
   for(var i=0;i<_dvVerifyBlocks.length;i++){
     var b=_dvVerifyBlocks[i];
     parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"")+"\n// "+b.title+"\n"+b.kql);
   }
-  navigator.clipboard.writeText(parts.join("\n")).then(function(){});
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
+    btnEl.classList.add("btn-copied");btnEl.textContent="Copied!";
+    setTimeout(function(){btnEl.classList.remove("btn-copied");btnEl.textContent="Copy All Queries"},1500);
+  });
 }
 
 function parseDVVerifyResults(){
@@ -2040,8 +2044,32 @@ function parseDVVerifyResults(){
   }
   if(state.retention.enableRetention!==false){
     for(var i=0;i<allTables.length;i++){
-      var found=text.indexOf(allTables[i].name)>-1;
-      results.push({name:allTables[i].name,check:"Retention = "+resolveRet(allTables[i].name,allTables[i].cat),status:found?"pass":"pending"});
+      var t=allTables[i];
+      var expected=resolveRet(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        results.push({name:t.name,check:"Retention = "+expected,status:(actualDays===expectedDays)?"pass":"fail"});
+      }else{
+        results.push({name:t.name,check:"Retention = "+expected,status:"pending"});
+      }
+    }
+  }
+  if(state.retention.enableCaching){
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      var expected=resolveCache(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        results.push({name:t.name,check:"Cache hot = "+expected,status:(actualDays===expectedDays)?"pass":"fail"});
+      }else{
+        results.push({name:t.name,check:"Cache hot = "+expected,status:"pending"});
+      }
     }
   }
   renderDVVerifyResults(results);
