@@ -1593,6 +1593,7 @@ function buildPerTableRLSBlock(tableName,fullEntries,byAgency,agencyOrder,applyP
       clauseIdx++;
     }
   }
+  if(clauseIdx===0){lines.push("        // WARNING: No mappings or full-access groups found for this table");lines.push("        1==0  // Default deny — add mappings above before deploying")}
   lines.push("}");
   if(applyPolicy){lines.push("");lines.push("// Step 2: Enable RLS policy (run separately from Step 1 above)");lines.push(".alter table "+tableName+" policy row_level_security enable \"RLS_"+tableName+"()\"")}
   return{lines:lines,clauseCount:clauseIdx};

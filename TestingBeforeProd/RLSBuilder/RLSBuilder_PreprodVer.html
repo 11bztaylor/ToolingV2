@@ -764,6 +764,10 @@ function buildPerTableRLS(tableName, fullEntries, byAgency, agencyOrder, applyPo
     }
   }
 
+  if(clauseIdx === 0){
+    lines.push("        // WARNING: No mappings or full-access groups found for this table");
+    lines.push("        1==0  // Default deny — add mappings above before deploying");
+  }
   lines.push("}");
 
   if(applyPolicy){
