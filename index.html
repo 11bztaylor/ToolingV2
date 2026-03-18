@@ -483,7 +483,6 @@ var DEFAULT_FLATTEN_FIELDS = [
   {cat:"common", raw:"traffic_type",      col:"TrafficType",       type:"string", tier:"rec",    sentinel:false},
   {cat:"common", raw:"policy",            col:"Policy",            type:"string", tier:"rec",    sentinel:true},
   {cat:"common", raw:"severity",          col:"Severity",          type:"string", tier:"rec",    sentinel:true},
-  {cat:"common", raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"rec",    sentinel:true},
   {cat:"common", raw:"appcategory",       col:"AppCategory",       type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"ccl",               col:"CloudConfidence",   type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"hostname",          col:"Hostname",          type:"string", tier:"ext",    sentinel:true},
@@ -494,7 +493,7 @@ var DEFAULT_FLATTEN_FIELDS = [
   {cat:"common", raw:"organization_unit", col:"OrgUnit",           type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"useragent",         col:"UserAgent",         type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"ur_normalized",     col:"UrlNormalized",     type:"string", tier:"ext",    sentinel:true},
-  {cat:"common", raw:"instance_id",       col:"InstanceId",        type:"string", tier:"notrec", sentinel:false},
+  {cat:"common", raw:"instance_id",       col:"InstanceId",        type:"string", tier:"ext",    sentinel:false},
   {cat:"common", raw:"request_id",        col:"RequestId",         type:"string", tier:"notrec", sentinel:false},
   {cat:"common", raw:"transaction_id",    col:"TransactionId",     type:"string", tier:"notrec", sentinel:false},
   {cat:"event",  raw:"url",               col:"Url",               type:"string", tier:"rec",    sentinel:true},
@@ -511,6 +510,7 @@ var DEFAULT_FLATTEN_FIELDS = [
   {cat:"alert",  raw:"alert_type",        col:"AlertType",         type:"string", tier:"rec",    sentinel:true},
   {cat:"alert",  raw:"action",            col:"Action",            type:"string", tier:"rec",    sentinel:true},
   {cat:"alert",  raw:"activity",          col:"Activity",          type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"ext",    sentinel:true},
   {cat:"alert",  raw:"object",            col:"Object",            type:"string", tier:"ext",    sentinel:false},
   {cat:"alert",  raw:"object_type",       col:"ObjectType",        type:"string", tier:"ext",    sentinel:false},
   {cat:"alert",  raw:"file_name",         col:"FileName",          type:"string", tier:"ext",    sentinel:true},
@@ -1228,8 +1228,8 @@ function generateTableBuilder(){
   if(phase==="staging"){
     blocks.push({title:"Create staging table + ingestion mapping",
       kql:makeBanner(pack.stagingTable)+"\n// Cluster: "+cluster+"  Database: "+db+"\n\n"+
-      ".create table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")\n\n"+
-      "// Run this SECOND:\n.create table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+      ".create-merge table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")\n\n"+
+      "// Run this SECOND:\n.create-or-alter table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
   }
 
   if(phase==="typed"){
@@ -1248,7 +1248,7 @@ function generateTableBuilder(){
         lines.push("");
         lines.push("// Step 1: Create table");
         var schemaParts=typedSchema.split(", ");
-        lines.push(".create table "+t.name+" (");
+        lines.push(".create-merge table "+t.name+" (");
         for(var s=0;s<schemaParts.length;s++)lines.push("    "+schemaParts[s]+(s<schemaParts.length-1?",":""));
         lines.push(")");
         lines.push("    with (folder=\""+tableFolder+"\")");
@@ -1460,7 +1460,9 @@ function toggleFullAccessEnabled(idx){var table=getCurrentFullAccessTable(),list
 function removeFullAccessEntry(idx){var table=getCurrentFullAccessTable(),list=getTableFullAccess(table).slice();list.splice(idx,1);setTableFullAccess(table,list);renderFullAccessEditor();generateRLS()}
 function getEnabledFullAccessByTable(){
   ensureFullAccessState();
-  var out={},tables=Object.keys(state.rls.fullAccessByTable);
+  var out={},allTables=Object.keys(state.rls.fullAccessByTable);
+  var scope=state.rls.selectedTables;
+  var tables=scope?allTables.filter(function(t){return scope.indexOf(t)>=0}):allTables;
   for(var i=0;i<tables.length;i++){
     var table=tables[i],src=state.rls.fullAccessByTable[table]||[],byKey={};
     for(var j=0;j<src.length;j++){

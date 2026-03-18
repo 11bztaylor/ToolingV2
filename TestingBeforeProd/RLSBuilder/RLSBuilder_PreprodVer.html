@@ -574,7 +574,9 @@ function removeFullAccessEntry(idx){
 function getEnabledFullAccessByTable(){
   ensureFullAccessState();
   var out = {};
-  var tables = Object.keys(state.rls.fullAccessByTable);
+  var allTables = Object.keys(state.rls.fullAccessByTable);
+  var scope = state.rls.selectedTables;
+  var tables = scope ? allTables.filter(function(t){ return scope.indexOf(t) >= 0; }) : allTables;
   for(var i=0;i<tables.length;i++){
     var table = tables[i], src = state.rls.fullAccessByTable[table] || [], byKey = {};
     for(var j=0;j<src.length;j++){
@@ -831,12 +833,12 @@ function makeCardsCollapsible(){
     btn.className = "collapse-btn";
     btn.type = "button";
     btn.textContent = "Collapse";
-    btn.onclick = (function(b){
+    btn.onclick = (function(b, button){
       return function(){
         var collapsed = b.classList.toggle("collapsed");
-        btn.textContent = collapsed ? "Expand" : "Collapse";
+        button.textContent = collapsed ? "Expand" : "Collapse";
       };
-    })(body);
+    })(body, btn);
     title.appendChild(btn);
     card.setAttribute("data-collapsible","1");
   }
