@@ -512,7 +512,7 @@ function generateTableBuilder(){
     blocks.push({title:"Create staging table + ingestion mapping",
       kql:makeBanner(pack.stagingTable)+"\n// Cluster: "+cluster+"  Database: "+db+"\n\n"+
       ".create-merge table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")\n\n"+
-      "// Run this SECOND:\n.create table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+      "// Run this SECOND:\n.create-or-alter table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
   }
 
   if(phase==="typed"){

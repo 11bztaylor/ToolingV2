@@ -575,8 +575,8 @@ function getEnabledFullAccessByTable(){
   ensureFullAccessState();
   var out = {};
   var allTables = Object.keys(state.rls.fullAccessByTable);
-  var scope = state.rls.selectedTables && state.rls.selectedTables.length ? state.rls.selectedTables : [];
-  var tables = scope.length ? allTables.filter(function(t){ return scope.indexOf(t) >= 0; }) : allTables;
+  var scope = state.rls.selectedTables;
+  var tables = scope ? allTables.filter(function(t){ return scope.indexOf(t) >= 0; }) : allTables;
   for(var i=0;i<tables.length;i++){
     var table = tables[i], src = state.rls.fullAccessByTable[table] || [], byKey = {};
     for(var j=0;j<src.length;j++){
