@@ -173,6 +173,26 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .pair-row .group-name{color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pair-row .group-uuid{color:var(--text-secondary);font-size:10px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
 .pair-row .rls-id{color:var(--text-secondary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;flex-shrink:0}
+.field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.field-row label{font-size:12px;color:var(--text-secondary)}
+.input{background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);padding:7px 10px;font-size:12px;font-family:var(--font-ui);outline:none}
+.input:focus{border-color:var(--border-focus)}
+.input-sm{min-width:180px}
+.full-list{border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;background:rgba(255,255,255,.01)}
+.full-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:var(--radius-sm)}
+.full-row:hover{background:var(--bg-hover)}
+.full-row.disabled{opacity:.45}
+.full-meta{flex:1;min-width:0}
+.full-meta .name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.full-meta .sub{font-size:10px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid var(--border);color:var(--text-secondary)}
+.collapse-btn{margin-left:auto;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);border-radius:var(--radius-sm);font-size:11px;padding:2px 8px;cursor:pointer}
+.collapse-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+.card-body.collapsed{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{font-size:11px;font-family:var(--font-mono);padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg-raised);color:var(--text-primary);cursor:pointer}
+.chip-btn:hover{background:var(--bg-hover)}
+.chip-btn.active{border-color:var(--color-info);box-shadow:0 0 0 1px rgba(74,158,237,.25) inset}
 /* Category badges for Retention */
 .cat{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:var(--font-mono)}
 .cat-staging{background:rgba(74,158,237,.15);color:var(--color-info)}
@@ -348,6 +368,21 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-info)"></span> Table Scope (Block 2)</span><span class="text-sm text-muted" id="rlsTableCountBadge"></span></div>
         <div id="rlsChecklist"></div>
       </div>
+      <div class="card" id="fullAccessCard">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-warn)"></span> Table Full-Access Groups (No Agency Filter)</span>
+          <span class="text-sm text-muted" id="fullAccessCountBadge"></span>
+        </div>
+        <div class="text-sm text-muted mb-8">Selected groups here can read every row in the selected table. Agency filter checks are bypassed for these groups on that table only.</div>
+        <div class="field-row"><label>Tables currently selected in scope:</label></div>
+        <div id="fullAccessSelectedTablesList" class="full-list mb-8"></div>
+        <div class="field-row"><label>Agency groups (toggle full access):</label></div>
+        <div id="fullAccessMappedArea" class="full-list mb-8"></div>
+        <div class="divider"></div>
+        <div class="field-row"><label for="fullAccessManualGroup">Manual group add:</label><input id="fullAccessManualGroup" class="input input-sm" placeholder="Group name or ID"><input id="fullAccessManualTenant" class="input input-sm" placeholder="Tenant ID (optional)"><button class="btn btn-sm" onclick="addManualFullAccessGroup()">Add Group</button></div>
+        <div class="field-row"><label id="fullAccessCurrentTableLabel">Selected for this table:</label></div>
+        <div id="fullAccessSelectedArea" class="full-list"></div>
+      </div>
       <div class="card">
         <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span><div style="display:flex;gap:6px"><button class="btn btn-sm" id="rlsCopyAllBtn" style="display:none" onclick="copyAllRlsKql()">Copy All</button><button class="btn btn-sm" onclick="generateRLS()">Refresh</button></div></div>
         <div id="rlsOutput"></div>
@@ -511,7 +546,7 @@ var state={
   files:[],
   mapping:{groupName:{fileId:null,column:null},domainFilter:{fileId:null,column:null},tenantId:{fileId:null,column:null},customField:{fileId:null,column:null}},
   tableBuilder:{phase:"staging",selectedTables:[],emailFieldOverride:"",addAgencyFilter:true,flattenFields:true,fields:[],activePreset:"rec"},
-  rls:{rlsFunction:true,applyPolicies:true,selectedTables:[],mappingPairs:[]},
+  rls:{rlsFunction:true,applyPolicies:true,selectedTables:[],mappingPairs:[],fullAccessTable:"",fullAccessByTable:{}},
   retention:{staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{}}
 };
 
@@ -583,6 +618,8 @@ function importSession(jsonData){
       }
     }
     if(loaded.rls)Object.assign(state.rls,loaded.rls);
+    if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={};
+    if(typeof state.rls.fullAccessTable!=="string")state.rls.fullAccessTable="";
     if(loaded.retention)Object.assign(state.retention,loaded.retention);
     document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
     document.getElementById("cfgDatabase").value=state.globalConfig.database;
@@ -594,6 +631,7 @@ function importSession(jsonData){
     syncMappingDropdownSelections();
     initTBChecklists();
     initRLSChecklists();
+    makeRLSCardsCollapsible();
     buildRetentionOverrides();
     // Restore saved Table Builder selections
     if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
@@ -1256,6 +1294,7 @@ function getRlsGroupId(pair){
   if(tenantId)return id+";"+tenantId;
   return id;
 }
+function getGroupKey(group,tenantId){return String(group||"").trim()+"|"+String(tenantId||"").trim()}
 
 function toggleSwitch(el,key){
   var isOn=!el.classList.contains("on");
@@ -1284,7 +1323,7 @@ function renderRLSMappingPairs(){
   var pairs=state.rls.mappingPairs;
   if(!pairs.length){
     area.innerHTML='<div class="alert alert-warn"><span>!</span><div>No mapping data loaded. Upload a CSV on the Data &amp; Mapping tab with Group Name + Domain Filter columns.</div></div>';
-    updateRLSPairBadge();return;
+    updateRLSPairBadge();renderFullAccessEditor();return;
   }
   var byAgency={},agencyOrder=[];
   for(var i=0;i<pairs.length;i++){
@@ -1312,7 +1351,7 @@ function renderRLSMappingPairs(){
     }
     html+='</div></div>';
   }
-  area.innerHTML=html;updateRLSPairBadge();
+  area.innerHTML=html;updateRLSPairBadge();renderFullAccessEditor();
 }
 
 function toggleRLSPair(idx){state.rls.mappingPairs[idx].enabled=!state.rls.mappingPairs[idx].enabled;renderRLSMappingPairs();generateRLS()}
@@ -1320,6 +1359,124 @@ function toggleRLSAgencyPairs(domain,enabled){var p=state.rls.mappingPairs;for(v
 function toggleRLSPairGroup(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
 function collapseAllAgencies(collapse){var headers=document.querySelectorAll("#mappingPairsArea .pair-group-header");for(var i=0;i<headers.length;i++){var arrow=headers[i].querySelector(".arrow"),body=headers[i].nextElementSibling;if(collapse){arrow.classList.add("collapsed");body.classList.add("collapsed")}else{arrow.classList.remove("collapsed");body.classList.remove("collapsed")}}}
 function updateRLSPairBadge(){var p=state.rls.mappingPairs,en=0;for(var i=0;i<p.length;i++){if(p[i].enabled)en++}var b=document.getElementById("pairCountBadge");if(b)b.textContent=en+"/"+p.length+" included"}
+
+// ── Per-table full-access groups (no AgencyDomain filter) ──
+var _fullAccessOptionIndex={};
+function ensureFullAccessState(){if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={}}
+function getCurrentFullAccessTable(){
+  var scopeTables=state.rls.selectedTables&&state.rls.selectedTables.length?state.rls.selectedTables.slice():[];
+  if(!scopeTables.length)return"";
+  if(!state.rls.fullAccessTable||scopeTables.indexOf(state.rls.fullAccessTable)<0)state.rls.fullAccessTable=scopeTables[0];
+  return state.rls.fullAccessTable;
+}
+function getTableFullAccess(tableName){ensureFullAccessState();if(!state.rls.fullAccessByTable[tableName])state.rls.fullAccessByTable[tableName]=[];return state.rls.fullAccessByTable[tableName]}
+function setTableFullAccess(tableName,list){ensureFullAccessState();state.rls.fullAccessByTable[tableName]=list}
+function getMappedGroupOptions(){
+  var pairs=state.rls.mappingPairs||[],byKey={};
+  for(var i=0;i<pairs.length;i++){
+    var p=pairs[i],key=getGroupKey(p.group,p.tenantId);
+    if(!key||key==="|")continue;
+    if(!byKey[key])byKey[key]={key:key,group:String(p.group||"").trim(),tenantId:String(p.tenantId||"").trim(),displayName:String(p.displayName||p.group||"").trim(),domains:[],source:"mapped"};
+    if(p.domain&&byKey[key].domains.indexOf(p.domain)<0)byKey[key].domains.push(p.domain);
+  }
+  return Object.keys(byKey).sort().map(function(k){return byKey[k]});
+}
+function selectFullAccessTable(tableName){state.rls.fullAccessTable=tableName||"";renderFullAccessEditor();generateRLS()}
+function renderFullAccessEditor(){
+  ensureFullAccessState();
+  var mappedArea=document.getElementById("fullAccessMappedArea"),selectedArea=document.getElementById("fullAccessSelectedArea"),selectedTablesArea=document.getElementById("fullAccessSelectedTablesList"),currentLabel=document.getElementById("fullAccessCurrentTableLabel");
+  if(!mappedArea||!selectedArea||!selectedTablesArea||!currentLabel)return;
+  var scopeTables=state.rls.selectedTables&&state.rls.selectedTables.length?state.rls.selectedTables.slice():[];
+  var scopeHtml="";
+  if(!scopeTables.length){
+    scopeHtml='<div class="text-sm text-muted">No tables selected in Table Scope. Select at least one table above.</div>';
+    mappedArea.innerHTML='<div class="text-sm text-muted">Select a table in scope first.</div>';
+    selectedArea.innerHTML='<div class="text-sm text-muted">No table selected.</div>';
+    currentLabel.textContent="Selected for this table:";
+    updateFullAccessBadge();
+    return;
+  }else{
+    scopeHtml='<div class="chips">';
+    for(var st=0;st<scopeTables.length;st++)scopeHtml+='<button type="button" class="chip-btn'+(scopeTables[st]===state.rls.fullAccessTable?' active':'')+'" onclick="selectFullAccessTable(\''+jsStrEsc(scopeTables[st])+'\')">'+esc(scopeTables[st])+'</button>';
+    scopeHtml+='</div>';
+  }
+  selectedTablesArea.innerHTML=scopeHtml;
+  var currentTable=getCurrentFullAccessTable();
+  currentLabel.textContent="Selected for table: "+currentTable;
+  var selectedList=getTableFullAccess(currentTable);
+  var mapped=getMappedGroupOptions();
+  _fullAccessOptionIndex={};
+  var selectedKeys={};
+  for(var sk=0;sk<selectedList.length;sk++)selectedKeys[getGroupKey(selectedList[sk].group,selectedList[sk].tenantId)]=1;
+  if(!mapped.length)mappedArea.innerHTML='<div class="text-sm text-muted">No mapped groups available yet.</div>';
+  else{
+    var mhtml="";
+    for(var m=0;m<mapped.length;m++){
+      var opt=mapped[m],key=opt.key,label=opt.displayName||opt.group;
+      _fullAccessOptionIndex[key]=opt;
+      mhtml+='<label class="full-row'+(selectedKeys[key]?'':' disabled')+'">';
+      mhtml+='<input type="checkbox" '+(selectedKeys[key]?'checked':'')+' onchange="toggleMappedFullAccess(\''+jsStrEsc(key)+'\',this.checked)">';
+      mhtml+='<div class="full-meta"><div class="name">'+esc(label)+'</div><div class="sub">'+esc(opt.domains.join(", "))+'</div></div>';
+      mhtml+='<span class="pill">mapped</span></label>';
+    }
+    mappedArea.innerHTML=mhtml;
+  }
+  if(!selectedList.length)selectedArea.innerHTML='<div class="text-sm text-muted">No full-access groups selected for this table.</div>';
+  else{
+    var shtml="";
+    for(var i=0;i<selectedList.length;i++){
+      var e=selectedList[i],principalId=getRlsGroupId(e);
+      shtml+='<div class="full-row'+(e.enabled?'':' disabled')+'"><input type="checkbox" '+(e.enabled?'checked':'')+' onchange="toggleFullAccessEnabled('+i+')"><div class="full-meta"><div class="name">'+esc(e.displayName||e.group)+'</div><div class="sub">'+esc(principalId)+'</div></div><span class="pill">'+esc(e.source||"manual")+'</span><button class="btn btn-sm" onclick="removeFullAccessEntry('+i+')">Remove</button></div>';
+    }
+    selectedArea.innerHTML=shtml;
+  }
+  updateFullAccessBadge();
+}
+function toggleMappedFullAccess(key,checked){
+  var table=getCurrentFullAccessTable(),list=getTableFullAccess(table).slice(),opt=_fullAccessOptionIndex[key];
+  if(!opt)return;
+  var idx=-1;
+  for(var i=0;i<list.length;i++){if(getGroupKey(list[i].group,list[i].tenantId)===key){idx=i;break}}
+  if(checked){
+    if(idx<0)list.push({group:opt.group,tenantId:opt.tenantId,displayName:opt.displayName,source:"mapped",enabled:true});
+    else{list[idx].enabled=true;list[idx].source=list[idx].source||"mapped";list[idx].displayName=list[idx].displayName||opt.displayName}
+  }else if(idx>=0)list.splice(idx,1);
+  setTableFullAccess(table,list);renderFullAccessEditor();generateRLS();
+}
+function addManualFullAccessGroup(){
+  var g=document.getElementById("fullAccessManualGroup"),t=document.getElementById("fullAccessManualTenant");
+  if(!g)return;
+  var raw=(g.value||"").trim(),tenant=t?(t.value||"").trim():"";
+  if(!raw)return;
+  var group=raw;
+  if(!tenant&&raw.indexOf(";")>0){var p=raw.split(";");group=p.slice(0,p.length-1).join(";").trim();tenant=(p[p.length-1]||"").trim()}
+  if(!group)return;
+  var table=getCurrentFullAccessTable(),list=getTableFullAccess(table).slice(),key=getGroupKey(group,tenant),found=false;
+  for(var i=0;i<list.length;i++){if(getGroupKey(list[i].group,list[i].tenantId)===key){list[i].enabled=true;list[i].source=list[i].source||"manual";found=true;break}}
+  if(!found)list.push({group:group,tenantId:tenant,displayName:group,source:"manual",enabled:true});
+  setTableFullAccess(table,list);g.value="";if(t)t.value="";renderFullAccessEditor();generateRLS();
+}
+function toggleFullAccessEnabled(idx){var table=getCurrentFullAccessTable(),list=getTableFullAccess(table);if(!list[idx])return;list[idx].enabled=!list[idx].enabled;renderFullAccessEditor();generateRLS()}
+function removeFullAccessEntry(idx){var table=getCurrentFullAccessTable(),list=getTableFullAccess(table).slice();list.splice(idx,1);setTableFullAccess(table,list);renderFullAccessEditor();generateRLS()}
+function getEnabledFullAccessByTable(){
+  ensureFullAccessState();
+  var out={},tables=Object.keys(state.rls.fullAccessByTable);
+  for(var i=0;i<tables.length;i++){
+    var table=tables[i],src=state.rls.fullAccessByTable[table]||[],byKey={};
+    for(var j=0;j<src.length;j++){
+      var e=src[j];
+      if(!e||!e.enabled||!e.group)continue;
+      var key=getGroupKey(e.group,e.tenantId);
+      if(!byKey[key])byKey[key]={group:String(e.group).trim(),tenantId:String(e.tenantId||"").trim(),displayName:String(e.displayName||e.group||"").trim(),source:e.source||"manual",enabled:true};
+    }
+    var arr=Object.keys(byKey).map(function(k){return byKey[k]});
+    if(arr.length)out[table]=arr;
+  }
+  return out;
+}
+function countFullAccessEntries(fullByTable){var c=0,tables=Object.keys(fullByTable);for(var i=0;i<tables.length;i++)c+=fullByTable[tables[i]].length;return c}
+function updateFullAccessBadge(){var b=document.getElementById("fullAccessCountBadge");if(!b)return;var fullByTable=getEnabledFullAccessByTable();var tableCount=Object.keys(fullByTable).length;b.textContent=countFullAccessEntries(fullByTable)+" groups across "+tableCount+" table"+(tableCount===1?"":"s")}
+
 function getEnabledRLSPairs(){var p=state.rls.mappingPairs,r=[];for(var i=0;i<p.length;i++){if(p[i].enabled)r.push(p[i])}return r}
 
 // ── RLS Table Scope ──
@@ -1334,7 +1491,7 @@ function initRLSChecklists(){
   html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(245,158,11,.15);color:var(--color-warn);padding:1px 6px;border-radius:3px;font-size:10px">Alerts</span><span class="tree-count">'+alerts.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleRLSCategory(\'alert\',true)">All</a><a onclick="event.stopPropagation();toggleRLSCategory(\'alert\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
   for(var i=0;i<alerts.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-ctx="rls" data-table="'+alerts[i].name+'" onchange="onRLSTableCheck()"><span>'+alerts[i].name+'</span></label>';
   html+='</div></div></div></div>';
-  container.innerHTML=html;onRLSTableCheck();
+  container.innerHTML=html;onRLSTableCheck();renderFullAccessEditor();
 }
 function onRLSTableCheck(){
   var cks=document.querySelectorAll('input[data-ctx="rls"]:checked'),sel=[];
@@ -1342,6 +1499,8 @@ function onRLSTableCheck(){
   state.rls.selectedTables=sel;
   var badge=document.getElementById("rlsTableCountBadge"),total=document.querySelectorAll('input[data-ctx="rls"]').length;
   if(badge)badge.textContent=sel.length+"/"+total+" selected";
+  renderFullAccessEditor();
+  generateRLS();
 }
 function toggleAllRLSTables(c){var cbs=document.querySelectorAll('input[data-ctx="rls"]');for(var i=0;i<cbs.length;i++)cbs[i].checked=c;onRLSTableCheck()}
 function toggleRLSCategory(cat,c){var tables=getAllTables(),cbs=document.querySelectorAll('input[data-ctx="rls"]');for(var i=0;i<cbs.length;i++){var n=cbs[i].getAttribute("data-table"),t=null;for(var j=0;j<tables.length;j++){if(tables[j].name===n){t=tables[j];break}}if(t&&t.cat===cat)cbs[i].checked=c}onRLSTableCheck()}
@@ -1375,13 +1534,16 @@ function generateRLS(){
   if(!out)return;
   var db=state.globalConfig.database||"{database}",cluster=state.globalConfig.clusterUri||"{cluster}";
   var enabledPairs=getEnabledRLSPairs();
+  var fullByTable=getEnabledFullAccessByTable();
+  var fullTables=Object.keys(fullByTable);
+  var fullClauseCount=countFullAccessEntries(fullByTable);
   var blocks=[];
 
   if(state.rls.rlsFunction){
     var lines=[];
-    if(!enabledPairs.length){
-      lines.push("// No group-to-domain mappings enabled.");
-      lines.push("// Check the Agency \u2192 Group Mappings card above.");
+    if(!enabledPairs.length&&!fullClauseCount){
+      lines.push("// No group-to-domain mappings or table full-access groups enabled.");
+      lines.push("// Configure Agency -> Group mappings or Table Full-Access Groups above.");
       lines.push(".create-or-alter function RLS_AgencyFilter(TableName:string) {");
       lines.push("    table(TableName)");
       lines.push("    | where");
@@ -1396,13 +1558,24 @@ function generateRLS(){
       }
       lines.push("// Generated by ADX Schema Builder V2");
       lines.push("// Cluster: "+cluster+"  Database: "+db);
-      lines.push("// "+enabledPairs.length+" mapping(s) across "+agencyOrder.length+" agencies");
+      lines.push("// Agency mappings: "+enabledPairs.length+" across "+agencyOrder.length+" agencies");
+      lines.push("// Table full-access clauses: "+fullClauseCount+" across "+fullTables.length+" table(s)");
       lines.push("//");
-      lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
-      for(var a=0;a<agencyOrder.length;a++){
-        var domain=agencyOrder[a],entries=byAgency[domain],names=[];
-        for(var e=0;e<entries.length;e++)names.push(kqlEsc(entries[e].displayName||entries[e].group));
-        lines.push("//   "+kqlEsc(domain)+": "+names.join(", "));
+      if(fullTables.length){
+        lines.push("// \u2500\u2500 Full Access (no AgencyDomain filter) \u2500\u2500");
+        for(var ft=0;ft<fullTables.length;ft++){
+          var tableName=fullTables[ft],fullEntries=fullByTable[tableName],fullNames=[];
+          for(var fe=0;fe<fullEntries.length;fe++)fullNames.push(kqlEsc(fullEntries[fe].displayName||fullEntries[fe].group));
+          lines.push("//   "+kqlEsc(tableName)+": "+fullNames.join(", "));
+        }
+      }
+      if(agencyOrder.length){
+        lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
+        for(var a=0;a<agencyOrder.length;a++){
+          var domain=agencyOrder[a],entries=byAgency[domain],names=[];
+          for(var e=0;e<entries.length;e++)names.push(kqlEsc(entries[e].displayName||entries[e].group));
+          lines.push("//   "+kqlEsc(domain)+": "+names.join(", "));
+        }
       }
       lines.push("//");
       lines.push(".create-or-alter function");
@@ -1411,6 +1584,18 @@ function generateRLS(){
       lines.push("    table(TableName)");
       lines.push("    | where");
       var clauseIdx=0;
+      for(var ft=0;ft<fullTables.length;ft++){
+        var tableName=fullTables[ft],fullEntries=fullByTable[tableName];
+        lines.push("        // \u2500\u2500 Full access: "+kqlEsc(tableName)+" ("+fullEntries.length+" group"+(fullEntries.length>1?"s":"")+") \u2500\u2500");
+        for(var fe=0;fe<fullEntries.length;fe++){
+          var fullEntry=fullEntries[fe];
+          var safeFullId=kqlEsc(getRlsGroupId(fullEntry)),safeTable=kqlEsc(tableName),safeLabel=kqlEsc(fullEntry.displayName||"");
+          var fullPrefix=clauseIdx===0?"        ":"        or ";
+          var fullComment="  // Admin role for "+safeTable+(safeLabel?": "+safeLabel:"");
+          lines.push(fullPrefix+"(TableName == '"+safeTable+"' and current_principal_is_member_of('aadgroup="+safeFullId+"'))"+fullComment);
+          clauseIdx++;
+        }
+      }
       for(var a=0;a<agencyOrder.length;a++){
         var domain=agencyOrder[a],entries=byAgency[domain];
         lines.push("        // \u2500\u2500 "+kqlEsc(domain)+" ("+entries.length+" group"+(entries.length>1?"s":"")+") \u2500\u2500");
@@ -1418,14 +1603,14 @@ function generateRLS(){
           var p=entries[e],rlsId=getRlsGroupId(p);
           var safeRlsId=kqlEsc(rlsId),safeDomain=kqlEsc(domain),safeDisplay=kqlEsc(p.displayName||"");
           var prefix=clauseIdx===0?"        ":"        or ";
-          var comment=safeDisplay?"  // "+safeDisplay:"";
+          var comment="  // Agency role for "+safeDomain+(safeDisplay?": "+safeDisplay:"");
           lines.push(prefix+"(current_principal_is_member_of('aadgroup="+safeRlsId+"') and AgencyDomain == '"+safeDomain+"')"+comment);
           clauseIdx++;
         }
       }
       lines.push("}");
     }
-    blocks.push({title:"Block 1 \u2014 RLS Function ("+enabledPairs.length+" clauses, "+countRLSAgencies(enabledPairs)+" agencies)",kql:lines.join("\n")});
+    blocks.push({title:"Block 1 \u2014 RLS Function ("+(enabledPairs.length+fullClauseCount)+" clauses, "+countRLSAgencies(enabledPairs)+" agencies, "+fullTables.length+" full-access tables)",kql:lines.join("\n")});
   }
 
   if(state.rls.applyPolicies){
@@ -1441,6 +1626,28 @@ function generateRLS(){
   renderRLSKqlBlocks(out,blocks);
 }
 function countRLSAgencies(pairs){var s={};for(var i=0;i<pairs.length;i++)s[pairs[i].domain]=1;return Object.keys(s).length}
+function makeRLSCardsCollapsible(){
+  var cards=document.querySelectorAll("#tab-rls .card");
+  for(var i=0;i<cards.length;i++){
+    var card=cards[i];
+    if(card.getAttribute("data-collapsible")==="1")continue;
+    var title=card.querySelector(".card-title");
+    if(!title)continue;
+    var body=document.createElement("div");
+    body.className="card-body";
+    var move=[];
+    for(var n=0;n<card.children.length;n++){if(card.children[n]!==title)move.push(card.children[n])}
+    for(var m=0;m<move.length;m++)body.appendChild(move[m]);
+    card.appendChild(body);
+    var btn=document.createElement("button");
+    btn.className="collapse-btn";
+    btn.type="button";
+    btn.textContent="Collapse";
+    btn.onclick=(function(b,button){return function(){var collapsed=b.classList.toggle("collapsed");button.textContent=collapsed?"Expand":"Collapse"}})(body,btn);
+    title.appendChild(btn);
+    card.setAttribute("data-collapsible","1");
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // TAB: Retention
@@ -1577,6 +1784,7 @@ function init(){
   });
   state.tableBuilder.activePreset="rec";
   bindConfig();
+  makeRLSCardsCollapsible();
   setupDropZone();
   initTBChecklists();
   syncRLSMappingsFromData();

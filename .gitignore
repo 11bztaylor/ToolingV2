@@ -1,22 +1,24 @@
-# Claude Code local settings
+# Agent / IDE configs (not public)
 .claude/
+.codex/
+.vscode/
 
-# Session docs (internal notes, not public)
+# Internal docs (session primers, not public)
 CLAUDE.md
 HOW-TO.md
 LIVING_FINDINGS.md
 
-# Test/sample data
-TESTDATA_*.csv
+# Local testing scripts & data
+run_tool_output.py
 typed_commands.json
+TESTDATA_*.csv
 
 # OS junk
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Editor configs
-.vscode/
+# Editor swap files
 *.swp
 *.swo
 *~
