@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADX Schema Builder - V2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5}
+.app{display:grid;grid-template-rows:auto 1fr;grid-template-columns:210px 1fr;grid-template-areas:"header header" "nav main";height:100vh;overflow:hidden}
+.app-header{grid-area:header;display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.app-header .logo{font-weight:700;font-size:15px;color:var(--color-info);white-space:nowrap}
+.app-header .logo span{color:var(--text-secondary);font-weight:400;font-size:12px;margin-left:6px}
+.config-fields{display:flex;gap:12px;flex:1;align-items:center;flex-wrap:wrap}
+.config-field{display:flex;align-items:center;gap:4px}
+.config-field label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.config-field input{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:4px 8px;font-size:12px;font-family:var(--font-mono);width:220px;outline:none}
+.config-field input:focus{border-color:var(--border-focus)}
+.config-field select{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:4px 8px;font-size:12px;font-family:var(--font-mono);outline:none;cursor:pointer}
+.config-field select:focus{border-color:var(--border-focus)}
+.app-nav{grid-area:nav;display:flex;flex-direction:column;background:var(--bg-raised);border-right:1px solid var(--border);overflow-y:auto}
+.nav-btn{flex:0 0 auto;padding:12px 16px;border:none;background:transparent;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:all .15s;text-align:left}
+.nav-btn:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-btn.active{color:var(--color-info);border-left-color:var(--color-info);background:var(--bg-hover)}
+.nav-divider{height:1px;background:var(--border);margin:6px 0;opacity:.5}
+.session-buttons{margin-top:auto;padding:12px;display:flex;gap:6px;flex-direction:column}
+.session-buttons .btn{width:100%;padding:6px;font-size:12px;justify-content:center}
+.app-main{grid-area:main;overflow-y:auto;padding:20px;background:var(--bg-base)}
+.tab{display:none}
+.tab.active{display:block}
+.tab-title{font-size:20px;font-weight:600;margin-bottom:4px}
+.tab-subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:var(--radius-md);font-size:12px;margin-bottom:16px}
+.alert span{font-weight:700;font-size:14px;flex:0 0 auto;min-width:20px;text-align:center}
+.alert-info{background:rgba(74,158,237,.1);border:1px solid rgba(74,158,237,.2);color:var(--text-secondary)}
+.alert-info span{color:var(--color-info)}
+.alert-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--text-secondary)}
+.alert-error span{color:var(--color-error)}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}
+.mt-8{margin-top:8px}.mb-8{margin-bottom:8px}
+.hidden{display:none!important}
+.phase-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.phase-pill{padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);transition:all .15s}
+.phase-pill:hover{border-color:var(--text-secondary)}
+.phase-pill.active{background:var(--color-info);border-color:var(--color-info);color:#fff}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.toggle-row label{font-size:13px;cursor:pointer;flex:1}
+.toggle-switch{position:relative;width:36px;height:20px;background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle-switch.on{background:var(--color-teal);border-color:var(--color-teal)}
+.toggle-switch .knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-switch.on .knob{left:18px}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;background:var(--bg-raised);transition:all .15s;cursor:pointer;margin-bottom:16px}
+.drop-zone.dragover{border-color:var(--color-info);background:rgba(74,158,237,.1)}
+.file-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.file-chip{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);font-size:12px}
+.file-chip .remove{color:var(--color-error);cursor:pointer;font-size:14px}
+.mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.mapping-field{display:flex;flex-direction:column;gap:4px}
+.mapping-field label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.mapping-field select{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:6px 8px;font-size:12px;font-family:var(--font-mono);outline:none;cursor:pointer}
+.mapping-field select:focus{border-color:var(--border-focus)}
+.mapping-summary{font-size:12px;margin-top:8px;color:var(--text-secondary)}
+.mapping-summary span{color:var(--color-info);font-weight:600}
+.kql-block{margin-bottom:16px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kql-block .block-title{font-size:13px;font-weight:600}
+.kql-block textarea{width:100%;min-height:100px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;outline:none;line-height:1.6}
+.tree-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:8px;overflow:hidden}
+.tree-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;transition:background .15s}
+.tree-header:hover{background:var(--bg-hover)}
+.tree-header .arrow{font-size:10px;color:var(--text-secondary);transition:transform .2s;width:12px}
+.tree-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-header .tree-label{font-size:13px;font-weight:600;flex:1}
+.tree-header .tree-count{font-size:10px;color:var(--text-secondary);background:var(--bg-surface);padding:1px 6px;border-radius:8px}
+.tree-header .tree-actions{display:flex;gap:6px;font-size:11px}
+.tree-header .tree-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-header .tree-actions a:hover{text-decoration:underline}
+.tree-body{padding:0 0 0 8px}.tree-body.collapsed{display:none}
+.tree-sub-header{display:flex;align-items:center;gap:6px;padding:6px 12px;cursor:pointer;user-select:none;font-size:12px;color:var(--text-secondary)}
+.tree-sub-header:hover{color:var(--text-primary)}
+.tree-sub-header .arrow{font-size:9px;width:10px;transition:transform .2s}
+.tree-sub-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-sub-header .sub-label{font-weight:600}
+.tree-sub-header .sub-actions{margin-left:auto;display:flex;gap:6px;font-size:10px}
+.tree-sub-header .sub-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-body{padding:0 0 4px 20px}.tree-body.collapsed{display:none}
+.tree-sub-body{padding:0 0 4px 20px}.tree-sub-body.collapsed{display:none}
+.table-checklist{display:grid;grid-template-columns:1fr;gap:2px;max-height:none}
+.tree-sub-body .table-checklist{grid-template-columns:1fr;gap:2px;max-height:none}
+.table-check{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm);cursor:pointer}
+.table-check:hover{background:var(--bg-hover)}
+.table-check input[type="checkbox"]{accent-color:var(--color-info);cursor:pointer}
+.email-field-config{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:12px}
+.email-field-config label{font-size:12px;color:var(--color-teal);font-weight:600;white-space:nowrap}
+.email-field-config input{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:5px 8px;font-size:12px;font-family:var(--font-mono);width:180px;outline:none}
+.email-field-config .hint{font-size:11px;color:var(--text-secondary);flex:1}
+.email-field-config .preview{font-size:11px;color:var(--color-success);font-family:var(--font-mono);white-space:nowrap}
+.filter-hint{font-size:11px;color:var(--text-secondary);padding:4px 0 0 46px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.field-section{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.field-section-header{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;font-size:12px}
+.field-section-header:hover{background:var(--bg-hover)}
+.field-section-header .arrow{font-size:9px;width:10px;color:var(--text-secondary);transition:transform .2s}
+.field-section-header .arrow.collapsed{transform:rotate(-90deg)}
+.field-section-header .fs-label{font-weight:600;font-size:11px}
+.field-section-header .fs-count{font-size:10px;color:var(--text-secondary);margin-left:auto}
+.field-section-body{padding:4px}.field-section-body.collapsed{display:none}
+.field-row{display:grid;grid-template-columns:20px 24px 1fr 1fr 80px 24px;gap:4px;align-items:center;padding:3px 6px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm)}
+.field-row:hover{background:var(--bg-hover)}
+.field-row.disabled{opacity:.4}
+.field-row.disabled input[type="text"],.field-row.disabled select{pointer-events:none}
+.field-row-header{font-family:var(--font-ui);font-size:10px;text-transform:uppercase;color:var(--text-secondary);letter-spacing:.5px;padding:4px 6px}
+.field-row input[type="checkbox"]{accent-color:var(--color-info);cursor:pointer;width:14px;height:14px}
+.field-row input[type="text"]{background:var(--bg-base);border:1px solid transparent;color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:3px 6px;width:100%;outline:none;border-radius:var(--radius-sm)}
+.field-row input[type="text"]:focus{border-color:var(--border-focus)}
+.field-row select{background:var(--bg-base);border:1px solid transparent;color:var(--text-primary);font-family:var(--font-mono);font-size:11px;padding:3px 4px;outline:none;border-radius:var(--radius-sm);cursor:pointer;width:100%}
+.field-row .remove-btn{color:var(--color-error);cursor:pointer;font-size:16px;text-align:center;opacity:.5;line-height:1}
+.field-row .remove-btn:hover{opacity:1}
+.field-row .field-idx{font-size:10px;color:var(--text-secondary);text-align:center}
+.add-field-row{display:flex;gap:6px;padding:6px;align-items:center}
+.add-field-row input{background:var(--bg-base);border:1px solid var(--border);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:4px 8px;border-radius:var(--radius-sm);outline:none;width:140px}
+.add-field-row select{background:var(--bg-base);border:1px solid var(--border);color:var(--text-primary);font-size:12px;padding:4px 6px;border-radius:var(--radius-sm);outline:none}
+.field-summary{font-size:11px;color:var(--text-secondary);margin-top:8px;padding:0 4px}
+.preset-bar{display:flex;align-items:center;gap:6px;padding:10px 0 6px;flex-wrap:wrap}
+.preset-bar .preset-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-right:2px}
+.preset-pill{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);transition:all .15s;user-select:none}
+.preset-pill:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+.preset-pill.active-rec{background:rgba(34,197,94,.2);border-color:var(--color-success);color:var(--color-success)}
+.preset-pill.active-ext{background:rgba(74,158,237,.2);border-color:var(--color-info);color:var(--color-info)}
+.preset-pill.active-notrec{background:rgba(239,68,68,.15);border-color:var(--color-error);color:var(--color-error)}
+.preset-pill.active-all{background:rgba(167,139,250,.2);border-color:var(--color-purple);color:var(--color-purple)}
+.preset-pill.active-sentinel{background:rgba(45,212,191,.2);border-color:var(--color-teal);color:var(--color-teal)}
+.preset-sep{width:1px;height:16px;background:var(--border);margin:0 2px}
+.tier-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:2px}
+.tier-dot-rec{background:var(--color-success)}
+.tier-dot-ext{background:var(--color-info)}
+.tier-dot-notrec{background:var(--color-error)}
+.tier-dot-custom{background:var(--color-purple)}
+.sentinel-badge{display:inline-block;font-size:8px;font-weight:700;padding:0 3px;border-radius:2px;background:rgba(45,212,191,.2);color:var(--color-teal);vertical-align:middle;margin-left:2px;letter-spacing:.3px}
+/* ── RLS Mapping Pairs ── */
+.pair-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;overflow:hidden}
+.pair-group-header{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;font-size:12px}
+.pair-group-header:hover{background:var(--bg-hover)}
+.pair-group-header .arrow{font-size:9px;width:10px;color:var(--text-secondary);transition:transform .2s}
+.pair-group-header .arrow.collapsed{transform:rotate(-90deg)}
+.pair-group-header .agency-label{font-weight:700;color:var(--color-teal);font-family:var(--font-mono);font-size:13px}
+.pair-group-header .pair-count{font-size:10px;color:var(--text-secondary);margin-left:auto}
+.pair-group-header .pair-actions{display:flex;gap:6px;font-size:10px;margin-left:6px}
+.pair-group-header .pair-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.pair-group-body{padding:4px 4px 4px 12px}.pair-group-body.collapsed{display:none}
+.pair-row{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm)}
+.pair-row:hover{background:var(--bg-hover)}
+.pair-row input[type="checkbox"]{accent-color:var(--color-teal);cursor:pointer;width:14px;height:14px}
+.pair-row.disabled{opacity:.35}
+.pair-row .pair-detail{flex:1;min-width:0}
+.pair-row .group-name{color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pair-row .group-uuid{color:var(--text-secondary);font-size:10px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.pair-row .rls-id{color:var(--text-secondary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;flex-shrink:0}
+/* Category badges for Retention */
+.cat{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:var(--font-mono)}
+.cat-staging{background:rgba(74,158,237,.15);color:var(--color-info)}
+.cat-event{background:rgba(34,197,94,.15);color:var(--color-success)}
+.cat-alert{background:rgba(245,158,11,.15);color:var(--color-warn)}
+/* Retention presets */
+.preset-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.preset-row:last-child{border-bottom:none}
+.preset-label{font-size:13px;font-weight:600;min-width:60px}
+.preset-row select{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;outline:none;cursor:pointer}
+.preset-row select:focus{border-color:var(--border-focus)}
+.preset-row input[type="text"]{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;width:80px;outline:none}
+.preset-row input[type="text"]:focus{border-color:var(--border-focus)}
+/* Time format hint */
+.time-hint{font-size:10px;color:var(--text-secondary);padding:2px 0 0 70px}
+/* Override row resolved value */
+.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:60px;text-align:right}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="logo">ADX Schema Builder<span>V2</span></div>
+    <div class="config-fields">
+      <div class="config-field">
+        <label>Cluster URI</label>
+        <input id="cfgCluster" type="text" placeholder="https://cluster.region.kusto.windows.net" oninput="bindConfig()">
+      </div>
+      <div class="config-field">
+        <label>Database</label>
+        <input id="cfgDatabase" type="text" placeholder="YourDatabase" oninput="bindConfig()">
+      </div>
+      <div class="config-field">
+        <label>Tenant ID</label>
+        <input id="cfgTenantId" type="text" placeholder="00000000-0000-0000-0000-000000000000" oninput="bindConfig()">
+      </div>
+      <div class="config-field">
+        <label>Schema Pack</label>
+        <select id="cfgPack" onchange="bindConfig()">
+          <option value="netskope">Netskope N2Av2</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="app-nav">
+    <button class="nav-btn active" onclick="showTab('data')">Data & Mapping</button>
+    <button class="nav-btn" onclick="showTab('tables')">Table Builder</button>
+    <button class="nav-btn" onclick="showTab('rls')">RLS Builder</button>
+    <button class="nav-btn" onclick="showTab('retention')">Retention</button>
+    <div class="nav-divider"></div>
+    <div class="session-buttons">
+      <button class="btn btn-sm" onclick="exportSession()">Save Session</button>
+      <button class="btn btn-sm" onclick="document.getElementById('sessionImportInput').click()">Load Session</button>
+      <input id="sessionImportInput" type="file" accept=".json" onchange="handleSessionImport(event)" style="display:none">
+    </div>
+  </div>
+  <div class="app-main">
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Data & Mapping
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab active" id="tab-data">
+      <div class="tab-title">Data & Mapping</div>
+      <div class="tab-subtitle">Upload your data and configure field mappings for RLS + extraction.</div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-info)"></span> Upload Data</div>
+        <div class="drop-zone" id="dropZone">
+          <div style="font-size:12px;color:var(--text-secondary)">Drag & drop CSV/TSV/JSON or paste data</div>
+        </div>
+        <textarea id="pasteArea" style="width:100%;height:100px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Or paste CSV/TSV/JSON here and press Ctrl+Enter"></textarea>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px">Supports CSV, TSV (tab-delimited), or JSON arrays</div>
+        <div class="file-chips" id="fileChips"></div>
+      </div>
+      <div class="card" id="previewCard" style="display:none">
+        <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Data Preview</div>
+        <div id="preview" style="font-size:11px;color:var(--text-secondary);overflow-x:auto"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Mapping Configuration</div>
+        <div class="text-sm text-muted mb-8">Assign columns from your data to system fields. Required for RLS policies.</div>
+        <div class="mapping-grid">
+          <div class="mapping-field">
+            <label>Group Name (AAD)</label>
+            <select id="mapGroupName" onchange="updateMapping('groupName')">
+              <option value="">-- none --</option>
+            </select>
+          </div>
+          <div class="mapping-field">
+            <label>Domain Filter (Agency)</label>
+            <select id="mapDomainFilter" onchange="updateMapping('domainFilter')">
+              <option value="">-- none --</option>
+            </select>
+          </div>
+          <div class="mapping-field">
+            <label>Tenant ID</label>
+            <select id="mapTenantId" onchange="updateMapping('tenantId')">
+              <option value="">-- none --</option>
+            </select>
+          </div>
+          <div class="mapping-field">
+            <label>Custom Field (optional)</label>
+            <select id="mapCustom" onchange="updateMapping('customField')">
+              <option value="">-- none --</option>
+            </select>
+          </div>
+        </div>
+        <div id="mappingSummary"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Table Builder
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-tables">
+      <div class="tab-title">Table Builder</div>
+      <div class="tab-subtitle">Generate phased ADX table creation commands.</div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Build Phase</div>
+        <div class="phase-pills" id="phasePills">
+          <span class="phase-pill active" data-phase="staging" onclick="setPhase('staging')">1. Staging Table</span>
+          <span class="phase-pill" data-phase="typed" onclick="setPhase('typed')">2. Typed Tables</span>
+        </div>
+        <div id="phaseDescription" class="text-sm text-muted"></div>
+      </div>
+      <div class="card" id="tableSelectionCard" style="display:none">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-info)"></span> Table Selection</span>
+          <span class="text-sm text-muted" id="tableSelectionCount"></span>
+        </div>
+        <div class="text-sm text-muted mb-8">Choose which typed tables to generate. Each schema pack adds its own group below.</div>
+        <div id="tableBuilderChecklist"></div>
+      </div>
+      <div class="card" id="fieldConfigCard" style="display:none">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-purple)"></span> Field Configuration</span>
+          <span class="text-sm text-muted" id="fieldConfigCount"></span>
+        </div>
+        <div class="text-sm text-muted mb-8">Configure extraction options and choose which fields to flatten from RawData into real columns.</div>
+        <div id="fieldOptionsArea">
+          <div class="toggle-row"><div class="toggle-switch on" id="togAgencyFilter" onclick="toggleOption('addAgencyFilter',this)"><div class="knob"></div></div><label onclick="toggleOption('addAgencyFilter',document.getElementById('togAgencyFilter'))">Add AgencyDomain filter</label><span class="text-sm text-muted" style="flex:none">Required for RLS</span></div>
+          <div id="emailFieldWrap" style="margin-top:4px;margin-bottom:4px"><div class="email-field-config"><label>RawData.</label><input id="emailFieldInput" type="text" placeholder="user" spellcheck="false" oninput="updateEmailField()"><span class="hint">Pack default shown as placeholder. Type to override.</span><span class="preview" id="emailFieldPreview">RawData.user</span></div></div>
+          <div class="toggle-row"><div class="toggle-switch on" id="togFlatten" onclick="toggleOption('flattenFields',this)"><div class="knob"></div></div><label onclick="toggleOption('flattenFields',document.getElementById('togFlatten'))">Flatten fields into columns</label><span class="text-sm text-muted" style="flex:none">RawData kept as archive</span></div>
+          <div class="divider"></div>
+        </div>
+        <div id="fieldEditorArea"></div>
+      </div>
+      <div class="card" id="kqlOutputCard">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span><div style="display:flex;gap:6px"><button class="btn btn-sm" id="copyAllBtn" style="display:none" onclick="copyAllKql()">Copy All</button><button class="btn btn-sm" onclick="generateTableBuilder()">Refresh</button></div></div>
+        <div id="tableBuilderOutput"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: RLS Builder
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-rls">
+      <div class="tab-title">RLS Builder</div>
+      <div class="tab-subtitle">Generate Row-Level Security function and per-table policy application.</div>
+      <div class="alert alert-info"><span>i</span><div><strong>Prerequisites:</strong> Database Admin role required. RLS function must exist (Block 1) before applying policies (Block 2). Assign Group Name + Domain Filter columns on the Data &amp; Mapping tab.</div></div>
+      <div class="card"><div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Output Toggles</div>
+        <div class="toggle-row"><div class="toggle-switch on" id="togRlsFunc" onclick="toggleSwitch(this,'rlsFunction')"><div class="knob"></div></div><label onclick="toggleSwitch(document.getElementById('togRlsFunc'),'rlsFunction')">Block 1 — RLS Function (.create-or-alter)</label></div>
+        <div class="toggle-row"><div class="toggle-switch on" id="togRlsApply" onclick="toggleSwitch(this,'applyPolicies')"><div class="knob"></div></div><label onclick="toggleSwitch(document.getElementById('togRlsApply'),'applyPolicies')">Block 2 — Apply policies (.alter table policy)</label></div>
+        <div id="rlsDependencyWarn" class="alert alert-error mt-8 hidden"><span>!</span><div>Warning: Applying policies requires the RLS function to exist. Run Block 1 first!</div></div>
+      </div>
+      <div class="card" id="mappingPairsCard">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-teal)"></span> Agency &rarr; Group Mappings</span>
+          <div style="display:flex;align-items:center;gap:10px"><span class="text-sm text-muted" id="pairCountBadge"></span><span style="display:flex;gap:6px;font-size:11px"><a style="color:var(--color-info);cursor:pointer" onclick="collapseAllAgencies(false)">Expand All</a><a style="color:var(--color-info);cursor:pointer" onclick="collapseAllAgencies(true)">Collapse All</a></span></div>
+        </div>
+        <div class="text-sm text-muted mb-8">Select which group-to-agency mappings to include in the RLS function. Uncheck to exclude a group from filtering.</div>
+        <div id="mappingPairsArea"></div>
+      </div>
+      <div class="card" id="rlsTableScope">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-info)"></span> Table Scope (Block 2)</span><span class="text-sm text-muted" id="rlsTableCountBadge"></span></div>
+        <div id="rlsChecklist"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span><div style="display:flex;gap:6px"><button class="btn btn-sm" id="rlsCopyAllBtn" style="display:none" onclick="copyAllRlsKql()">Copy All</button><button class="btn btn-sm" onclick="generateRLS()">Refresh</button></div></div>
+        <div id="rlsOutput"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Retention
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-retention">
+      <div class="tab-title">Retention</div>
+      <div class="tab-subtitle">Configure soft-delete retention periods per category or per table.</div>
+
+      <div class="alert alert-info">
+        <span>i</span>
+        <div><strong>ADX timespan format:</strong> Use <code>d</code> for days, <code>h</code> for hours, <code>m</code> for minutes. No month shorthand — convert to days (e.g., 6 months = <code>180d</code>, 1 year = <code>365d</code>). Full format also supported: <code>90.00:00:00</code></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Category Presets</div>
+        <div class="text-sm text-muted mb-12">Set defaults by table category. Per-table overrides below take priority.</div>
+        <div class="preset-row">
+          <span class="preset-label" style="color:var(--color-info)">Staging</span>
+          <select id="retStaging" onchange="updateRetention()">
+            <option value="7d">7 days</option>
+            <option value="10d" selected>10 days</option>
+            <option value="14d">14 days</option>
+            <option value="30d">30 days</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="updateRetention()">
+          <span class="text-sm text-muted">Netskope_Raw — short retention, data flows to typed tables</span>
+        </div>
+        <div class="preset-row">
+          <span class="preset-label" style="color:var(--color-success)">Events</span>
+          <select id="retEvents" onchange="updateRetention()">
+            <option value="90d">90 days (3 mo)</option>
+            <option value="180d" selected>180 days (6 mo)</option>
+            <option value="365d">365 days (1 yr)</option>
+            <option value="730d">730 days (2 yr)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="updateRetention()">
+          <span class="text-sm text-muted">8 event tables</span>
+        </div>
+        <div class="preset-row">
+          <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+          <select id="retAlerts" onchange="updateRetention()">
+            <option value="180d">180 days (6 mo)</option>
+            <option value="365d" selected>365 days (1 yr)</option>
+            <option value="730d">730 days (2 yr)</option>
+            <option value="1095d">1095 days (3 yr)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="updateRetention()">
+          <span class="text-sm text-muted">13 alert tables</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides</div>
+        <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset. Enter a timespan like <code>90d</code>, <code>365d</code>, or <code>730d</code>.</div>
+        <div id="retentionOverrides"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Options</div>
+        <div class="toggle-row">
+          <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
+          <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')">Enable recoverability</label>
+          <span class="text-sm text-muted" style="flex:none">Allows recovery of deleted data. Adds storage overhead.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
+          <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateRetention()">Refresh</button></div>
+        </div>
+        <div id="retentionOutput"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// SHARED CORE: DEFAULT_FLATTEN_FIELDS, TIER_META, SCHEMA_PACKS, state
+// ═══════════════════════════════════════════════════════════════════
+var DEFAULT_FLATTEN_FIELDS = [
+  {cat:"common", raw:"user",              col:"User",              type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"userPrincipalName", col:"UserPrincipalName", type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"srcip",             col:"SrcIP",             type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"dstip",             col:"DstIP",             type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"app",               col:"App",               type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"category",          col:"Category",          type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"access_method",     col:"AccessMethod",      type:"string", tier:"rec",    sentinel:false},
+  {cat:"common", raw:"traffic_type",      col:"TrafficType",       type:"string", tier:"rec",    sentinel:false},
+  {cat:"common", raw:"policy",            col:"Policy",            type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"severity",          col:"Severity",          type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"rec",    sentinel:true},
+  {cat:"common", raw:"appcategory",       col:"AppCategory",       type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"ccl",               col:"CloudConfidence",   type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"hostname",          col:"Hostname",          type:"string", tier:"ext",    sentinel:true},
+  {cat:"common", raw:"os",                col:"OS",                type:"string", tier:"ext",    sentinel:true},
+  {cat:"common", raw:"browser",           col:"Browser",           type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"device",            col:"Device",            type:"string", tier:"ext",    sentinel:true},
+  {cat:"common", raw:"protocol",          col:"Protocol",          type:"string", tier:"ext",    sentinel:true},
+  {cat:"common", raw:"organization_unit", col:"OrgUnit",           type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"useragent",         col:"UserAgent",         type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"ur_normalized",     col:"UrlNormalized",     type:"string", tier:"ext",    sentinel:true},
+  {cat:"common", raw:"instance_id",       col:"InstanceId",        type:"string", tier:"notrec", sentinel:false},
+  {cat:"common", raw:"request_id",        col:"RequestId",         type:"string", tier:"notrec", sentinel:false},
+  {cat:"common", raw:"transaction_id",    col:"TransactionId",     type:"string", tier:"notrec", sentinel:false},
+  {cat:"event",  raw:"url",               col:"Url",               type:"string", tier:"rec",    sentinel:true},
+  {cat:"event",  raw:"domain",            col:"Domain",            type:"string", tier:"rec",    sentinel:true},
+  {cat:"event",  raw:"page",              col:"Page",              type:"string", tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"site",              col:"Site",              type:"string", tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"dstport",           col:"DstPort",           type:"int",    tier:"ext",    sentinel:true},
+  {cat:"event",  raw:"numbytes",          col:"NumBytes",          type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"client_bytes",      col:"ClientBytes",       type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"server_bytes",      col:"ServerBytes",       type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"conn_duration",     col:"ConnDuration",      type:"real",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"ssl_decrypt_policy",col:"SslDecryptPolicy",  type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"alert_name",        col:"AlertName",         type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"alert_type",        col:"AlertType",         type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"action",            col:"Action",            type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"activity",          col:"Activity",          type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"object",            col:"Object",            type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"object_type",       col:"ObjectType",        type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"file_name",         col:"FileName",          type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"file_type",         col:"FileType",          type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"file_size",         col:"FileSize",          type:"long",   tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"dlp_profile",       col:"DlpProfile",        type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"exposure",          col:"Exposure",          type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"risk_level",        col:"RiskLevel",         type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"malware_name",      col:"MalwareName",       type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"malware_type",      col:"MalwareType",       type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"malsite_category",  col:"MalsiteCategory",   type:"string", tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"md5",               col:"MD5",               type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"sha256",            col:"SHA256",            type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"from_user",         col:"FromUser",          type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"to_user",           col:"ToUser",            type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"url",               col:"Url",               type:"string", tier:"rec",    sentinel:true},
+  {cat:"alert",  raw:"shared_with",       col:"SharedWith",        type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"dstport",           col:"DstPort",           type:"int",    tier:"ext",    sentinel:true},
+  {cat:"alert",  raw:"numbytes",          col:"NumBytes",          type:"long",   tier:"ext",    sentinel:false}
+];
+
+var TIER_META = {
+  rec:    {label:"Recommended",  color:"var(--color-success)", cls:"active-rec",    desc:"Core SOC/hunting fields. Always useful."},
+  ext:    {label:"Extended",     color:"var(--color-info)",    cls:"active-ext",    desc:"Valuable for deeper analysis. Enable as needed."},
+  notrec: {label:"Not Rec.",     color:"var(--color-error)",   cls:"active-notrec", desc:"High cardinality or niche. Available in RawData."}
+};
+
+var SCHEMA_PACKS={netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",stagingSchema:"TimeGenerated:datetime, StreamType:string, RawData:dynamic",mappingName:"Netskope_Raw_Mapping",mappingDef:'[{"column":"TimeGenerated","path":"$.TimeGenerated","transform":"DateTimeFromUnixMilliseconds"},{"column":"StreamType","path":"$.StreamType"},{"column":"RawData","path":"$"}]',userEmailField:"user",baseTypedSchema:"TimeGenerated:datetime, RawData:dynamic",tables:[{name:"NetskopeEventsPage_CL",stream:"events_page",cat:"event"},{name:"NetskopeEventsApplication_CL",stream:"events_application",cat:"event"},{name:"NetskopeEventsAudit_CL",stream:"events_audit",cat:"event"},{name:"NetskopeEventsInfrastructure_CL",stream:"events_infrastructure",cat:"event"},{name:"NetskopeEventsNetwork_CL",stream:"events_network",cat:"event"},{name:"NetskopeEventsConnection_CL",stream:"events_connection",cat:"event"},{name:"NetskopeEventsEndpoint_CL",stream:"events_endpoint",cat:"event"},{name:"NetskopeEventsIncident_CL",stream:"events_incident",cat:"event"},{name:"NetskopeAlertsPolicy_CL",stream:"alerts_policy",cat:"alert"},{name:"NetskopeAlertsUba_CL",stream:"alerts_uba",cat:"alert"},{name:"NetskopeAlertsCompromisedCredential_CL",stream:"alerts_compromisedcredential",cat:"alert"},{name:"NetskopeAlertsRemediation_CL",stream:"alerts_remediation",cat:"alert"},{name:"NetskopeAlertsSecurityAssessment_CL",stream:"alerts_securityassessment",cat:"alert"},{name:"NetskopeAlertsQuarantine_CL",stream:"alerts_quarantine",cat:"alert"},{name:"NetskopeAlertsMalware_CL",stream:"alerts_malware",cat:"alert"},{name:"NetskopeAlertsMalsite_CL",stream:"alerts_malsite",cat:"alert"},{name:"NetskopeAlertsDlp_CL",stream:"alerts_dlp",cat:"alert"},{name:"NetskopeAlertsCtep_CL",stream:"alerts_ctep",cat:"alert"},{name:"NetskopeAlertsWatchlist_CL",stream:"alerts_watchlist",cat:"alert"},{name:"NetskopeAlertsDevice_CL",stream:"alerts_device",cat:"alert"},{name:"NetskopeAlertsContent_CL",stream:"alerts_content",cat:"alert"}],folder:"Netskope"}};
+
+var state={
+  globalConfig:{clusterUri:"https://testcluster.westus2.kusto.windows.net",database:"NetskopeDB",tenantId:"72f988bf-86f1-41af-91ab-2d7cd011db47"},
+  activePack:"netskope",
+  files:[],
+  mapping:{groupName:{fileId:null,column:null},domainFilter:{fileId:null,column:null},tenantId:{fileId:null,column:null},customField:{fileId:null,column:null}},
+  tableBuilder:{phase:"staging",selectedTables:[],emailFieldOverride:"",addAgencyFilter:true,flattenFields:true,fields:[],activePreset:"rec"},
+  rls:{rlsFunction:true,applyPolicies:true,selectedTables:[],mappingPairs:[]},
+  retention:{staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{}}
+};
+
+var fileIdCounter=1;
+
+function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function getAllTables(){var p=getPack();return p?p.tables:[]}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function jsStrEsc(s){return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[\r\n]/g," ")}
+function kqlEsc(s){return String(s==null?"":s).replace(/'/g,"''").replace(/[\r\n]/g," ")}
+function copyToClipboard(btn,taId){var ta=document.getElementById(taId);if(!ta)return;navigator.clipboard.writeText(ta.value).then(function(){btn.classList.add("btn-copied");btn.textContent="Copied!";setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500)})}
+
+// ═══════════════════════════════════════════════════════════════════
+// SHARED APP SHELL
+// ═══════════════════════════════════════════════════════════════════
+function showTab(tabName){
+  var tabs=document.querySelectorAll(".tab");
+  for(var i=0;i<tabs.length;i++)tabs[i].classList.remove("active");
+  document.getElementById("tab-"+tabName).classList.add("active");
+  var btns=document.querySelectorAll(".nav-btn");
+  for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
+  event.target.classList.add("active");
+  if(tabName==="tables")generateTableBuilder();
+  if(tabName==="rls")generateRLS();
+  if(tabName==="retention")generateRetention();
+}
+
+function bindConfig(){
+  var cluster=document.getElementById("cfgCluster").value;
+  var db=document.getElementById("cfgDatabase").value;
+  var tid=document.getElementById("cfgTenantId").value;
+  var pack=document.getElementById("cfgPack").value;
+  state.globalConfig.clusterUri=cluster;
+  state.globalConfig.database=db;
+  state.globalConfig.tenantId=tid;
+  state.activePack=pack;
+}
+
+function syncEmailFieldPlaceholder(){
+  var p=getPack(),inp=document.getElementById("emailFieldInput");
+  if(inp)inp.placeholder=p?p.userEmailField:"user";
+}
+
+function exportSession(){
+  var json=JSON.stringify(state,null,2);
+  var blob=new Blob([json],{type:"application/json"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;
+  a.download="adx-schema-session.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importSession(jsonData){
+  try{
+    var loaded=JSON.parse(jsonData);
+    if(loaded.globalConfig)Object.assign(state.globalConfig,loaded.globalConfig);
+    if(loaded.activePack)state.activePack=loaded.activePack;
+    if(loaded.files)state.files=loaded.files;
+    if(loaded.mapping)Object.assign(state.mapping,loaded.mapping);
+    if(loaded.tableBuilder){
+      Object.assign(state.tableBuilder,loaded.tableBuilder);
+      if(!state.tableBuilder.fields||!Array.isArray(state.tableBuilder.fields)||state.tableBuilder.fields.length===0){
+        state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
+          return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
+        });
+        state.tableBuilder.activePreset="rec";
+      }
+    }
+    if(loaded.rls)Object.assign(state.rls,loaded.rls);
+    if(loaded.retention)Object.assign(state.retention,loaded.retention);
+    document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
+    document.getElementById("cfgDatabase").value=state.globalConfig.database;
+    document.getElementById("cfgTenantId").value=state.globalConfig.tenantId;
+    document.getElementById("cfgPack").value=state.activePack;
+    syncEmailFieldPlaceholder();
+    renderFileChips();
+    updateMappingDropdowns();
+    syncMappingDropdownSelections();
+    initTBChecklists();
+    initRLSChecklists();
+    buildRetentionOverrides();
+    // Restore saved Table Builder selections
+    if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
+      var tbCbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');
+      for(var i=0;i<tbCbs.length;i++){
+        tbCbs[i].checked=state.tableBuilder.selectedTables.indexOf(tbCbs[i].getAttribute("data-table"))>=0;
+      }
+    }
+    // Restore saved RLS table selections
+    if(state.rls.selectedTables&&state.rls.selectedTables.length){
+      var rlsCbs=document.querySelectorAll('input[data-ctx="rls"]');
+      for(var i=0;i<rlsCbs.length;i++){
+        rlsCbs[i].checked=state.rls.selectedTables.indexOf(rlsCbs[i].getAttribute("data-table"))>=0;
+      }
+    }
+    // Restore phase
+    if(state.tableBuilder.phase)setPhase(state.tableBuilder.phase);
+    // Restore email override
+    if(state.tableBuilder.emailFieldOverride){
+      var efi=document.getElementById("emailFieldInput");
+      if(efi)efi.value=state.tableBuilder.emailFieldOverride;
+    }
+    // Restore toggle visual states
+    var togRF=document.getElementById("togRlsFunc");
+    if(togRF){if(state.rls.rlsFunction)togRF.classList.add("on");else togRF.classList.remove("on")}
+    var togRA=document.getElementById("togRlsApply");
+    if(togRA){if(state.rls.applyPolicies)togRA.classList.add("on");else togRA.classList.remove("on")}
+    var togRec=document.getElementById("togRecoverable");
+    if(togRec){if(state.retention.recoverability)togRec.classList.add("on");else togRec.classList.remove("on")}
+    // Restore RLS mapping pairs
+    if(state.rls.mappingPairs&&state.rls.mappingPairs.length)renderRLSMappingPairs();
+    else syncRLSMappingsFromData();
+    // Restore retention preset dropdowns
+    if(state.retention){
+      var retCats=["Staging","Events","Alerts"];
+      for(var rc=0;rc<retCats.length;rc++){
+        var catKey=retCats[rc].toLowerCase();
+        var selEl=document.getElementById("ret"+retCats[rc]);
+        if(selEl&&state.retention[catKey]){
+          // Check if value matches a preset option
+          var opts=selEl.options;var found=false;
+          for(var oi=0;oi<opts.length;oi++){if(opts[oi].value===state.retention[catKey]){selEl.value=state.retention[catKey];found=true;break}}
+          if(!found){selEl.value="custom";var cust=document.getElementById("ret"+retCats[rc]+"Custom");if(cust){cust.style.display="";cust.value=state.retention[catKey]}}
+        }
+      }
+    }
+    // Re-render field editor with loaded state
+    renderFieldEditor();
+    // Regenerate all outputs
+    generateRLS();
+    generateRetention();
+    return true;
+  }catch(e){
+    alert("Failed to load session: "+e.message);
+    return false;
+  }
+}
+
+function handleSessionImport(event){
+  var file=event.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var success=importSession(e.target.result);
+    if(success)alert("Session loaded successfully!");
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: Data & Mapping
+// ═══════════════════════════════════════════════════════════════════
+function setupDropZone(){
+  var dz=document.getElementById("dropZone");
+  var pa=document.getElementById("pasteArea");
+  dz.addEventListener("dragover",function(e){e.preventDefault();dz.classList.add("dragover")});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("dragover")});
+  dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("dragover");handleFiles(e.dataTransfer.files)});
+  pa.addEventListener("keydown",function(e){if(e.ctrlKey&&e.key==="Enter"){var text=pa.value.trim();if(text)parsePastedData(text);pa.value=""}});
+}
+
+function handleFiles(files){
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var reader=new FileReader();
+    reader.onload=(function(file){return function(e){
+      var id="file_"+fileIdCounter++;
+      var content=parseFileContent(file.name,e.target.result);
+      if(content){
+        state.files.push({id:id,name:file.name,columns:content.columns,rows:content.rows,rowCount:content.rows.length});
+        renderFileChips();
+        updateMappingDropdowns();
+        updateBadge();
+        syncRLSMappingsFromData();
+      }
+    }})(f);
+    reader.readAsText(f);
+  }
+}
+
+function parseFileContent(name,content){
+  var lower=name.toLowerCase();
+  if(lower.endsWith(".json")){
+    try{var arr=JSON.parse(content);if(!Array.isArray(arr)||arr.length===0)return null;var cols=Object.keys(arr[0]);return{columns:cols,rows:arr}}catch(e){return null}
+  }else if(lower.endsWith(".csv")||lower.endsWith(".tsv")||lower.endsWith(".txt")){
+    var delim=lower.endsWith(".tsv")?"\t":",";
+    var lines=content.trim().split("\n");
+    if(lines.length<2)return null;
+    var cols=lines[0].split(delim).map(function(c){return c.trim()});
+    var rows=[];
+    for(var i=1;i<lines.length;i++){
+      var cells=lines[i].split(delim);
+      var row={};
+      for(var j=0;j<cols.length;j++)row[cols[j]]=cells[j]?cells[j].trim():"";
+      rows.push(row);
+    }
+    return{columns:cols,rows:rows};
+  }
+  return null;
+}
+
+function parsePastedData(text){
+  if(text.trim().startsWith("[")){
+    var content=parseFileContent("data.json",text);
+    if(content){
+      var id="file_"+fileIdCounter++;
+      state.files.push({id:id,name:"Pasted JSON",columns:content.columns,rows:content.rows,rowCount:content.rows.length});
+      renderFileChips();
+      updateMappingDropdowns();
+      updateBadge();
+      syncRLSMappingsFromData();
+      return;
+    }
+  }
+  var lines=text.trim().split("\n");
+  if(lines.length>=2){
+    var delim=lines[0].includes("\t")?"\t":",";
+    var cols=lines[0].split(delim).map(function(c){return c.trim()});
+    var rows=[];
+    for(var i=1;i<lines.length;i++){
+      var cells=lines[i].split(delim);
+      var row={};
+      for(var j=0;j<cols.length;j++)row[cols[j]]=cells[j]?cells[j].trim():"";
+      rows.push(row);
+    }
+    if(rows.length>0){
+      var id="file_"+fileIdCounter++;
+      state.files.push({id:id,name:"Pasted data",columns:cols,rows:rows,rowCount:rows.length});
+      renderFileChips();
+      updateMappingDropdowns();
+      updateBadge();
+      syncRLSMappingsFromData();
+    }
+  }
+}
+
+function renderFileChips(){
+  var cont=document.getElementById("fileChips");
+  var html="";
+  for(var i=0;i<state.files.length;i++){
+    var f=state.files[i];
+    html+='<div class="file-chip">'+esc(f.name)+' ('+f.rowCount+' rows)<span class="remove" onclick="removeFile(\''+f.id+'\')">×</span></div>';
+  }
+  cont.innerHTML=html;
+}
+
+function removeFile(id){
+  state.files=state.files.filter(function(f){return f.id!==id});
+  for(var key in state.mapping){
+    if(state.mapping[key].fileId===id)state.mapping[key]={fileId:null,column:null};
+  }
+  renderFileChips();
+  updateMappingDropdowns();
+  updateBadge();
+  renderMappingSummary();
+  syncRLSMappingsFromData();
+}
+
+function updateBadge(){
+  var card=document.getElementById("previewCard");
+  if(state.files.length>0)card.style.display="";else card.style.display="none";
+  var prev=document.getElementById("preview");
+  if(state.files.length>0){
+    var f=state.files[0];
+    var html='<table style="border-collapse:collapse;font-size:11px"><tr>';
+    for(var i=0;i<f.columns.length;i++)html+='<th style="border:1px solid var(--border);padding:4px">'+esc(f.columns[i])+'</th>';
+    html+='</tr>';
+    for(var r=0;r<Math.min(f.rows.length,3);r++){
+      html+='<tr>';
+      for(var c=0;c<f.columns.length;c++){
+        var val=f.rows[r][f.columns[c]]||"";
+        html+='<td style="border:1px solid var(--border);padding:4px">'+esc(val.substring(0,20))+'</td>';
+      }
+      html+='</tr>';
+    }
+    if(f.rows.length>3)html+='<tr><td colspan="'+f.columns.length+'" style="padding:4px;color:var(--text-secondary)">... ('+(f.rows.length-3)+' more rows)</td></tr>';
+    html+='</table>';
+    prev.innerHTML=html;
+  }
+}
+
+function updateMappingDropdowns(){
+  var opts=['<option value="">-- none --</option>'];
+  for(var i=0;i<state.files.length;i++){
+    var f=state.files[i];
+    for(var j=0;j<f.columns.length;j++){
+      opts.push('<option value="'+f.id+'|'+f.columns[j]+'">'+esc(f.name)+'['+esc(f.columns[j])+']</option>');
+    }
+  }
+  var selects=["mapGroupName","mapDomainFilter","mapTenantId","mapCustom"];
+  for(var s=0;s<selects.length;s++){
+    var sel=document.getElementById(selects[s]);
+    if(sel){
+      var curVal=sel.value;
+      sel.innerHTML=opts.join("");
+      sel.value=curVal;
+    }
+  }
+}
+
+function syncMappingDropdownSelections(){
+  var mapDefs=[
+    {id:"mapGroupName",key:"groupName"},
+    {id:"mapDomainFilter",key:"domainFilter"},
+    {id:"mapTenantId",key:"tenantId"},
+    {id:"mapCustom",key:"customField"}
+  ];
+  for(var i=0;i<mapDefs.length;i++){
+    var sel=document.getElementById(mapDefs[i].id);
+    var m=state.mapping[mapDefs[i].key];
+    if(!sel||!m||!m.fileId||!m.column){if(sel)sel.value="";continue}
+    sel.value=m.fileId+"|"+m.column;
+  }
+}
+
+function updateMapping(key){
+  var sel=document.getElementById("map"+key.charAt(0).toUpperCase()+key.slice(1));
+  if(!sel)return;
+  var val=sel.value;
+  if(val){
+    var parts=val.split("|");
+    state.mapping[key]={fileId:parts[0],column:parts[1]};
+  }else{
+    state.mapping[key]={fileId:null,column:null};
+  }
+  renderMappingSummary();
+  syncRLSMappingsFromData();
+}
+
+function syncRLSMappingsFromData(){
+  var groupMap=state.mapping.groupName,domainMap=state.mapping.domainFilter;
+  var tenantMap=state.mapping.tenantId,displayMap=state.mapping.customField;
+  if(!groupMap||!domainMap||!groupMap.fileId||!domainMap.fileId||groupMap.fileId!==domainMap.fileId){
+    state.rls.mappingPairs=[];
+    renderRLSMappingPairs();
+    generateRLS();
+    return;
+  }
+  var f=null;
+  for(var i=0;i<state.files.length;i++){if(state.files[i].id===groupMap.fileId){f=state.files[i];break}}
+  if(!f){
+    state.rls.mappingPairs=[];
+    renderRLSMappingPairs();
+    generateRLS();
+    return;
+  }
+  var keepEnabled={},existing=state.rls.mappingPairs||[];
+  for(var i=0;i<existing.length;i++){
+    var ek=(existing[i].group||"")+"|"+(existing[i].domain||"")+"|"+(existing[i].tenantId||"")+"|"+(existing[i].displayName||"");
+    keepEnabled[ek]=!!existing[i].enabled;
+  }
+  var dedup={},pairs=[];
+  for(var r=0;r<f.rows.length;r++){
+    var row=f.rows[r];
+    var group=row[groupMap.column],domain=row[domainMap.column];
+    if(!group||!domain)continue;
+    var tenantId=(tenantMap&&tenantMap.fileId===f.id&&tenantMap.column)?(row[tenantMap.column]||""):"";
+    var displayName=(displayMap&&displayMap.fileId===f.id&&displayMap.column)?(row[displayMap.column]||""):"";
+    var key=String(group)+"|"+String(domain)+"|"+String(tenantId)+"|"+String(displayName);
+    if(dedup[key])continue;
+    dedup[key]=1;
+    pairs.push({group:String(group),domain:String(domain),tenantId:String(tenantId),displayName:String(displayName),enabled:(keepEnabled[key]!==false)});
+  }
+  state.rls.mappingPairs=pairs;
+  renderRLSMappingPairs();
+  generateRLS();
+}
+
+function getMappedValues(key){
+  var m=state.mapping[key];
+  if(!m||!m.fileId)return[];
+  var f=null;
+  for(var i=0;i<state.files.length;i++){if(state.files[i].id===m.fileId){f=state.files[i];break}}
+  if(!f)return[];
+  var vals=[];
+  for(var i=0;i<f.rows.length;i++){
+    var v=f.rows[i][m.column];
+    if(v&&vals.indexOf(v)<0)vals.push(v);
+  }
+  return vals;
+}
+
+function getMappedPairs(key1,key2){
+  var m1=state.mapping[key1],m2=state.mapping[key2];
+  if(!m1||!m1.fileId||!m2||!m2.fileId)return[];
+  var f=null;
+  if(m1.fileId===m2.fileId)f=state.files.find(function(x){return x.id===m1.fileId});
+  if(!f)return[];
+  var pairs=[];
+  for(var i=0;i<f.rows.length;i++){
+    var v1=f.rows[i][m1.column],v2=f.rows[i][m2.column];
+    if(v1&&v2){
+      var found=false;
+      for(var j=0;j<pairs.length;j++){if(pairs[j].a===v1&&pairs[j].b===v2){found=true;break}}
+      if(!found)pairs.push({a:v1,b:v2});
+    }
+  }
+  return pairs;
+}
+
+function getMappedTriples(key1,key2,key3){
+  var m1=state.mapping[key1],m2=state.mapping[key2],m3=state.mapping[key3];
+  if(!m1||!m1.fileId||!m2||!m2.fileId||!m3||!m3.fileId)return[];
+  var f=null;
+  if(m1.fileId===m2.fileId&&m2.fileId===m3.fileId)f=state.files.find(function(x){return x.id===m1.fileId});
+  if(!f)return[];
+  var trips=[];
+  for(var i=0;i<f.rows.length;i++){
+    var v1=f.rows[i][m1.column],v2=f.rows[i][m2.column],v3=f.rows[i][m3.column];
+    if(v1&&v2&&v3){
+      var found=false;
+      for(var j=0;j<trips.length;j++){if(trips[j].a===v1&&trips[j].b===v2&&trips[j].c===v3){found=true;break}}
+      if(!found)trips.push({a:v1,b:v2,c:v3});
+    }
+  }
+  return trips;
+}
+
+function renderMappingSummary(){
+  var cont=document.getElementById("mappingSummary");
+  var html="";
+  var gn=getMappedValues("groupName");
+  var df=getMappedValues("domainFilter");
+  if(gn.length>0)html+='<div class="mapping-summary">Group Name: <span>'+gn.length+' unique</span></div>';
+  if(df.length>0)html+='<div class="mapping-summary">Domain Filter: <span>'+df.length+' unique</span></div>';
+  if(html==="")html='<div class="text-sm text-muted">No mappings configured.</div>';
+  cont.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: Table Builder
+// ═══════════════════════════════════════════════════════════════════
+function getActiveEmailField(){var p=getPack(),o=state.tableBuilder.emailFieldOverride;return o?o:(p?p.userEmailField:"user")}
+function getActiveExtractExpr(){var f=getActiveEmailField();return 'tostring(split(split(tostring(RawData.'+f+'), "@")[1], ".")[0])'}
+function getFieldsForCat(cat){
+  if(!state.tableBuilder.flattenFields)return[];
+  return state.tableBuilder.fields.filter(function(f){return f.enabled&&(f.cat==="common"||f.cat===cat)});
+}
+function getTypedSchema(cat){var p=getPack();if(!p)return"";var parts=[p.baseTypedSchema];if(state.tableBuilder.addAgencyFilter)parts.push("AgencyDomain:string");var ff=getFieldsForCat(cat);for(var i=0;i<ff.length;i++)parts.push(ff[i].col+":"+ff[i].type);return parts.join(", ")}
+function castExpr(k,t){if(t==="string")return"tostring(RawData."+k+")";if(t==="int")return"toint(RawData."+k+")";if(t==="long")return"tolong(RawData."+k+")";if(t==="real")return"toreal(RawData."+k+")";if(t==="bool")return"tobool(RawData."+k+")";if(t==="datetime")return"todatetime(RawData."+k+")";if(t==="dynamic")return"RawData."+k;return"tostring(RawData."+k+")"}
+function updateEmailField(){var el=document.getElementById("emailFieldInput");state.tableBuilder.emailFieldOverride=el.value.trim();document.getElementById("emailFieldPreview").textContent="RawData."+getActiveEmailField();generateTableBuilder()}
+function makeBanner(t){var p=80-t.length-4,l=Math.floor(p/2),r=p-l,s="";for(var i=0;i<l;i++)s+="/";s+=" "+t+" ";for(var i=0;i<r;i++)s+="/";return"// "+s}
+function getSelectedCats(){var tables=getAllTables(),sel=state.tableBuilder.selectedTables,hE=false,hA=false;for(var i=0;i<tables.length;i++){if(sel.indexOf(tables[i].name)>=0){if(tables[i].cat==="event")hE=true;if(tables[i].cat==="alert")hA=true}}return{event:hE,alert:hA,any:hE||hA}}
+function toggleOption(key,el){var isOn=!el.classList.contains("on");if(isOn)el.classList.add("on");else el.classList.remove("on");state.tableBuilder[key]=isOn;if(key==="addAgencyFilter")document.getElementById("emailFieldWrap").style.display=isOn?"":"none";renderFieldEditor();generateTableBuilder()}
+
+function applyPreset(preset){
+  var fields=state.tableBuilder.fields;
+  if(preset==="all"){
+    for(var i=0;i<fields.length;i++)fields[i].enabled=true;
+    state.tableBuilder.activePreset="all";
+  }else if(preset==="none"){
+    for(var i=0;i<fields.length;i++)fields[i].enabled=false;
+    state.tableBuilder.activePreset="none";
+  }else if(preset==="sentinel"){
+    for(var i=0;i<fields.length;i++){
+      fields[i].enabled=!!fields[i].sentinel;
+    }
+    state.tableBuilder.activePreset="sentinel";
+  }else{
+    var include={};
+    if(preset==="rec"){include.rec=true}
+    else if(preset==="ext"){include.rec=true;include.ext=true}
+    else if(preset==="notrec"){include.rec=true;include.ext=true;include.notrec=true}
+    for(var i=0;i<fields.length;i++){
+      fields[i].enabled=!!include[fields[i].tier];
+    }
+    state.tableBuilder.activePreset=preset;
+  }
+  renderFieldEditor();
+  generateTableBuilder();
+}
+
+function toggleFieldEnabled(idx){
+  state.tableBuilder.fields[idx].enabled=!state.tableBuilder.fields[idx].enabled;
+  state.tableBuilder.activePreset="custom";
+  renderFieldEditor();
+  generateTableBuilder();
+}
+
+function getPresetState(){
+  var fields=state.tableBuilder.fields;
+  var allOn=true,allOff=true,recOnly=true,recExt=true,sentinelMatch=true;
+  for(var i=0;i<fields.length;i++){
+    var f=fields[i];
+    if(f.enabled)allOff=false; else allOn=false;
+    if(f.tier==="rec"&&!f.enabled)recOnly=false;
+    if(f.tier!=="rec"&&f.enabled)recOnly=false;
+    if((f.tier==="rec"||f.tier==="ext")&&!f.enabled)recExt=false;
+    if(f.tier==="notrec"&&f.enabled)recExt=false;
+    if(f.sentinel&&!f.enabled)sentinelMatch=false;
+    if(!f.sentinel&&f.enabled)sentinelMatch=false;
+  }
+  if(allOn)return"all";
+  if(allOff)return"none";
+  if(recOnly)return"rec";
+  if(recExt)return"ext";
+  if(sentinelMatch)return"sentinel";
+  return"custom";
+}
+
+function initTBChecklists(){
+  var pack=getPack(),container=document.getElementById("tableBuilderChecklist");
+  if(!container||!pack)return;
+  var tables=pack.tables,events=tables.filter(function(t){return t.cat==="event"}),alerts=tables.filter(function(t){return t.cat==="alert"});
+  var html='<div class="tree-group"><div class="tree-header" onclick="toggleTreeGroup(this)"><span class="arrow">&#9660;</span><span class="tree-label">'+esc(pack.name)+'</span><span class="tree-count">'+tables.length+' tables</span><span class="tree-actions"><a onclick="event.stopPropagation();toggleAllTBTables(true)">All</a> <a onclick="event.stopPropagation();toggleAllTBTables(false)">None</a></span></div><div class="tree-body">';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(34,197,94,.15);color:var(--color-success);padding:1px 6px;border-radius:3px;font-size:10px">Events</span><span class="tree-count">'+events.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleTBCat(\'event\',true)">All</a> <a onclick="event.stopPropagation();toggleTBCat(\'event\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<events.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-ctx="tableBuilder" data-table="'+events[i].name+'" onchange="onTBTableCheck()"><span>'+events[i].name+'</span></label>';
+  html+='</div></div>';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(245,158,11,.15);color:var(--color-warn);padding:1px 6px;border-radius:3px;font-size:10px">Alerts</span><span class="tree-count">'+alerts.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleTBCat(\'alert\',true)">All</a> <a onclick="event.stopPropagation();toggleTBCat(\'alert\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<alerts.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-ctx="tableBuilder" data-table="'+alerts[i].name+'" onchange="onTBTableCheck()"><span>'+alerts[i].name+'</span></label>';
+  html+='</div></div></div></div>';
+  container.innerHTML=html;onTBTableCheck();
+  var allChecked=document.querySelectorAll('input[data-ctx="tableBuilder"]').length===document.querySelectorAll('input[data-ctx="tableBuilder"]:checked').length;
+  if(allChecked){
+    var grpHeader=container.querySelector('.tree-header');
+    if(grpHeader){grpHeader.querySelector('.arrow').classList.add('collapsed');grpHeader.nextElementSibling.classList.add('collapsed')}
+  }
+}
+
+function onTBTableCheck(){
+  var cks=document.querySelectorAll('input[data-ctx="tableBuilder"]:checked'),sel=[];
+  for(var i=0;i<cks.length;i++)sel.push(cks[i].getAttribute("data-table"));
+  state.tableBuilder.selectedTables=sel;
+  var total=document.querySelectorAll('input[data-ctx="tableBuilder"]').length;
+  var badge=document.getElementById("tableSelectionCount");
+  if(badge)badge.textContent=sel.length+"/"+total+" selected";
+  renderFieldEditor();
+}
+
+function toggleAllTBTables(c){var cbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');for(var i=0;i<cbs.length;i++)cbs[i].checked=c;onTBTableCheck()}
+function toggleTBCat(cat,c){var tables=getAllTables(),cbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');for(var i=0;i<cbs.length;i++){var n=cbs[i].getAttribute("data-table"),t=null;for(var j=0;j<tables.length;j++){if(tables[j].name===n){t=tables[j];break}}if(t&&t.cat===cat)cbs[i].checked=c}onTBTableCheck()}
+function toggleTreeGroup(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+function toggleTreeSub(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+
+function renderFieldEditor(){
+  var area=document.getElementById("fieldEditorArea");
+  var fcBadge=document.getElementById("fieldConfigCount");
+  if(!state.tableBuilder.flattenFields){area.innerHTML="";if(fcBadge)fcBadge.textContent="flattening off";return}
+  var cats=getSelectedCats();
+  if(!cats.any){area.innerHTML='<div class="text-sm text-muted mt-8">Select tables in Table Selection above to configure fields.</div>';if(fcBadge)fcBadge.textContent="no tables selected";return}
+  var fields=state.tableBuilder.fields;
+  var curPreset=getPresetState();
+
+  var html='<div class="preset-bar">';
+  html+='<span class="preset-label">Presets</span>';
+  var presets=[
+    {key:"rec",    label:"Recommended"},
+    {key:"ext",    label:"Rec + Extended"},
+    {key:"notrec", label:"All Fields"},
+  ];
+  for(var p=0;p<presets.length;p++){
+    var pr=presets[p],isActive=curPreset===pr.key;
+    var tm=TIER_META[pr.key];
+    html+='<span class="preset-pill'+(isActive?" "+tm.cls:"")+'" onclick="applyPreset(\''+pr.key+'\')" title="'+tm.desc+'">';
+    html+='<span class="tier-dot tier-dot-'+pr.key+'"></span> '+pr.label+'</span>';
+  }
+  html+='<span class="preset-sep"></span>';
+  html+='<span class="preset-pill'+(curPreset==="sentinel"?" active-sentinel":"")+'" onclick="applyPreset(\'sentinel\')" title="Fields needed for Sentinel entity mapping, ASIM schemas, analytics rules, and workbooks">Sentinel / LA</span>';
+  html+='<span class="preset-sep"></span>';
+  html+='<span class="preset-pill'+(curPreset==="all"?" active-all":"")+'" onclick="applyPreset(\'all\')" title="Enable all fields">All</span>';
+  html+='<span class="preset-pill'+(curPreset==="none"?" active-all":"")+'" onclick="applyPreset(\'none\')" title="Disable all fields">None</span>';
+  html+='</div>';
+
+  var sections=[];
+  if(cats.any)sections.push({key:"common",label:"Common Fields (Events + Alerts)",color:"var(--color-info)",bg:"rgba(74,158,237,.12)"});
+  if(cats.event)sections.push({key:"event",label:"Event-Only Fields",color:"var(--color-success)",bg:"rgba(34,197,94,.12)"});
+  if(cats.alert)sections.push({key:"alert",label:"Alert-Only Fields",color:"var(--color-warn)",bg:"rgba(245,158,11,.12)"});
+  var types=["string","int","long","real","bool","datetime","dynamic"];
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    var secFields=[];
+    for(var i=0;i<fields.length;i++){if(fields[i].cat===sec.key)secFields.push({idx:i,f:fields[i]})}
+    var enabledCount=0;for(var i=0;i<secFields.length;i++){if(secFields[i].f.enabled)enabledCount++}
+    html+='<div class="field-section" style="margin-top:'+(s===0?"12":"6")+'px">';
+    html+='<div class="field-section-header" onclick="toggleFieldSection(this)" style="border-left:3px solid '+sec.color+'">';
+    html+='<span class="arrow">&#9660;</span>';
+    html+='<span class="fs-label" style="color:'+sec.color+'">'+sec.label+'</span>';
+    html+='<span class="fs-count">'+enabledCount+'/'+secFields.length+'</span>';
+    html+='<span class="tree-actions" style="margin-left:6px" onclick="event.stopPropagation()"><a onclick="toggleSectionFields(\''+sec.key+'\',true)">All</a> <a onclick="toggleSectionFields(\''+sec.key+'\',false)">None</a></span>';
+    html+='</div>';
+    html+='<div class="field-section-body">';
+    html+='<div class="field-row field-row-header"><span></span><span></span><span>RawData Key</span><span>Column Name</span><span>Type</span><span></span></div>';
+    for(var f=0;f<secFields.length;f++){
+      var idx=secFields[f].idx,fd=secFields[f].f;
+      var tierDot=fd.tier?'<span class="tier-dot tier-dot-'+fd.tier+'" title="'+(TIER_META[fd.tier]?TIER_META[fd.tier].label:"Custom")+'"></span>':'';
+      var sBadge=fd.sentinel?'<span class="sentinel-badge" title="Sentinel / Log Analytics">LA</span>':'';
+      html+='<div class="field-row'+(fd.enabled?'':' disabled')+'">';
+      html+='<input type="checkbox" '+(fd.enabled?'checked':'')+' onchange="toggleFieldEnabled('+idx+')" title="Include in schema">';
+      html+='<span class="field-idx">'+tierDot+(f+1)+sBadge+'</span>';
+      html+='<input type="text" value="'+esc(fd.raw)+'" onchange="editField('+idx+',\'raw\',this.value)">';
+      html+='<input type="text" value="'+esc(fd.col)+'" onchange="editField('+idx+',\'col\',this.value)">';
+      html+='<select onchange="editField('+idx+',\'type\',this.value)">';
+      for(var ti=0;ti<types.length;ti++)html+='<option value="'+types[ti]+'"'+(fd.type===types[ti]?' selected':'')+'>'+types[ti]+'</option>';
+      html+='</select>';
+      html+='<span class="remove-btn" onclick="removeField('+idx+')" title="Remove">&times;</span></div>';
+    }
+    html+='<div class="add-field-row"><input type="text" id="addRaw_'+sec.key+'" placeholder="RawData.field"><input type="text" id="addCol_'+sec.key+'" placeholder="ColumnName"><select id="addType_'+sec.key+'">';
+    for(var ti=0;ti<types.length;ti++)html+='<option value="'+types[ti]+'">'+types[ti]+'</option>';
+    html+='</select><button class="btn btn-sm" onclick="addField(\''+sec.key+'\')">+ Add</button></div>';
+    html+='</div></div>';
+  }
+
+  var evEnabled=0,evTotal=0,alEnabled=0,alTotal=0;
+  for(var i=0;i<fields.length;i++){
+    var fc=fields[i];
+    if(fc.cat==="common"){evTotal++;alTotal++;if(fc.enabled){evEnabled++;alEnabled++}}
+    else if(fc.cat==="event"){evTotal++;if(fc.enabled)evEnabled++}
+    else if(fc.cat==="alert"){alTotal++;if(fc.enabled)alEnabled++}
+  }
+  html+='<div class="field-summary">';
+  if(cats.event)html+='<span style="color:var(--color-success)">'+evEnabled+'/'+evTotal+' event cols</span>';
+  if(cats.event&&cats.alert)html+=' &bull; ';
+  if(cats.alert)html+='<span style="color:var(--color-warn)">'+alEnabled+'/'+alTotal+' alert cols</span>';
+  html+=' &bull; RawData kept as archive';
+  html+=' &bull; <span class="tier-dot tier-dot-rec"></span>rec <span class="tier-dot tier-dot-ext"></span>ext <span class="tier-dot tier-dot-notrec"></span>notrec';
+  html+='</div>';
+  area.innerHTML=html;
+  var totalEnabled=0;for(var i=0;i<fields.length;i++){if(fields[i].enabled)totalEnabled++}
+  var fcBadge=document.getElementById("fieldConfigCount");
+  if(fcBadge)fcBadge.textContent=totalEnabled+"/"+fields.length+" enabled";
+}
+
+function toggleFieldSection(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+function toggleSectionFields(cat,enabled){
+  var fields=state.tableBuilder.fields;
+  for(var i=0;i<fields.length;i++){if(fields[i].cat===cat)fields[i].enabled=enabled}
+  state.tableBuilder.activePreset="custom";
+  renderFieldEditor();generateTableBuilder();
+}
+function editField(idx,prop,val){state.tableBuilder.fields[idx][prop]=val;generateTableBuilder()}
+function removeField(idx){state.tableBuilder.fields.splice(idx,1);renderFieldEditor();generateTableBuilder()}
+function addField(cat){var rEl=document.getElementById("addRaw_"+cat),cEl=document.getElementById("addCol_"+cat),tEl=document.getElementById("addType_"+cat);var raw=rEl.value.trim();if(!raw)return;var col=cEl.value.trim();if(!col)col=raw.split("_").map(function(w){return w.charAt(0).toUpperCase()+w.slice(1)}).join("");state.tableBuilder.fields.push({cat:cat,raw:raw,col:col,type:tEl.value,tier:"custom",sentinel:false,enabled:true});rEl.value="";cEl.value="";renderFieldEditor();generateTableBuilder()}
+
+var _lastRenderedTBBlocks=[];
+function renderTBKqlBlocks(container,blocks){
+  _lastRenderedTBBlocks=blocks;
+  var copyAllBtn=document.getElementById("copyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var html="";for(var i=0;i<blocks.length;i++){var b=blocks[i],id="tb_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,4),30);
+  html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>'}
+  container.innerHTML=html;
+}
+
+function copyAllKql(){
+  var all=_lastRenderedTBBlocks.map(function(b){return b.kql}).join("\n\n");
+  var btn=document.getElementById("copyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+var PHASE_DESC={staging:"Creates the raw staging table with ingestion mapping.",typed:"Creates each typed table, transform function, and update policy — grouped per table."};
+function setPhase(phase){
+  state.tableBuilder.phase=phase;
+  var pills=document.querySelectorAll(".phase-pill");
+  for(var i=0;i<pills.length;i++)pills[i].classList.toggle("active",pills[i].getAttribute("data-phase")===phase);
+  document.getElementById("phaseDescription").textContent=PHASE_DESC[phase]||"";
+  var showTyped=phase!=="staging";
+  document.getElementById("tableSelectionCard").style.display=showTyped?"":"none";
+  document.getElementById("fieldConfigCard").style.display=showTyped?"":"none";
+  generateTableBuilder();
+}
+
+function generateTableBuilder(){
+  var pack=getPack(),out=document.getElementById("tableBuilderOutput");
+  if(!out||!pack)return;
+  var db=state.globalConfig.database||"{database}",cluster=state.globalConfig.clusterUri||"{cluster}";
+  var phase=state.tableBuilder.phase,selected=state.tableBuilder.selectedTables;
+  var tables=pack.tables.filter(function(t){return selected.indexOf(t.name)>=0});
+  var addFilter=state.tableBuilder.addAgencyFilter,blocks=[];
+
+  if(phase==="staging"){
+    blocks.push({title:"Create staging table + ingestion mapping",
+      kql:makeBanner(pack.stagingTable)+"\n// Cluster: "+cluster+"  Database: "+db+"\n\n"+
+      ".create table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")\n\n"+
+      "// Run this SECOND:\n.create table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+  }
+
+  if(phase==="typed"){
+    if(!tables.length){blocks.push({title:"No tables selected",kql:"// Select tables from the tree above"});
+    }else{
+      for(var i=0;i<tables.length;i++){
+        var t=tables[i],fn="fn_"+t.name.replace(/_CL$/,"");
+        var catFolder=t.cat==="event"?"Events":"Alerts";
+        var tableFolder=pack.folder+"/"+catFolder;
+        var funcFolder=pack.folder+"/Functions/"+catFolder;
+        var typedSchema=getTypedSchema(t.cat);
+        var flatFields=getFieldsForCat(t.cat);
+        var lines=[];
+        lines.push(makeBanner(t.name));
+        lines.push("// Run each command below one at a time in ADX Web UI");
+        lines.push("");
+        lines.push("// Step 1: Create table");
+        var schemaParts=typedSchema.split(", ");
+        lines.push(".create table "+t.name+" (");
+        for(var s=0;s<schemaParts.length;s++)lines.push("    "+schemaParts[s]+(s<schemaParts.length-1?",":""));
+        lines.push(")");
+        lines.push("    with (folder=\""+tableFolder+"\")");
+        lines.push("");
+        lines.push("// Step 2: Create transform function");
+        lines.push(".create-or-alter function");
+        lines.push("    with (folder=\""+funcFolder+"\", skipvalidation=\"true\")");
+        lines.push(fn+"() {");
+        lines.push("    "+pack.stagingTable);
+        lines.push("    | where StreamType == \""+t.stream+"\"");
+        var extParts=[];
+        if(addFilter)extParts.push("AgencyDomain = "+getActiveExtractExpr());
+        for(var f=0;f<flatFields.length;f++)extParts.push(flatFields[f].col+" = "+castExpr(flatFields[f].raw,flatFields[f].type));
+        if(extParts.length>0){
+          lines.push("    | extend");
+          for(var e=0;e<extParts.length;e++)lines.push("        "+extParts[e]+(e<extParts.length-1?",":""));
+        }
+        var projParts=["TimeGenerated","RawData"];
+        if(addFilter)projParts.push("AgencyDomain");
+        for(var f=0;f<flatFields.length;f++)projParts.push(flatFields[f].col);
+        lines.push("    | project");
+        for(var p=0;p<projParts.length;p++)lines.push("        "+projParts[p]+(p<projParts.length-1?",":""));
+        lines.push("}");
+        lines.push("");
+        lines.push("// Step 3: Attach update policy");
+        lines.push(".alter table "+t.name+" policy update");
+        lines.push("@'[{\"IsEnabled\": true, \"Source\": \""+pack.stagingTable+"\", \"Query\": \""+fn+"()\", \"IsTransactional\": false}]'");
+
+        blocks.push({title:t.name+" ("+(flatFields.length+(addFilter?1:0))+" extracted cols)",kql:lines.join("\n")});
+      }
+    }
+  }
+  renderTBKqlBlocks(out,blocks);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: RLS Builder
+// ═══════════════════════════════════════════════════════════════════
+
+function getRlsGroupId(pair){
+  var id=pair.group||pair.displayName;
+  var tenantId=pair.tenantId||state.globalConfig.tenantId;
+  if(tenantId)return id+";"+tenantId;
+  return id;
+}
+
+function toggleSwitch(el,key){
+  var isOn=!el.classList.contains("on");
+  if(isOn)el.classList.add("on");else el.classList.remove("on");
+  if(key==="rlsFunction")state.rls.rlsFunction=isOn;
+  if(key==="applyPolicies")state.rls.applyPolicies=isOn;
+  if(key==="recoverability")state.retention.recoverability=isOn;
+  var warn=document.getElementById("rlsDependencyWarn");
+  if(warn){
+    if(state.rls.applyPolicies&&!state.rls.rlsFunction)warn.classList.remove("hidden");
+    else warn.classList.add("hidden");
+  }
+  generateRLS();
+}
+
+// ── Mapping pairs ──
+function loadRLSMappingPairs(data){
+  state.rls.mappingPairs=data.map(function(t){
+    return{group:t.group||t[0],domain:t.domain||t[1],tenantId:(t.tenantId||t[2]||""),displayName:(t.displayName||t[3]||""),enabled:(t.enabled!==false)};
+  });
+  renderRLSMappingPairs();
+}
+
+function renderRLSMappingPairs(){
+  var area=document.getElementById("mappingPairsArea");
+  var pairs=state.rls.mappingPairs;
+  if(!pairs.length){
+    area.innerHTML='<div class="alert alert-warn"><span>!</span><div>No mapping data loaded. Upload a CSV on the Data &amp; Mapping tab with Group Name + Domain Filter columns.</div></div>';
+    updateRLSPairBadge();return;
+  }
+  var byAgency={},agencyOrder=[];
+  for(var i=0;i<pairs.length;i++){
+    var d=pairs[i].domain;
+    if(!byAgency[d]){byAgency[d]=[];agencyOrder.push(d)}
+    byAgency[d].push({idx:i,pair:pairs[i]});
+  }
+  var html='';
+  for(var a=0;a<agencyOrder.length;a++){
+    var domain=agencyOrder[a],entries=byAgency[domain],enabledCount=0;
+    for(var e=0;e<entries.length;e++){if(entries[e].pair.enabled)enabledCount++}
+    html+='<div class="pair-group"><div class="pair-group-header" onclick="toggleRLSPairGroup(this)">';
+    html+='<span class="arrow">&#9660;</span><span class="agency-label">'+esc(domain)+'</span>';
+    html+='<span class="pair-count">'+enabledCount+'/'+entries.length+'</span>';
+    html+='<span class="pair-actions" onclick="event.stopPropagation()"><a onclick="toggleRLSAgencyPairs(\''+jsStrEsc(domain)+'\',true)">All</a><a onclick="toggleRLSAgencyPairs(\''+jsStrEsc(domain)+'\',false)">None</a></span>';
+    html+='</div><div class="pair-group-body">';
+    for(var e=0;e<entries.length;e++){
+      var idx=entries[e].idx,p=entries[e].pair;
+      var rlsId=getRlsGroupId(p),label=p.displayName||p.group,showUuid=p.displayName&&p.displayName!==p.group;
+      html+='<div class="pair-row'+(p.enabled?'':' disabled')+'">';
+      html+='<input type="checkbox" '+(p.enabled?'checked':'')+' onchange="toggleRLSPair('+idx+')">';
+      html+='<div class="pair-detail"><div class="group-name">'+esc(label)+'</div>';
+      if(showUuid)html+='<div class="group-uuid">'+esc(p.group)+'</div>';
+      html+='</div><span class="rls-id" title="aadgroup='+esc(rlsId)+'">→ '+esc(rlsId)+'</span></div>';
+    }
+    html+='</div></div>';
+  }
+  area.innerHTML=html;updateRLSPairBadge();
+}
+
+function toggleRLSPair(idx){state.rls.mappingPairs[idx].enabled=!state.rls.mappingPairs[idx].enabled;renderRLSMappingPairs();generateRLS()}
+function toggleRLSAgencyPairs(domain,enabled){var p=state.rls.mappingPairs;for(var i=0;i<p.length;i++){if(p[i].domain===domain)p[i].enabled=enabled}renderRLSMappingPairs();generateRLS()}
+function toggleRLSPairGroup(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+function collapseAllAgencies(collapse){var headers=document.querySelectorAll("#mappingPairsArea .pair-group-header");for(var i=0;i<headers.length;i++){var arrow=headers[i].querySelector(".arrow"),body=headers[i].nextElementSibling;if(collapse){arrow.classList.add("collapsed");body.classList.add("collapsed")}else{arrow.classList.remove("collapsed");body.classList.remove("collapsed")}}}
+function updateRLSPairBadge(){var p=state.rls.mappingPairs,en=0;for(var i=0;i<p.length;i++){if(p[i].enabled)en++}var b=document.getElementById("pairCountBadge");if(b)b.textContent=en+"/"+p.length+" included"}
+function getEnabledRLSPairs(){var p=state.rls.mappingPairs,r=[];for(var i=0;i<p.length;i++){if(p[i].enabled)r.push(p[i])}return r}
+
+// ── RLS Table Scope ──
+function initRLSChecklists(){
+  var pack=getPack(),container=document.getElementById("rlsChecklist");
+  if(!container||!pack)return;
+  var tables=pack.tables,events=tables.filter(function(t){return t.cat==="event"}),alerts=tables.filter(function(t){return t.cat==="alert"});
+  var html='<div class="tree-group"><div class="tree-header" onclick="toggleTreeGroup(this)"><span class="arrow">&#9660;</span><span class="tree-label">'+esc(pack.name)+'</span><span class="tree-count">'+tables.length+' tables</span><span class="tree-actions"><a onclick="event.stopPropagation();toggleAllRLSTables(true)">All</a><a onclick="event.stopPropagation();toggleAllRLSTables(false)">None</a></span></div><div class="tree-body">';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(34,197,94,.15);color:var(--color-success);padding:1px 6px;border-radius:3px;font-size:10px">Events</span><span class="tree-count">'+events.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleRLSCategory(\'event\',true)">All</a><a onclick="event.stopPropagation();toggleRLSCategory(\'event\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<events.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-ctx="rls" data-table="'+events[i].name+'" onchange="onRLSTableCheck()"><span>'+events[i].name+'</span></label>';
+  html+='</div></div>';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(245,158,11,.15);color:var(--color-warn);padding:1px 6px;border-radius:3px;font-size:10px">Alerts</span><span class="tree-count">'+alerts.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleRLSCategory(\'alert\',true)">All</a><a onclick="event.stopPropagation();toggleRLSCategory(\'alert\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<alerts.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-ctx="rls" data-table="'+alerts[i].name+'" onchange="onRLSTableCheck()"><span>'+alerts[i].name+'</span></label>';
+  html+='</div></div></div></div>';
+  container.innerHTML=html;onRLSTableCheck();
+}
+function onRLSTableCheck(){
+  var cks=document.querySelectorAll('input[data-ctx="rls"]:checked'),sel=[];
+  for(var i=0;i<cks.length;i++)sel.push(cks[i].getAttribute("data-table"));
+  state.rls.selectedTables=sel;
+  var badge=document.getElementById("rlsTableCountBadge"),total=document.querySelectorAll('input[data-ctx="rls"]').length;
+  if(badge)badge.textContent=sel.length+"/"+total+" selected";
+}
+function toggleAllRLSTables(c){var cbs=document.querySelectorAll('input[data-ctx="rls"]');for(var i=0;i<cbs.length;i++)cbs[i].checked=c;onRLSTableCheck()}
+function toggleRLSCategory(cat,c){var tables=getAllTables(),cbs=document.querySelectorAll('input[data-ctx="rls"]');for(var i=0;i<cbs.length;i++){var n=cbs[i].getAttribute("data-table"),t=null;for(var j=0;j<tables.length;j++){if(tables[j].name===n){t=tables[j];break}}if(t&&t.cat===cat)cbs[i].checked=c}onRLSTableCheck()}
+
+// ── RLS KQL rendering + Copy All ──
+var _lastRlsBlocks=[];
+function renderRLSKqlBlocks(container,blocks){
+  _lastRlsBlocks=blocks;
+  var copyAllBtn=document.getElementById("rlsCopyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">Enable at least one toggle.</div>';return}
+  var html="";
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i],id="rls_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,4),30);
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+  }
+  container.innerHTML=html;
+}
+function makeRLSSeparator(label){return"\n////////////////////////////////////////\n// "+label+"\n// Run the command below separately in ADX Web UI\n////////////////////////////////////////\n"}
+function copyAllRlsKql(){
+  var parts=[];
+  for(var i=0;i<_lastRlsBlocks.length;i++)parts.push(makeRLSSeparator(_lastRlsBlocks[i].title)+_lastRlsBlocks[i].kql);
+  var all=parts.join("\n");
+  var btn=document.getElementById("rlsCopyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){btn.classList.add("btn-copied");btn.textContent="Copied All!";setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500)});
+}
+
+// ── RLS generation — reads only ENABLED pairs ──
+function generateRLS(){
+  var out=document.getElementById("rlsOutput");
+  if(!out)return;
+  var db=state.globalConfig.database||"{database}",cluster=state.globalConfig.clusterUri||"{cluster}";
+  var enabledPairs=getEnabledRLSPairs();
+  var blocks=[];
+
+  if(state.rls.rlsFunction){
+    var lines=[];
+    if(!enabledPairs.length){
+      lines.push("// No group-to-domain mappings enabled.");
+      lines.push("// Check the Agency \u2192 Group Mappings card above.");
+      lines.push(".create-or-alter function RLS_AgencyFilter(TableName:string) {");
+      lines.push("    table(TableName)");
+      lines.push("    | where");
+      lines.push("        (current_principal_is_member_of('aadgroup=PLACEHOLDER') and AgencyDomain == 'PLACEHOLDER')");
+      lines.push("}");
+    }else{
+      var byAgency={},agencyOrder=[];
+      for(var i=0;i<enabledPairs.length;i++){
+        var p=enabledPairs[i];
+        if(!byAgency[p.domain]){byAgency[p.domain]=[];agencyOrder.push(p.domain)}
+        byAgency[p.domain].push(p);
+      }
+      lines.push("// Generated by ADX Schema Builder V2");
+      lines.push("// Cluster: "+cluster+"  Database: "+db);
+      lines.push("// "+enabledPairs.length+" mapping(s) across "+agencyOrder.length+" agencies");
+      lines.push("//");
+      lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
+      for(var a=0;a<agencyOrder.length;a++){
+        var domain=agencyOrder[a],entries=byAgency[domain],names=[];
+        for(var e=0;e<entries.length;e++)names.push(kqlEsc(entries[e].displayName||entries[e].group));
+        lines.push("//   "+kqlEsc(domain)+": "+names.join(", "));
+      }
+      lines.push("//");
+      lines.push(".create-or-alter function");
+      lines.push("    with (folder=\"Functions/RLS\", skipvalidation=\"true\")");
+      lines.push("RLS_AgencyFilter(TableName:string) {");
+      lines.push("    table(TableName)");
+      lines.push("    | where");
+      var clauseIdx=0;
+      for(var a=0;a<agencyOrder.length;a++){
+        var domain=agencyOrder[a],entries=byAgency[domain];
+        lines.push("        // \u2500\u2500 "+kqlEsc(domain)+" ("+entries.length+" group"+(entries.length>1?"s":"")+") \u2500\u2500");
+        for(var e=0;e<entries.length;e++){
+          var p=entries[e],rlsId=getRlsGroupId(p);
+          var safeRlsId=kqlEsc(rlsId),safeDomain=kqlEsc(domain),safeDisplay=kqlEsc(p.displayName||"");
+          var prefix=clauseIdx===0?"        ":"        or ";
+          var comment=safeDisplay?"  // "+safeDisplay:"";
+          lines.push(prefix+"(current_principal_is_member_of('aadgroup="+safeRlsId+"') and AgencyDomain == '"+safeDomain+"')"+comment);
+          clauseIdx++;
+        }
+      }
+      lines.push("}");
+    }
+    blocks.push({title:"Block 1 \u2014 RLS Function ("+enabledPairs.length+" clauses, "+countRLSAgencies(enabledPairs)+" agencies)",kql:lines.join("\n")});
+  }
+
+  if(state.rls.applyPolicies){
+    var selected=state.rls.selectedTables;
+    if(!selected.length){
+      blocks.push({title:"Block 2 \u2014 No tables selected",kql:"// Select tables in Table Scope above"});
+    }else{
+      for(var i=0;i<selected.length;i++){
+        blocks.push({title:"Apply RLS: "+selected[i],kql:".alter table "+selected[i]+" policy row_level_security enable \"RLS_AgencyFilter('"+selected[i]+"')\""});
+      }
+    }
+  }
+  renderRLSKqlBlocks(out,blocks);
+}
+function countRLSAgencies(pairs){var s={};for(var i=0;i<pairs.length;i++)s[pairs[i].domain]=1;return Object.keys(s).length}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: Retention
+// ═══════════════════════════════════════════════════════════════════
+function updateRetention(){
+  var cats=["Staging","Events","Alerts"];
+  for(var i=0;i<cats.length;i++){
+    var cat=cats[i];
+    var sel=document.getElementById("ret"+cat);
+    var custom=document.getElementById("ret"+cat+"Custom");
+    if(sel.value==="custom"){
+      custom.style.display="";
+      state.retention[cat.toLowerCase()]=custom.value.trim()||"365d";
+    }else{
+      custom.style.display="none";
+      state.retention[cat.toLowerCase()]=sel.value;
+    }
+  }
+  updateOverrideResolvedValues();
+  generateRetention();
+}
+
+function resolveRet(tableName,cat){
+  if(state.retention.overrides[tableName])return state.retention.overrides[tableName];
+  if(cat==="staging")return state.retention.staging;
+  if(cat==="event")return state.retention.events;
+  if(cat==="alert")return state.retention.alerts;
+  return"365d";
+}
+
+function buildRetentionOverrides(){
+  var pack=getPack();if(!pack)return;
+  var cont=document.getElementById("retentionOverrides");if(!cont)return;
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var html="";
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i];
+    var catClass=t.cat==="event"?"cat-event":(t.cat==="alert"?"cat-alert":"cat-staging");
+    var catLabel=t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"STG");
+    var resolved=resolveRet(t.name,t.cat);
+    html+='<div class="preset-row" style="padding:4px 10px">';
+    html+='<span class="cat '+catClass+'" style="min-width:32px;text-align:center">'+catLabel+'</span>';
+    html+='<span class="text-mono text-sm" style="flex:1">'+t.name+'</span>';
+    html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+(t.cat||"staging")+'" placeholder="'+resolved+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
+    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+resolved+'</span>';
+    html+='</div>';
+  }
+  cont.innerHTML=html;
+}
+
+function updateRetentionOverride(input){
+  var table=input.getAttribute("data-ret-table");
+  var val=input.value.trim();
+  if(val)state.retention.overrides[table]=val;
+  else delete state.retention.overrides[table];
+  updateOverrideResolvedValues();
+  generateRetention();
+}
+
+function updateOverrideResolvedValues(){
+  var pack=getPack();if(!pack)return;
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i];
+    var resolved=resolveRet(t.name,t.cat);
+    var el=document.querySelector('[data-resolved-for="'+t.name+'"]');
+    if(el)el.textContent=resolved;
+    // Update placeholder to reflect current category default
+    var inp=document.querySelector('[data-ret-table="'+t.name+'"]');
+    if(inp&&!inp.value.trim())inp.placeholder=resolved;
+  }
+}
+
+var _lastRetBlocks=[];
+function renderRetKqlBlocks(container,blocks){
+  _lastRetBlocks=blocks;
+  var copyAllBtn=document.getElementById("retCopyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var html="";
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i],id="ret_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllRetKql(){
+  var sep="////////////////////////////////////////";
+  var parts=[];
+  for(var i=0;i<_lastRetBlocks.length;i++){
+    parts.push("\n"+sep+"\n// "+_lastRetBlocks[i].title+"\n// Run separately in ADX Web UI\n"+sep+"\n"+_lastRetBlocks[i].kql);
+  }
+  var all=parts.join("\n");
+  var btn=document.getElementById("retCopyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+function generateRetention(){
+  var out=document.getElementById("retentionOutput");if(!out)return;
+  var pack=getPack();
+  if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var db=state.globalConfig.database||"{database}";
+  var cluster=state.globalConfig.clusterUri||"{cluster}";
+  var recover=state.retention.recoverability?"enabled":"disabled";
+  var blocks=[];
+
+  // Header block
+  blocks.push({title:"Retention — run each separately",kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Recoverability: "+recover+"\n// Run each .alter-merge command separately in ADX Web UI"});
+
+  // Staging table
+  var stagingRet=resolveRet(pack.stagingTable,"staging");
+  blocks.push({title:pack.stagingTable+" — "+stagingRet,kql:".alter-merge table "+pack.stagingTable+" policy retention softdelete = "+stagingRet+" recoverability = "+recover});
+
+  // Typed tables
+  for(var i=0;i<pack.tables.length;i++){
+    var t=pack.tables[i];
+    var ret=resolveRet(t.name,t.cat);
+    blocks.push({title:t.name+" — "+ret,kql:".alter-merge table "+t.name+" policy retention softdelete = "+ret+" recoverability = "+recover});
+  }
+
+  renderRetKqlBlocks(out,blocks);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
+    return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
+  });
+  state.tableBuilder.activePreset="rec";
+  bindConfig();
+  setupDropZone();
+  initTBChecklists();
+  syncRLSMappingsFromData();
+  initRLSChecklists();
+  buildRetentionOverrides();
+  syncEmailFieldPlaceholder();
+  setPhase("staging");
+  generateRLS();
+  generateRetention();
+  renderMappingSummary();
+}
+
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

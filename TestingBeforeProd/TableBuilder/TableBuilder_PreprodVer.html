@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEST — Table Builder Section</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.phase-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.phase-pill{padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);transition:all .15s}
+.phase-pill:hover{border-color:var(--text-secondary)}
+.phase-pill.active{background:var(--color-info);border-color:var(--color-info);color:#fff}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}
+.mt-8{margin-top:8px}.mb-8{margin-bottom:8px}
+.hidden{display:none!important}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.toggle-row label{font-size:13px;cursor:pointer;flex:1}
+.toggle-switch{position:relative;width:36px;height:20px;background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle-switch.on{background:var(--color-teal);border-color:var(--color-teal)}
+.toggle-switch .knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-switch.on .knob{left:18px}
+</style>
+<style>
+.tree-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:8px;overflow:hidden}
+.tree-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;transition:background .15s}
+.tree-header:hover{background:var(--bg-hover)}
+.tree-header .arrow{font-size:10px;color:var(--text-secondary);transition:transform .2s;width:12px}
+.tree-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-header .tree-label{font-size:13px;font-weight:600;flex:1}
+.tree-header .tree-count{font-size:10px;color:var(--text-secondary);background:var(--bg-surface);padding:1px 6px;border-radius:8px}
+.tree-header .tree-actions{display:flex;gap:6px;font-size:11px}
+.tree-header .tree-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-header .tree-actions a:hover{text-decoration:underline}
+.tree-body{padding:0 0 0 8px}.tree-body.collapsed{display:none}
+.tree-sub-header{display:flex;align-items:center;gap:6px;padding:6px 12px;cursor:pointer;user-select:none;font-size:12px;color:var(--text-secondary)}
+.tree-sub-header:hover{color:var(--text-primary)}
+.tree-sub-header .arrow{font-size:9px;width:10px;transition:transform .2s}
+.tree-sub-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-sub-header .sub-label{font-weight:600}
+.tree-sub-header .sub-actions{margin-left:auto;display:flex;gap:6px;font-size:10px}
+.tree-sub-header .sub-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-sub-body{padding:0 0 4px 20px}.tree-sub-body.collapsed{display:none}
+.table-checklist{display:grid;grid-template-columns:1fr;gap:2px;max-height:none}
+.table-check{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm);cursor:pointer}
+.table-check:hover{background:var(--bg-hover)}
+.table-check input[type="checkbox"]{accent-color:var(--color-info);cursor:pointer}
+</style>
+<style>
+.kql-block{margin-bottom:16px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kql-block .block-title{font-size:13px;font-weight:600}
+.kql-block textarea{width:100%;min-height:100px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;outline:none;line-height:1.6}
+.email-field-config{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:12px}
+.email-field-config label{font-size:12px;color:var(--color-teal);font-weight:600;white-space:nowrap}
+.email-field-config input{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:5px 8px;font-size:12px;font-family:var(--font-mono);width:180px;outline:none}
+.email-field-config .hint{font-size:11px;color:var(--text-secondary);flex:1}
+.email-field-config .preview{font-size:11px;color:var(--color-success);font-family:var(--font-mono);white-space:nowrap}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:960px}
+.filter-hint{font-size:11px;color:var(--text-secondary);padding:4px 0 0 46px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+</style>
+<style>
+.field-section{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.field-section-header{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;font-size:12px}
+.field-section-header:hover{background:var(--bg-hover)}
+.field-section-header .arrow{font-size:9px;width:10px;color:var(--text-secondary);transition:transform .2s}
+.field-section-header .arrow.collapsed{transform:rotate(-90deg)}
+.field-section-header .fs-label{font-weight:600;font-size:11px}
+.field-section-header .fs-count{font-size:10px;color:var(--text-secondary);margin-left:auto}
+.field-section-body{padding:4px}.field-section-body.collapsed{display:none}
+.field-row{display:grid;grid-template-columns:20px 24px 1fr 1fr 80px 24px;gap:4px;align-items:center;padding:3px 6px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm)}
+.field-row:hover{background:var(--bg-hover)}
+.field-row.disabled{opacity:.4}
+.field-row.disabled input[type="text"],.field-row.disabled select{pointer-events:none}
+.field-row-header{font-family:var(--font-ui);font-size:10px;text-transform:uppercase;color:var(--text-secondary);letter-spacing:.5px;padding:4px 6px}
+.field-row input[type="checkbox"]{accent-color:var(--color-info);cursor:pointer;width:14px;height:14px}
+.field-row input[type="text"]{background:var(--bg-base);border:1px solid transparent;color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:3px 6px;width:100%;outline:none;border-radius:var(--radius-sm)}
+.field-row input[type="text"]:focus{border-color:var(--border-focus)}
+.field-row select{background:var(--bg-base);border:1px solid transparent;color:var(--text-primary);font-family:var(--font-mono);font-size:11px;padding:3px 4px;outline:none;border-radius:var(--radius-sm);cursor:pointer;width:100%}
+.field-row .remove-btn{color:var(--color-error);cursor:pointer;font-size:16px;text-align:center;opacity:.5;line-height:1}
+.field-row .remove-btn:hover{opacity:1}
+.field-row .field-idx{font-size:10px;color:var(--text-secondary);text-align:center}
+.add-field-row{display:flex;gap:6px;padding:6px;align-items:center}
+.add-field-row input{background:var(--bg-base);border:1px solid var(--border);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:4px 8px;border-radius:var(--radius-sm);outline:none;width:140px}
+.add-field-row select{background:var(--bg-base);border:1px solid var(--border);color:var(--text-primary);font-size:12px;padding:4px 6px;border-radius:var(--radius-sm);outline:none}
+.field-summary{font-size:11px;color:var(--text-secondary);margin-top:8px;padding:0 4px}
+/* ── Preset bar ── */
+.preset-bar{display:flex;align-items:center;gap:6px;padding:10px 0 6px;flex-wrap:wrap}
+.preset-bar .preset-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-right:2px}
+.preset-pill{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);transition:all .15s;user-select:none}
+.preset-pill:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+.preset-pill.active-rec{background:rgba(34,197,94,.2);border-color:var(--color-success);color:var(--color-success)}
+.preset-pill.active-ext{background:rgba(74,158,237,.2);border-color:var(--color-info);color:var(--color-info)}
+.preset-pill.active-notrec{background:rgba(239,68,68,.15);border-color:var(--color-error);color:var(--color-error)}
+.preset-pill.active-all{background:rgba(167,139,250,.2);border-color:var(--color-purple);color:var(--color-purple)}
+.preset-sep{width:1px;height:16px;background:var(--border);margin:0 2px}
+.tier-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:2px}
+.tier-dot-rec{background:var(--color-success)}
+.tier-dot-ext{background:var(--color-info)}
+.tier-dot-notrec{background:var(--color-error)}
+.tier-dot-custom{background:var(--color-purple)}
+.preset-pill.active-sentinel{background:rgba(45,212,191,.2);border-color:var(--color-teal);color:var(--color-teal)}
+.sentinel-badge{display:inline-block;font-size:8px;font-weight:700;padding:0 3px;border-radius:2px;background:rgba(45,212,191,.2);color:var(--color-teal);vertical-align:middle;margin-left:2px;letter-spacing:.3px}
+</style>
+</head>
+<body>
+<div class="test-banner">TEST HARNESS — Table Builder section only. Edit here, merge to index.html when stable.</div>
+<div style="max-width:960px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Table Builder</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Generate phased ADX table creation commands.</p>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Build Phase</div>
+    <div class="phase-pills" id="phasePills">
+      <span class="phase-pill active" data-phase="staging" onclick="setPhase('staging')">1. Staging Table</span>
+      <span class="phase-pill" data-phase="typed" onclick="setPhase('typed')">2. Typed Tables</span>
+    </div>
+    <div id="phaseDescription" class="text-sm text-muted"></div>
+  </div>
+  <div class="card" id="tableSelectionCard" style="display:none">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-info)"></span> Table Selection</span>
+      <span class="text-sm text-muted" id="tableSelectionCount"></span>
+    </div>
+    <div class="text-sm text-muted mb-8">Choose which typed tables to generate. Each schema pack adds its own group below.</div>
+    <div id="tableBuilderChecklist"></div>
+  </div>
+  <div class="card" id="fieldConfigCard" style="display:none">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-purple)"></span> Field Configuration</span>
+      <span class="text-sm text-muted" id="fieldConfigCount"></span>
+    </div>
+    <div class="text-sm text-muted mb-8">Configure extraction options and choose which fields to flatten from RawData into real columns.</div>
+    <div id="fieldOptionsArea">
+      <div class="toggle-row"><div class="toggle-switch on" id="togAgencyFilter" onclick="toggleOption('addAgencyFilter',this)"><div class="knob"></div></div><label onclick="toggleOption('addAgencyFilter',document.getElementById('togAgencyFilter'))">Add AgencyDomain filter</label><span class="text-sm text-muted" style="flex:none">Required for RLS</span></div>
+      <div id="emailFieldWrap" style="margin-top:4px;margin-bottom:4px"><div class="email-field-config"><label>RawData.</label><input id="emailFieldInput" type="text" placeholder="user" spellcheck="false" oninput="updateEmailField()"><span class="hint">Pack default shown as placeholder. Type to override.</span><span class="preview" id="emailFieldPreview">RawData.user</span></div></div>
+      <div class="toggle-row"><div class="toggle-switch on" id="togFlatten" onclick="toggleOption('flattenFields',this)"><div class="knob"></div></div><label onclick="toggleOption('flattenFields',document.getElementById('togFlatten'))">Flatten fields into columns</label><span class="text-sm text-muted" style="flex:none">RawData kept as archive</span></div>
+      <div class="divider"></div>
+    </div>
+    <div id="fieldEditorArea"></div>
+  </div>
+  <div class="card" id="kqlOutputCard">
+    <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span><div style="display:flex;gap:6px"><button class="btn btn-sm" id="copyAllBtn" style="display:none" onclick="copyAllKql()">Copy All</button><button class="btn btn-sm" onclick="generateTableBuilder()">Refresh</button></div></div>
+    <div id="tableBuilderOutput"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// DEFAULT_FLATTEN_FIELDS — tier: "rec"|"ext"|"notrec", sentinel: bool
+// sentinel = true → needed for Sentinel entity mapping, ASIM, analytics rules, or workbooks
+// ═══════════════════════════════════════════════════════════════════
+var DEFAULT_FLATTEN_FIELDS = [
+  // ── Common: Recommended ──                                                          // Sentinel entity / use
+  {cat:"common", raw:"user",              col:"User",              type:"string", tier:"rec",    sentinel:true},  // Account entity
+  {cat:"common", raw:"userPrincipalName", col:"UserPrincipalName", type:"string", tier:"rec",    sentinel:true},  // Account entity (UPN)
+  {cat:"common", raw:"srcip",             col:"SrcIP",             type:"string", tier:"rec",    sentinel:true},  // IP entity
+  {cat:"common", raw:"dstip",             col:"DstIP",             type:"string", tier:"rec",    sentinel:true},  // IP entity
+  {cat:"common", raw:"app",               col:"App",               type:"string", tier:"rec",    sentinel:true},  // CloudApp entity
+  {cat:"common", raw:"category",          col:"Category",          type:"string", tier:"rec",    sentinel:true},  // ASIM event categorization
+  {cat:"common", raw:"access_method",     col:"AccessMethod",      type:"string", tier:"rec",    sentinel:false},
+  {cat:"common", raw:"traffic_type",      col:"TrafficType",       type:"string", tier:"rec",    sentinel:false},
+  {cat:"common", raw:"policy",            col:"Policy",            type:"string", tier:"rec",    sentinel:true},  // DLP workbooks
+  {cat:"common", raw:"severity",          col:"Severity",          type:"string", tier:"rec",    sentinel:true},  // Incident severity mapping
+  {cat:"common", raw:"severity_level",    col:"SeverityLevel",     type:"string", tier:"rec",    sentinel:true},  // Incident severity mapping
+  // ── Common: Extended ──
+  {cat:"common", raw:"appcategory",       col:"AppCategory",       type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"ccl",               col:"CloudConfidence",   type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"hostname",          col:"Hostname",          type:"string", tier:"ext",    sentinel:true},  // Host entity
+  {cat:"common", raw:"os",                col:"OS",                type:"string", tier:"ext",    sentinel:true},  // UEBA / endpoint analytics
+  {cat:"common", raw:"browser",           col:"Browser",           type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"device",            col:"Device",            type:"string", tier:"ext",    sentinel:true},  // UEBA / endpoint analytics
+  {cat:"common", raw:"protocol",          col:"Protocol",          type:"string", tier:"ext",    sentinel:true},  // ASIM NetworkSession
+  {cat:"common", raw:"organization_unit", col:"OrgUnit",           type:"string", tier:"ext",    sentinel:false},
+  // ── Common: Extended (cont.) ──
+  {cat:"common", raw:"useragent",         col:"UserAgent",         type:"string", tier:"ext",    sentinel:false},
+  {cat:"common", raw:"ur_normalized",     col:"UrlNormalized",     type:"string", tier:"ext",    sentinel:true},  // URL entity
+  // ── Common: Not Recommended ──
+  {cat:"common", raw:"instance_id",       col:"InstanceId",        type:"string", tier:"notrec", sentinel:false},
+  {cat:"common", raw:"request_id",        col:"RequestId",         type:"string", tier:"notrec", sentinel:false},
+  {cat:"common", raw:"transaction_id",    col:"TransactionId",     type:"string", tier:"notrec", sentinel:false},
+  // ── Event: Recommended ──
+  {cat:"event",  raw:"url",               col:"Url",               type:"string", tier:"rec",    sentinel:true},  // URL entity
+  {cat:"event",  raw:"domain",            col:"Domain",            type:"string", tier:"rec",    sentinel:true},  // DNS entity
+  // ── Event: Extended ──
+  {cat:"event",  raw:"page",              col:"Page",              type:"string", tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"site",              col:"Site",              type:"string", tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"dstport",           col:"DstPort",           type:"int",    tier:"ext",    sentinel:true},  // ASIM NetworkSession
+  {cat:"event",  raw:"numbytes",          col:"NumBytes",          type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"client_bytes",      col:"ClientBytes",       type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"server_bytes",      col:"ServerBytes",       type:"long",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"conn_duration",     col:"ConnDuration",      type:"real",   tier:"ext",    sentinel:false},
+  {cat:"event",  raw:"ssl_decrypt_policy",col:"SslDecryptPolicy",  type:"string", tier:"ext",    sentinel:false},
+  // ── Alert: Recommended ──
+  {cat:"alert",  raw:"alert_name",        col:"AlertName",         type:"string", tier:"rec",    sentinel:true},  // Alert correlation
+  {cat:"alert",  raw:"alert_type",        col:"AlertType",         type:"string", tier:"rec",    sentinel:true},  // Alert correlation
+  {cat:"alert",  raw:"action",            col:"Action",            type:"string", tier:"rec",    sentinel:true},  // ASIM activity mapping
+  {cat:"alert",  raw:"activity",          col:"Activity",          type:"string", tier:"rec",    sentinel:true},  // ASIM activity mapping
+  // ── Alert: Extended ──
+  {cat:"alert",  raw:"object",            col:"Object",            type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"object_type",       col:"ObjectType",        type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"file_name",         col:"FileName",          type:"string", tier:"ext",    sentinel:true},  // File entity
+  {cat:"alert",  raw:"file_type",         col:"FileType",          type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"file_size",         col:"FileSize",          type:"long",   tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"dlp_profile",       col:"DlpProfile",        type:"string", tier:"ext",    sentinel:true},  // DLP workbooks
+  {cat:"alert",  raw:"exposure",          col:"Exposure",          type:"string", tier:"ext",    sentinel:true},  // DLP workbooks
+  {cat:"alert",  raw:"risk_level",        col:"RiskLevel",         type:"string", tier:"ext",    sentinel:true},  // Risk scoring / UEBA
+  {cat:"alert",  raw:"malware_name",      col:"MalwareName",       type:"string", tier:"ext",    sentinel:true},  // Malware entity
+  {cat:"alert",  raw:"malware_type",      col:"MalwareType",       type:"string", tier:"ext",    sentinel:true},  // Malware analytics
+  {cat:"alert",  raw:"malsite_category",  col:"MalsiteCategory",   type:"string", tier:"ext",    sentinel:true},  // Malsite analytics
+  // ── Alert: Recommended (cont.) ──
+  {cat:"alert",  raw:"md5",               col:"MD5",               type:"string", tier:"rec",    sentinel:true},  // FileHash entity
+  {cat:"alert",  raw:"sha256",            col:"SHA256",            type:"string", tier:"rec",    sentinel:true},  // FileHash entity
+  {cat:"alert",  raw:"from_user",         col:"FromUser",          type:"string", tier:"rec",    sentinel:true},  // Account entity (src)
+  {cat:"alert",  raw:"to_user",           col:"ToUser",            type:"string", tier:"rec",    sentinel:true},  // Account entity (dst)
+  {cat:"alert",  raw:"url",               col:"Url",               type:"string", tier:"rec",    sentinel:true},  // URL entity
+  // ── Alert: Extended (cont.) ──
+  {cat:"alert",  raw:"shared_with",       col:"SharedWith",        type:"string", tier:"ext",    sentinel:false},
+  {cat:"alert",  raw:"dstport",           col:"DstPort",           type:"int",    tier:"ext",    sentinel:true},  // ASIM NetworkSession
+  {cat:"alert",  raw:"numbytes",          col:"NumBytes",          type:"long",   tier:"ext",    sentinel:false}
+];
+
+var TIER_META = {
+  rec:    {label:"Recommended",  color:"var(--color-success)", cls:"active-rec",    desc:"Core SOC/hunting fields. Always useful."},
+  ext:    {label:"Extended",     color:"var(--color-info)",    cls:"active-ext",    desc:"Valuable for deeper analysis. Enable as needed."},
+  notrec: {label:"Not Rec.",     color:"var(--color-error)",   cls:"active-notrec", desc:"High cardinality or niche. Available in RawData."}
+};
+
+var SCHEMA_PACKS={netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",stagingSchema:"TimeGenerated:datetime, StreamType:string, RawData:dynamic",mappingName:"Netskope_Raw_Mapping",mappingDef:'[{"Name":"TimeGenerated","Source":"TimeGenerated","Transform":"DateTimeFromUnixMilliseconds"},{"Name":"StreamType","Source":"StreamType"},{"Name":"RawData","Source":""}]',userEmailField:"user",tables:[{name:"NetskopeEventsPage_CL",stream:"events_page",cat:"event"},{name:"NetskopeEventsApplication_CL",stream:"events_application",cat:"event"},{name:"NetskopeEventsAudit_CL",stream:"events_audit",cat:"event"},{name:"NetskopeEventsInfrastructure_CL",stream:"events_infrastructure",cat:"event"},{name:"NetskopeEventsNetwork_CL",stream:"events_network",cat:"event"},{name:"NetskopeEventsConnection_CL",stream:"events_connection",cat:"event"},{name:"NetskopeEventsEndpoint_CL",stream:"events_endpoint",cat:"event"},{name:"NetskopeEventsIncident_CL",stream:"events_incident",cat:"event"},{name:"NetskopeAlertsPolicy_CL",stream:"alerts_policy",cat:"alert"},{name:"NetskopeAlertsUba_CL",stream:"alerts_uba",cat:"alert"},{name:"NetskopeAlertsCompromisedCredential_CL",stream:"alerts_compromisedcredential",cat:"alert"},{name:"NetskopeAlertsRemediation_CL",stream:"alerts_remediation",cat:"alert"},{name:"NetskopeAlertsSecurityAssessment_CL",stream:"alerts_securityassessment",cat:"alert"},{name:"NetskopeAlertsQuarantine_CL",stream:"alerts_quarantine",cat:"alert"},{name:"NetskopeAlertsMalware_CL",stream:"alerts_malware",cat:"alert"},{name:"NetskopeAlertsMalsite_CL",stream:"alerts_malsite",cat:"alert"},{name:"NetskopeAlertsDlp_CL",stream:"alerts_dlp",cat:"alert"},{name:"NetskopeAlertsCtep_CL",stream:"alerts_ctep",cat:"alert"},{name:"NetskopeAlertsWatchlist_CL",stream:"alerts_watchlist",cat:"alert"},{name:"NetskopeAlertsDevice_CL",stream:"alerts_device",cat:"alert"},{name:"NetskopeAlertsContent_CL",stream:"alerts_content",cat:"alert"}],baseTypedSchema:"TimeGenerated:datetime, RawData:dynamic",folder:"Netskope"}};
+
+var state={globalConfig:{clusterUri:"https://testcluster.westus2.kusto.windows.net",database:"NetskopeDB",tenantId:"72f988bf-86f1-41af-91ab-2d7cd011db47"},activePack:"netskope",tableBuilder:{phase:"staging",selectedTables:[],emailFieldOverride:"",addAgencyFilter:true,flattenFields:true,fields:[],activePreset:"rec"}};
+
+function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function getAllTables(){var p=getPack();return p?p.tables:[]}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function getActiveEmailField(){var p=getPack(),o=state.tableBuilder.emailFieldOverride;return o?o:(p?p.userEmailField:"user")}
+function getActiveExtractExpr(){var f=getActiveEmailField();return 'tostring(split(split(tostring(RawData.'+f+'), "@")[1], ".")[0])'}
+function getFieldsForCat(cat){
+  if(!state.tableBuilder.flattenFields)return[];
+  return state.tableBuilder.fields.filter(function(f){return f.enabled&&(f.cat==="common"||f.cat===cat)});
+}
+function getTypedSchema(cat){var p=getPack();if(!p)return"";var parts=[p.baseTypedSchema];if(state.tableBuilder.addAgencyFilter)parts.push("AgencyDomain:string");var ff=getFieldsForCat(cat);for(var i=0;i<ff.length;i++)parts.push(ff[i].col+":"+ff[i].type);return parts.join(", ")}
+function castExpr(k,t){if(t==="string")return"tostring(RawData."+k+")";if(t==="int")return"toint(RawData."+k+")";if(t==="long")return"tolong(RawData."+k+")";if(t==="real")return"toreal(RawData."+k+")";if(t==="bool")return"tobool(RawData."+k+")";if(t==="datetime")return"todatetime(RawData."+k+")";if(t==="dynamic")return"RawData."+k;return"tostring(RawData."+k+")"}
+function updateEmailField(){var el=document.getElementById("emailFieldInput");state.tableBuilder.emailFieldOverride=el.value.trim();document.getElementById("emailFieldPreview").textContent="RawData."+getActiveEmailField();generateTableBuilder()}
+function makeBanner(t){var p=80-t.length-4,l=Math.floor(p/2),r=p-l,s="";for(var i=0;i<l;i++)s+="/";s+=" "+t+" ";for(var i=0;i<r;i++)s+="/";return"// "+s}
+function getSelectedCats(){var tables=getAllTables(),sel=state.tableBuilder.selectedTables,hE=false,hA=false;for(var i=0;i<tables.length;i++){if(sel.indexOf(tables[i].name)>=0){if(tables[i].cat==="event")hE=true;if(tables[i].cat==="alert")hA=true}}return{event:hE,alert:hA,any:hE||hA}}
+function toggleOption(key,el){var isOn=!el.classList.contains("on");if(isOn)el.classList.add("on");else el.classList.remove("on");state.tableBuilder[key]=isOn;if(key==="addAgencyFilter")document.getElementById("emailFieldWrap").style.display=isOn?"":"none";renderFieldEditor();generateTableBuilder()}
+function copyToClipboard(btn,taId){var ta=document.getElementById(taId);if(!ta)return;navigator.clipboard.writeText(ta.value).then(function(){btn.classList.add("btn-copied");btn.textContent="Copied!";setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500)})}
+
+// ═══════════════════════════════════════════════════════════════════
+// Preset system
+// ═══════════════════════════════════════════════════════════════════
+function applyPreset(preset){
+  var fields=state.tableBuilder.fields;
+  if(preset==="all"){
+    for(var i=0;i<fields.length;i++)fields[i].enabled=true;
+    state.tableBuilder.activePreset="all";
+  }else if(preset==="none"){
+    for(var i=0;i<fields.length;i++)fields[i].enabled=false;
+    state.tableBuilder.activePreset="none";
+  }else if(preset==="sentinel"){
+    // Cross-cutting: enable all sentinel-flagged fields regardless of tier
+    for(var i=0;i<fields.length;i++){
+      fields[i].enabled=!!fields[i].sentinel;
+    }
+    state.tableBuilder.activePreset="sentinel";
+  }else{
+    // Toggle tiers cumulatively: rec = rec only; ext = rec+ext; notrec = all
+    var include={};
+    if(preset==="rec"){include.rec=true}
+    else if(preset==="ext"){include.rec=true;include.ext=true}
+    else if(preset==="notrec"){include.rec=true;include.ext=true;include.notrec=true}
+    for(var i=0;i<fields.length;i++){
+      fields[i].enabled=!!include[fields[i].tier];
+    }
+    state.tableBuilder.activePreset=preset;
+  }
+  renderFieldEditor();
+  generateTableBuilder();
+}
+function toggleFieldEnabled(idx){
+  state.tableBuilder.fields[idx].enabled=!state.tableBuilder.fields[idx].enabled;
+  // Clear preset highlight since user customized
+  state.tableBuilder.activePreset="custom";
+  renderFieldEditor();
+  generateTableBuilder();
+}
+function getPresetState(){
+  // Detect which preset matches current enabled state
+  var fields=state.tableBuilder.fields;
+  var allOn=true,allOff=true,recOnly=true,recExt=true,sentinelMatch=true;
+  for(var i=0;i<fields.length;i++){
+    var f=fields[i];
+    if(f.enabled)allOff=false; else allOn=false;
+    if(f.tier==="rec"&&!f.enabled)recOnly=false;
+    if(f.tier!=="rec"&&f.enabled)recOnly=false;
+    if((f.tier==="rec"||f.tier==="ext")&&!f.enabled)recExt=false;
+    if(f.tier==="notrec"&&f.enabled)recExt=false;
+    // sentinel: enabled should match sentinel flag exactly
+    if(f.sentinel&&!f.enabled)sentinelMatch=false;
+    if(!f.sentinel&&f.enabled)sentinelMatch=false;
+  }
+  if(allOn)return"all";
+  if(allOff)return"none";
+  if(recOnly)return"rec";
+  if(recExt)return"ext";
+  if(sentinelMatch)return"sentinel";
+  return"custom";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Table checklists
+// ═══════════════════════════════════════════════════════════════════
+function initTableChecklists(){
+  var pack=getPack(),container=document.getElementById("tableBuilderChecklist");
+  if(!container||!pack)return;
+  var tables=pack.tables,events=tables.filter(function(t){return t.cat==="event"}),alerts=tables.filter(function(t){return t.cat==="alert"});
+  var html='<div class="tree-group"><div class="tree-header" onclick="toggleTreeGroup(this)"><span class="arrow">&#9660;</span><span class="tree-label">'+esc(pack.name)+'</span><span class="tree-count">'+tables.length+' tables</span><span class="tree-actions"><a onclick="event.stopPropagation();toggleAllTables(true)">All</a> <a onclick="event.stopPropagation();toggleAllTables(false)">None</a></span></div><div class="tree-body">';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(34,197,94,.15);color:var(--color-success);padding:1px 6px;border-radius:3px;font-size:10px">Events</span><span class="tree-count">'+events.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleCat(\'event\',true)">All</a> <a onclick="event.stopPropagation();toggleCat(\'event\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<events.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-table="'+events[i].name+'" onchange="onTableCheck()"><span>'+events[i].name+'</span></label>';
+  html+='</div></div>';
+  html+='<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(245,158,11,.15);color:var(--color-warn);padding:1px 6px;border-radius:3px;font-size:10px">Alerts</span><span class="tree-count">'+alerts.length+'</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleCat(\'alert\',true)">All</a> <a onclick="event.stopPropagation();toggleCat(\'alert\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i=0;i<alerts.length;i++)html+='<label class="table-check"><input type="checkbox" checked data-table="'+alerts[i].name+'" onchange="onTableCheck()"><span>'+alerts[i].name+'</span></label>';
+  html+='</div></div></div></div>';
+  container.innerHTML=html;onTableCheck();
+  // Auto-collapse tree when all tables selected (saves vertical space)
+  var allChecked=document.querySelectorAll('input[data-table]').length===document.querySelectorAll('input[data-table]:checked').length;
+  if(allChecked){
+    var grpHeader=container.querySelector('.tree-header');
+    if(grpHeader){grpHeader.querySelector('.arrow').classList.add('collapsed');grpHeader.nextElementSibling.classList.add('collapsed')}
+  }
+}
+function onTableCheck(){
+  var cks=document.querySelectorAll('input[data-table]:checked'),sel=[];
+  for(var i=0;i<cks.length;i++)sel.push(cks[i].getAttribute("data-table"));
+  state.tableBuilder.selectedTables=sel;
+  var total=document.querySelectorAll('input[data-table]').length;
+  var badge=document.getElementById("tableSelectionCount");
+  if(badge)badge.textContent=sel.length+"/"+total+" selected";
+  renderFieldEditor();
+}
+function toggleAllTables(c){var cbs=document.querySelectorAll('input[data-table]');for(var i=0;i<cbs.length;i++)cbs[i].checked=c;onTableCheck()}
+function toggleCat(cat,c){var tables=getAllTables(),cbs=document.querySelectorAll('input[data-table]');for(var i=0;i<cbs.length;i++){var n=cbs[i].getAttribute("data-table"),t=null;for(var j=0;j<tables.length;j++){if(tables[j].name===n){t=tables[j];break}}if(t&&t.cat===cat)cbs[i].checked=c}onTableCheck()}
+function toggleTreeGroup(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+function toggleTreeSub(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+
+// ═══════════════════════════════════════════════════════════════════
+// Field editor with preset bar + checkboxes
+// ═══════════════════════════════════════════════════════════════════
+function renderFieldEditor(){
+  var area=document.getElementById("fieldEditorArea");
+  var fcBadge=document.getElementById("fieldConfigCount");
+  if(!state.tableBuilder.flattenFields){area.innerHTML="";if(fcBadge)fcBadge.textContent="flattening off";return}
+  var cats=getSelectedCats();
+  if(!cats.any){area.innerHTML='<div class="text-sm text-muted mt-8">Select tables in Table Selection above to configure fields.</div>';if(fcBadge)fcBadge.textContent="no tables selected";return}
+  var fields=state.tableBuilder.fields;
+  var curPreset=getPresetState();
+
+  // ── Preset bar ──
+  var html='<div class="preset-bar">';
+  html+='<span class="preset-label">Presets</span>';
+  var presets=[
+    {key:"rec",    label:"Recommended"},
+    {key:"ext",    label:"Rec + Extended"},
+    {key:"notrec", label:"All Fields"},
+  ];
+  for(var p=0;p<presets.length;p++){
+    var pr=presets[p],isActive=curPreset===pr.key;
+    var tm=TIER_META[pr.key];
+    html+='<span class="preset-pill'+(isActive?" "+tm.cls:"")+'" onclick="applyPreset(\''+pr.key+'\')" title="'+tm.desc+'">';
+    html+='<span class="tier-dot tier-dot-'+pr.key+'"></span> '+pr.label+'</span>';
+  }
+  html+='<span class="preset-sep"></span>';
+  html+='<span class="preset-pill'+(curPreset==="sentinel"?" active-sentinel":"")+'" onclick="applyPreset(\'sentinel\')" title="Fields needed for Sentinel entity mapping, ASIM schemas, analytics rules, and workbooks">Sentinel / LA</span>';
+  html+='<span class="preset-sep"></span>';
+  html+='<span class="preset-pill'+(curPreset==="all"?" active-all":"")+'" onclick="applyPreset(\'all\')" title="Enable all fields">All</span>';
+  html+='<span class="preset-pill'+(curPreset==="none"?" active-all":"")+'" onclick="applyPreset(\'none\')" title="Disable all fields">None</span>';
+  html+='</div>';
+
+  // ── Field sections ──
+  var sections=[];
+  if(cats.any)sections.push({key:"common",label:"Common Fields (Events + Alerts)",color:"var(--color-info)",bg:"rgba(74,158,237,.12)"});
+  if(cats.event)sections.push({key:"event",label:"Event-Only Fields",color:"var(--color-success)",bg:"rgba(34,197,94,.12)"});
+  if(cats.alert)sections.push({key:"alert",label:"Alert-Only Fields",color:"var(--color-warn)",bg:"rgba(245,158,11,.12)"});
+  var types=["string","int","long","real","bool","datetime","dynamic"];
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    var secFields=[];
+    for(var i=0;i<fields.length;i++){if(fields[i].cat===sec.key)secFields.push({idx:i,f:fields[i]})}
+    var enabledCount=0;for(var i=0;i<secFields.length;i++){if(secFields[i].f.enabled)enabledCount++}
+    html+='<div class="field-section" style="margin-top:'+(s===0?"12":"6")+'px">';
+    html+='<div class="field-section-header" onclick="toggleFieldSection(this)" style="border-left:3px solid '+sec.color+'">';
+    html+='<span class="arrow">&#9660;</span>';
+    html+='<span class="fs-label" style="color:'+sec.color+'">'+sec.label+'</span>';
+    html+='<span class="fs-count">'+enabledCount+'/'+secFields.length+'</span>';
+    html+='<span class="tree-actions" style="margin-left:6px" onclick="event.stopPropagation()"><a onclick="toggleSectionFields(\''+sec.key+'\',true)">All</a> <a onclick="toggleSectionFields(\''+sec.key+'\',false)">None</a></span>';
+    html+='</div>';
+    html+='<div class="field-section-body">';
+    html+='<div class="field-row field-row-header"><span></span><span></span><span>RawData Key</span><span>Column Name</span><span>Type</span><span></span></div>';
+    for(var f=0;f<secFields.length;f++){
+      var idx=secFields[f].idx,fd=secFields[f].f;
+      var tierDot=fd.tier?'<span class="tier-dot tier-dot-'+fd.tier+'" title="'+(TIER_META[fd.tier]?TIER_META[fd.tier].label:"Custom")+'"></span>':'';
+      var sBadge=fd.sentinel?'<span class="sentinel-badge" title="Sentinel / Log Analytics">LA</span>':'';
+      html+='<div class="field-row'+(fd.enabled?'':' disabled')+'">';
+      html+='<input type="checkbox" '+(fd.enabled?'checked':'')+' onchange="toggleFieldEnabled('+idx+')" title="Include in schema">';
+      html+='<span class="field-idx">'+tierDot+(f+1)+sBadge+'</span>';
+      html+='<input type="text" value="'+esc(fd.raw)+'" onchange="editField('+idx+',\'raw\',this.value)">';
+      html+='<input type="text" value="'+esc(fd.col)+'" onchange="editField('+idx+',\'col\',this.value)">';
+      html+='<select onchange="editField('+idx+',\'type\',this.value)">';
+      for(var ti=0;ti<types.length;ti++)html+='<option value="'+types[ti]+'"'+(fd.type===types[ti]?' selected':'')+'>'+types[ti]+'</option>';
+      html+='</select>';
+      html+='<span class="remove-btn" onclick="removeField('+idx+')" title="Remove">&times;</span></div>';
+    }
+    html+='<div class="add-field-row"><input type="text" id="addRaw_'+sec.key+'" placeholder="RawData.field"><input type="text" id="addCol_'+sec.key+'" placeholder="ColumnName"><select id="addType_'+sec.key+'">';
+    for(var ti=0;ti<types.length;ti++)html+='<option value="'+types[ti]+'">'+types[ti]+'</option>';
+    html+='</select><button class="btn btn-sm" onclick="addField(\''+sec.key+'\')">+ Add</button></div>';
+    html+='</div></div>';
+  }
+
+  // ── Summary ──
+  var evEnabled=0,evTotal=0,alEnabled=0,alTotal=0;
+  for(var i=0;i<fields.length;i++){
+    var fc=fields[i];
+    if(fc.cat==="common"){evTotal++;alTotal++;if(fc.enabled){evEnabled++;alEnabled++}}
+    else if(fc.cat==="event"){evTotal++;if(fc.enabled)evEnabled++}
+    else if(fc.cat==="alert"){alTotal++;if(fc.enabled)alEnabled++}
+  }
+  html+='<div class="field-summary">';
+  if(cats.event)html+='<span style="color:var(--color-success)">'+evEnabled+'/'+evTotal+' event cols</span>';
+  if(cats.event&&cats.alert)html+=' &bull; ';
+  if(cats.alert)html+='<span style="color:var(--color-warn)">'+alEnabled+'/'+alTotal+' alert cols</span>';
+  html+=' &bull; RawData kept as archive';
+  html+=' &bull; <span class="tier-dot tier-dot-rec"></span>rec <span class="tier-dot tier-dot-ext"></span>ext <span class="tier-dot tier-dot-notrec"></span>notrec';
+  html+='</div>';
+  area.innerHTML=html;
+  // Update field config card badge
+  var totalEnabled=0;for(var i=0;i<fields.length;i++){if(fields[i].enabled)totalEnabled++}
+  var fcBadge=document.getElementById("fieldConfigCount");
+  if(fcBadge)fcBadge.textContent=totalEnabled+"/"+fields.length+" enabled";
+}
+function toggleFieldSection(h){h.querySelector(".arrow").classList.toggle("collapsed");h.nextElementSibling.classList.toggle("collapsed")}
+function toggleSectionFields(cat,enabled){
+  var fields=state.tableBuilder.fields;
+  for(var i=0;i<fields.length;i++){if(fields[i].cat===cat)fields[i].enabled=enabled}
+  state.tableBuilder.activePreset="custom";
+  renderFieldEditor();generateTableBuilder();
+}
+function editField(idx,prop,val){state.tableBuilder.fields[idx][prop]=val;generateTableBuilder()}
+function removeField(idx){state.tableBuilder.fields.splice(idx,1);renderFieldEditor();generateTableBuilder()}
+function addField(cat){var rEl=document.getElementById("addRaw_"+cat),cEl=document.getElementById("addCol_"+cat),tEl=document.getElementById("addType_"+cat);var raw=rEl.value.trim();if(!raw)return;var col=cEl.value.trim();if(!col)col=raw.split("_").map(function(w){return w.charAt(0).toUpperCase()+w.slice(1)}).join("");state.tableBuilder.fields.push({cat:cat,raw:raw,col:col,type:tEl.value,tier:"custom",sentinel:false,enabled:true});rEl.value="";cEl.value="";renderFieldEditor();generateTableBuilder()}
+
+// ═══════════════════════════════════════════════════════════════════
+// KQL rendering
+// ═══════════════════════════════════════════════════════════════════
+var _lastRenderedBlocks=[];
+function renderKqlBlocks(container,blocks,prefix){
+  _lastRenderedBlocks=blocks;
+  var copyAllBtn=document.getElementById("copyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var html="";for(var i=0;i<blocks.length;i++){var b=blocks[i],id=prefix+"_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,4),30);
+  html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>'}
+  container.innerHTML=html;
+}
+function copyAllKql(){
+  var all=_lastRenderedBlocks.map(function(b){return b.kql}).join("\n\n");
+  var btn=document.getElementById("copyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+var PHASE_DESC={staging:"Creates the raw staging table with ingestion mapping.",typed:"Creates each typed table, transform function, and update policy \u2014 grouped per table."};
+function setPhase(phase){
+  state.tableBuilder.phase=phase;
+  var pills=document.querySelectorAll(".phase-pill");
+  for(var i=0;i<pills.length;i++)pills[i].classList.toggle("active",pills[i].getAttribute("data-phase")===phase);
+  document.getElementById("phaseDescription").textContent=PHASE_DESC[phase]||"";
+  var showTyped=phase!=="staging";
+  document.getElementById("tableSelectionCard").style.display=showTyped?"":"none";
+  document.getElementById("fieldConfigCard").style.display=showTyped?"":"none";
+  generateTableBuilder();
+}
+
+function generateTableBuilder(){
+  var pack=getPack(),out=document.getElementById("tableBuilderOutput");
+  if(!out||!pack)return;
+  var db=state.globalConfig.database||"{database}",cluster=state.globalConfig.clusterUri||"{cluster}";
+  var phase=state.tableBuilder.phase,selected=state.tableBuilder.selectedTables;
+  var tables=pack.tables.filter(function(t){return selected.indexOf(t.name)>=0});
+  var addFilter=state.tableBuilder.addAgencyFilter,blocks=[];
+
+  if(phase==="staging"){
+    blocks.push({title:"Create staging table + ingestion mapping",
+      kql:makeBanner(pack.stagingTable)+"\n// Cluster: "+cluster+"  Database: "+db+"\n\n"+
+      ".create table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")\n\n"+
+      "// Run this SECOND:\n.create table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+  }
+
+  if(phase==="typed"){
+    if(!tables.length){blocks.push({title:"No tables selected",kql:"// Select tables from the tree above"});
+    }else{
+      for(var i=0;i<tables.length;i++){
+        var t=tables[i],fn="fn_"+t.name.replace(/_CL$/,"");
+        var catFolder=t.cat==="event"?"Events":"Alerts";
+        var tableFolder=pack.folder+"/"+catFolder;
+        var funcFolder=pack.folder+"/Functions/"+catFolder;
+        var typedSchema=getTypedSchema(t.cat);
+        var flatFields=getFieldsForCat(t.cat);
+        var lines=[];
+        lines.push(makeBanner(t.name));
+        lines.push("// Run each command below one at a time in ADX Web UI");
+        lines.push("");
+        // Step 1
+        lines.push("// Step 1: Create table");
+        var schemaParts=typedSchema.split(", ");
+        lines.push(".create table "+t.name+" (");
+        for(var s=0;s<schemaParts.length;s++)lines.push("    "+schemaParts[s]+(s<schemaParts.length-1?",":""));
+        lines.push(")");
+        lines.push("    with (folder=\""+tableFolder+"\")");
+        lines.push("");
+        // Step 2
+        lines.push("// Step 2: Create transform function");
+        lines.push(".create-or-alter function");
+        lines.push("    with (folder=\""+funcFolder+"\", skipvalidation=\"true\")");
+        lines.push(fn+"() {");
+        lines.push("    "+pack.stagingTable);
+        lines.push("    | where StreamType == \""+t.stream+"\"");
+        var extParts=[];
+        if(addFilter)extParts.push("AgencyDomain = "+getActiveExtractExpr());
+        for(var f=0;f<flatFields.length;f++)extParts.push(flatFields[f].col+" = "+castExpr(flatFields[f].raw,flatFields[f].type));
+        if(extParts.length>0){
+          lines.push("    | extend");
+          for(var e=0;e<extParts.length;e++)lines.push("        "+extParts[e]+(e<extParts.length-1?",":""));
+        }
+        var projParts=["TimeGenerated","RawData"];
+        if(addFilter)projParts.push("AgencyDomain");
+        for(var f=0;f<flatFields.length;f++)projParts.push(flatFields[f].col);
+        lines.push("    | project");
+        for(var p=0;p<projParts.length;p++)lines.push("        "+projParts[p]+(p<projParts.length-1?",":""));
+        lines.push("}");
+        lines.push("");
+        // Step 3
+        lines.push("// Step 3: Attach update policy");
+        lines.push(".alter table "+t.name+" policy update");
+        lines.push("@'[{\"IsEnabled\": true, \"Source\": \""+pack.stagingTable+"\", \"Query\": \""+fn+"()\", \"IsTransactional\": false}]'");
+
+        blocks.push({title:t.name+" ("+(flatFields.length+(addFilter?1:0))+" extracted cols)",kql:lines.join("\n")});
+      }
+    }
+  }
+  renderKqlBlocks(out,blocks,"tb");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init — copy fields with tier + set enabled based on "rec" preset
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
+    return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
+  });
+  state.tableBuilder.activePreset="rec";
+  initTableChecklists();
+  renderFieldEditor();
+  setPhase("staging");
+}
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

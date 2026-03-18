@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — Retention Policies</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:960px}
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.toggle-row label{font-size:13px;cursor:pointer;flex:1}
+.toggle-switch{position:relative;width:36px;height:20px;background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle-switch.on{background:var(--color-info);border-color:var(--color-info)}
+.toggle-switch .knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-switch.on .knob{left:18px}
+/* Preset rows */
+.preset-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.preset-row:last-child{border-bottom:none}
+.preset-label{font-size:13px;font-weight:600;min-width:60px}
+.preset-row select{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;outline:none;cursor:pointer}
+.preset-row select:focus{border-color:var(--border-focus)}
+.preset-row input[type="text"]{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;width:80px;outline:none}
+.preset-row input[type="text"]:focus{border-color:var(--border-focus)}
+/* Category badges */
+.cat{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:var(--font-mono)}
+.cat-staging{background:rgba(74,158,237,.15);color:var(--color-info)}
+.cat-event{background:rgba(34,197,94,.15);color:var(--color-success)}
+.cat-alert{background:rgba(245,158,11,.15);color:var(--color-warn)}
+/* Alert */
+.alert{padding:10px 14px;border-radius:var(--radius-md);font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;margin-bottom:12px}
+.alert-info{background:rgba(74,158,237,.1);border:1px solid rgba(74,158,237,.25);color:var(--color-info)}
+/* KQL output */
+.kql-block{margin-bottom:16px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kql-block .block-title{font-size:13px;font-weight:600}
+.kql-block textarea{width:100%;min-height:60px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;outline:none;line-height:1.6}
+/* Time format hint */
+.time-hint{font-size:10px;color:var(--text-secondary);padding:2px 0 0 70px}
+/* Override row resolved value */
+.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:60px;text-align:right}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — Retention Policies panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:960px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Retention Policies</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Configure soft-delete retention periods per category or per table.</p>
+
+  <div class="alert alert-info">
+    <span>i</span>
+    <div><strong>ADX timespan format:</strong> Use <code>d</code> for days, <code>h</code> for hours, <code>m</code> for minutes. No month shorthand — convert to days (e.g., 6 months = <code>180d</code>, 1 year = <code>365d</code>). Full format also supported: <code>90.00:00:00</code></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Category Presets</div>
+    <div class="text-sm text-muted mb-12">Set defaults by table category. Per-table overrides below take priority.</div>
+    <div class="preset-row">
+      <span class="preset-label" style="color:var(--color-info)">Staging</span>
+      <select id="retStaging" onchange="updateRetention()">
+        <option value="7d">7 days</option>
+        <option value="10d" selected>10 days</option>
+        <option value="14d">14 days</option>
+        <option value="30d">30 days</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="updateRetention()">
+      <span class="text-sm text-muted">Netskope_Raw — short retention, data flows to typed tables</span>
+    </div>
+    <div class="preset-row">
+      <span class="preset-label" style="color:var(--color-success)">Events</span>
+      <select id="retEvents" onchange="updateRetention()">
+        <option value="90d">90 days (3 mo)</option>
+        <option value="180d" selected>180 days (6 mo)</option>
+        <option value="365d">365 days (1 yr)</option>
+        <option value="730d">730 days (2 yr)</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="updateRetention()">
+      <span class="text-sm text-muted">8 event tables</span>
+    </div>
+    <div class="preset-row">
+      <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+      <select id="retAlerts" onchange="updateRetention()">
+        <option value="180d">180 days (6 mo)</option>
+        <option value="365d" selected>365 days (1 yr)</option>
+        <option value="730d">730 days (2 yr)</option>
+        <option value="1095d">1095 days (3 yr)</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="updateRetention()">
+      <span class="text-sm text-muted">13 alert tables</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides</div>
+    <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset. Enter a timespan like <code>90d</code>, <code>365d</code>, or <code>730d</code>.</div>
+    <div id="retentionOverrides"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Options</div>
+    <div class="toggle-row">
+      <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
+      <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')">Enable recoverability</label>
+      <span class="text-sm text-muted" style="flex:none">Allows recovery of deleted data. Adds storage overhead.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
+      <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateRetention()">Refresh</button></div>
+    </div>
+    <div id="retentionOutput"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// Schema pack + state
+// ═══════════════════════════════════════════════════════════════════
+var SCHEMA_PACKS = {netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",tables:[{name:"NetskopeEventsPage_CL",stream:"events_page",cat:"event"},{name:"NetskopeEventsApplication_CL",stream:"events_application",cat:"event"},{name:"NetskopeEventsAudit_CL",stream:"events_audit",cat:"event"},{name:"NetskopeEventsInfrastructure_CL",stream:"events_infrastructure",cat:"event"},{name:"NetskopeEventsNetwork_CL",stream:"events_network",cat:"event"},{name:"NetskopeEventsConnection_CL",stream:"events_connection",cat:"event"},{name:"NetskopeEventsEndpoint_CL",stream:"events_endpoint",cat:"event"},{name:"NetskopeEventsIncident_CL",stream:"events_incident",cat:"event"},{name:"NetskopeAlertsPolicy_CL",stream:"alerts_policy",cat:"alert"},{name:"NetskopeAlertsUba_CL",stream:"alerts_uba",cat:"alert"},{name:"NetskopeAlertsCompromisedCredential_CL",stream:"alerts_compromisedcredential",cat:"alert"},{name:"NetskopeAlertsRemediation_CL",stream:"alerts_remediation",cat:"alert"},{name:"NetskopeAlertsSecurityAssessment_CL",stream:"alerts_securityassessment",cat:"alert"},{name:"NetskopeAlertsQuarantine_CL",stream:"alerts_quarantine",cat:"alert"},{name:"NetskopeAlertsMalware_CL",stream:"alerts_malware",cat:"alert"},{name:"NetskopeAlertsMalsite_CL",stream:"alerts_malsite",cat:"alert"},{name:"NetskopeAlertsDlp_CL",stream:"alerts_dlp",cat:"alert"},{name:"NetskopeAlertsCtep_CL",stream:"alerts_ctep",cat:"alert"},{name:"NetskopeAlertsWatchlist_CL",stream:"alerts_watchlist",cat:"alert"},{name:"NetskopeAlertsDevice_CL",stream:"alerts_device",cat:"alert"},{name:"NetskopeAlertsContent_CL",stream:"alerts_content",cat:"alert"}],folder:"Netskope"}};
+
+var state = {
+  globalConfig: { clusterUri:"https://testcluster.westus2.kusto.windows.net", database:"NetskopeDB", tenantId:"" },
+  activePack: "netskope",
+  retention: { staging:"10d", events:"180d", alerts:"365d", recoverability:false, overrides:{} }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Utilities
+// ═══════════════════════════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+
+function copyToClipboard(btn,taId){
+  var ta=document.getElementById(taId);if(!ta)return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500);
+  });
+}
+
+function toggleSwitch(el,key){
+  var isOn=!el.classList.contains("on");
+  if(isOn)el.classList.add("on");else el.classList.remove("on");
+  if(key==="recoverability")state.retention.recoverability=isOn;
+  generateRetention();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Category presets
+// ═══════════════════════════════════════════════════════════════════
+function updateRetention(){
+  var cats=["Staging","Events","Alerts"];
+  for(var i=0;i<cats.length;i++){
+    var cat=cats[i];
+    var sel=document.getElementById("ret"+cat);
+    var custom=document.getElementById("ret"+cat+"Custom");
+    if(sel.value==="custom"){
+      custom.style.display="";
+      state.retention[cat.toLowerCase()]=custom.value.trim()||"365d";
+    }else{
+      custom.style.display="none";
+      state.retention[cat.toLowerCase()]=sel.value;
+    }
+  }
+  updateOverrideResolvedValues();
+  generateRetention();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Per-table overrides
+// ═══════════════════════════════════════════════════════════════════
+function resolveRet(tableName,cat){
+  if(state.retention.overrides[tableName])return state.retention.overrides[tableName];
+  if(cat==="staging")return state.retention.staging;
+  if(cat==="event")return state.retention.events;
+  if(cat==="alert")return state.retention.alerts;
+  return"365d";
+}
+
+function buildRetentionOverrides(){
+  var pack=getPack();if(!pack)return;
+  var cont=document.getElementById("retentionOverrides");if(!cont)return;
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var html="";
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i];
+    var catClass=t.cat==="event"?"cat-event":(t.cat==="alert"?"cat-alert":"cat-staging");
+    var catLabel=t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"STG");
+    var resolved=resolveRet(t.name,t.cat);
+    html+='<div class="preset-row" style="padding:4px 10px">';
+    html+='<span class="cat '+catClass+'" style="min-width:32px;text-align:center">'+catLabel+'</span>';
+    html+='<span class="text-mono text-sm" style="flex:1">'+t.name+'</span>';
+    html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+(t.cat||"staging")+'" placeholder="'+resolved+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
+    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+resolved+'</span>';
+    html+='</div>';
+  }
+  cont.innerHTML=html;
+}
+
+function updateRetentionOverride(input){
+  var table=input.getAttribute("data-ret-table");
+  var val=input.value.trim();
+  if(val)state.retention.overrides[table]=val;
+  else delete state.retention.overrides[table];
+  updateOverrideResolvedValues();
+  generateRetention();
+}
+
+function updateOverrideResolvedValues(){
+  var pack=getPack();if(!pack)return;
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i];
+    var resolved=resolveRet(t.name,t.cat);
+    var el=document.querySelector('[data-resolved-for="'+t.name+'"]');
+    if(el)el.textContent=resolved;
+    // Update placeholder to reflect current category default
+    var inp=document.querySelector('[data-ret-table="'+t.name+'"]');
+    if(inp&&!inp.value.trim())inp.placeholder=resolved;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KQL rendering + Copy All
+// ═══════════════════════════════════════════════════════════════════
+var _lastRetBlocks=[];
+function renderRetKqlBlocks(container,blocks){
+  _lastRetBlocks=blocks;
+  var copyAllBtn=document.getElementById("retCopyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var html="";
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i],id="ret_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllRetKql(){
+  var sep="////////////////////////////////////////";
+  var parts=[];
+  for(var i=0;i<_lastRetBlocks.length;i++){
+    parts.push("\n"+sep+"\n// "+_lastRetBlocks[i].title+"\n// Run separately in ADX Web UI\n"+sep+"\n"+_lastRetBlocks[i].kql);
+  }
+  var all=parts.join("\n");
+  var btn=document.getElementById("retCopyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Retention generation
+// ═══════════════════════════════════════════════════════════════════
+function generateRetention(){
+  var out=document.getElementById("retentionOutput");if(!out)return;
+  var pack=getPack();
+  if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var db=state.globalConfig.database||"{database}";
+  var cluster=state.globalConfig.clusterUri||"{cluster}";
+  var recover=state.retention.recoverability?"enabled":"disabled";
+  var blocks=[];
+
+  // Header block
+  blocks.push({title:"Retention \u2014 run each separately",kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Recoverability: "+recover+"\n// Run each .alter-merge command separately in ADX Web UI"});
+
+  // Staging table
+  var stagingRet=resolveRet(pack.stagingTable,"staging");
+  blocks.push({title:pack.stagingTable+" \u2014 "+stagingRet,kql:".alter-merge table "+pack.stagingTable+" policy retention softdelete = "+stagingRet+" recoverability = "+recover});
+
+  // Typed tables
+  for(var i=0;i<pack.tables.length;i++){
+    var t=pack.tables[i];
+    var ret=resolveRet(t.name,t.cat);
+    blocks.push({title:t.name+" \u2014 "+ret,kql:".alter-merge table "+t.name+" policy retention softdelete = "+ret+" recoverability = "+recover});
+  }
+
+  renderRetKqlBlocks(out,blocks);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  buildRetentionOverrides();
+  generateRetention();
+}
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

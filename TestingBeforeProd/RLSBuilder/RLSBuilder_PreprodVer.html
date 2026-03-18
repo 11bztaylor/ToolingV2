@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — RLS Builder</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
+.hidden{display:none!important}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:960px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.toggle-row label{font-size:13px;cursor:pointer;flex:1}
+.toggle-switch{position:relative;width:36px;height:20px;background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle-switch.on{background:var(--color-info);border-color:var(--color-info)}
+.toggle-switch .knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-switch.on .knob{left:18px}
+/* Alert */
+.alert{padding:10px 14px;border-radius:var(--radius-md);font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;margin-bottom:12px}
+.alert span:first-child{font-weight:700;font-size:14px}
+.alert-info{background:rgba(74,158,237,.1);border:1px solid rgba(74,158,237,.25);color:var(--color-info)}
+.alert-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--color-warn)}
+.alert-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--color-error)}
+/* Tree / table checklist */
+.tree-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:8px;overflow:hidden}
+.tree-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;transition:background .15s}
+.tree-header:hover{background:var(--bg-hover)}
+.tree-header .arrow{font-size:10px;color:var(--text-secondary);transition:transform .2s;width:12px}
+.tree-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-header .tree-label{font-size:13px;font-weight:600;flex:1}
+.tree-header .tree-count{font-size:10px;color:var(--text-secondary);background:var(--bg-surface);padding:1px 6px;border-radius:8px}
+.tree-header .tree-actions{display:flex;gap:6px;font-size:11px}
+.tree-header .tree-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-header .tree-actions a:hover{text-decoration:underline}
+.tree-body{padding:0 0 0 8px}.tree-body.collapsed{display:none}
+.tree-sub-header{display:flex;align-items:center;gap:6px;padding:6px 12px;cursor:pointer;user-select:none;font-size:12px;color:var(--text-secondary)}
+.tree-sub-header:hover{color:var(--text-primary)}
+.tree-sub-header .arrow{font-size:9px;width:10px;transition:transform .2s}
+.tree-sub-header .arrow.collapsed{transform:rotate(-90deg)}
+.tree-sub-header .sub-label{font-weight:600}
+.tree-sub-header .sub-actions{margin-left:auto;display:flex;gap:6px;font-size:10px}
+.tree-sub-header .sub-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.tree-sub-body{padding:0 0 4px 20px}.tree-sub-body.collapsed{display:none}
+.table-checklist{display:grid;grid-template-columns:1fr;gap:2px;max-height:none}
+.table-check{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm);cursor:pointer}
+.table-check:hover{background:var(--bg-hover)}
+.table-check input[type="checkbox"]{accent-color:var(--color-info);cursor:pointer}
+/* KQL output */
+.kql-block{margin-bottom:16px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kql-block .block-title{font-size:13px;font-weight:600}
+.kql-block textarea{width:100%;min-height:60px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;outline:none;line-height:1.6}
+/* Mapping pairs card */
+.pair-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;overflow:hidden}
+.pair-group-header{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-raised);cursor:pointer;user-select:none;font-size:12px}
+.pair-group-header:hover{background:var(--bg-hover)}
+.pair-group-header .arrow{font-size:9px;width:10px;color:var(--text-secondary);transition:transform .2s}
+.pair-group-header .arrow.collapsed{transform:rotate(-90deg)}
+.pair-group-header .agency-label{font-weight:700;color:var(--color-teal);font-family:var(--font-mono);font-size:13px}
+.pair-group-header .pair-count{font-size:10px;color:var(--text-secondary);margin-left:auto}
+.pair-group-header .pair-actions{display:flex;gap:6px;font-size:10px;margin-left:6px}
+.pair-group-header .pair-actions a{color:var(--color-info);cursor:pointer;text-decoration:none}
+.pair-group-body{padding:4px 4px 4px 12px}.pair-group-body.collapsed{display:none}
+.pair-row{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);border-radius:var(--radius-sm)}
+.pair-row:hover{background:var(--bg-hover)}
+.pair-row input[type="checkbox"]{accent-color:var(--color-teal);cursor:pointer;width:14px;height:14px}
+.pair-row.disabled{opacity:.35}
+.pair-row .pair-detail{flex:1;min-width:0}
+.pair-row .group-name{color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pair-row .group-uuid{color:var(--text-secondary);font-size:10px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.pair-row .rls-id{color:var(--text-secondary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — RLS Builder panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:960px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">RLS Builder</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Generate Row-Level Security function and per-table policy application.</p>
+
+  <div class="alert alert-info">
+    <span>i</span>
+    <div><strong>Prerequisites:</strong> Database Admin role required. RLS function must exist (Block 1) before applying policies (Block 2). In prod, mapping data comes from the Data &amp; Mapping tab.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Output Toggles</div>
+    <div class="toggle-row">
+      <div class="toggle-switch on" id="togRlsFunc" onclick="toggleSwitch(this,'rlsFunction')"><div class="knob"></div></div>
+      <label onclick="toggleSwitch(document.getElementById('togRlsFunc'),'rlsFunction')">Block 1 — RLS Function (.create-or-alter)</label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-switch on" id="togRlsApply" onclick="toggleSwitch(this,'applyPolicies')"><div class="knob"></div></div>
+      <label onclick="toggleSwitch(document.getElementById('togRlsApply'),'applyPolicies')">Block 2 — Apply policies (.alter table policy)</label>
+    </div>
+    <div id="rlsDependencyWarn" class="alert alert-error mt-8 hidden"><span>!</span><div>Warning: Applying policies requires the RLS function to exist. Run Block 1 first!</div></div>
+  </div>
+
+  <div class="card" id="mappingPairsCard">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-teal)"></span> Agency &rarr; Group Mappings</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="text-sm text-muted" id="pairCountBadge"></span>
+        <span style="display:flex;gap:6px;font-size:11px"><a style="color:var(--color-info);cursor:pointer" onclick="collapseAllAgencies(false)">Expand All</a><a style="color:var(--color-info);cursor:pointer" onclick="collapseAllAgencies(true)">Collapse All</a></span>
+      </div>
+    </div>
+    <div class="text-sm text-muted mb-8">Select which group-to-agency mappings to include in the RLS function. Uncheck to exclude a group from filtering.</div>
+    <div id="mappingPairsArea"></div>
+  </div>
+
+  <div class="card" id="rlsTableScope">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-info)"></span> Table Scope (Block 2)</span>
+      <span class="text-sm text-muted" id="tableCountBadge"></span>
+    </div>
+    <div id="rlsChecklist"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
+      <div style="display:flex;gap:6px"><button class="btn btn-sm" id="rlsCopyAllBtn" style="display:none" onclick="copyAllRlsKql()">Copy All</button><button class="btn btn-sm" onclick="generateRLS()">Refresh</button></div>
+    </div>
+    <div id="rlsOutput"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// Test data — simulates mapping from Data & Mapping tab
+// Each entry: [groupId, agencyDomain, tenantId, displayName]
+// displayName is optional — if blank, groupId is shown as the label
+// ═══════════════════════════════════════════════════════════════════
+var TEST_MAPPING_DATA = [
+  ["a1b2c3d4-e5f6-7890-abcd-ef1234567890", "DOH",    "72f988bf-86f1-41af-91ab-2d7cd011db47", "DOH Security Analysts"],
+  ["b2c3d4e5-f6a7-8901-bcde-f12345678901", "DOH",    "72f988bf-86f1-41af-91ab-2d7cd011db47", "DOH SOC Tier 1"],
+  ["c3d4e5f6-a7b8-9012-cdef-123456789012", "DSHS",   "72f988bf-86f1-41af-91ab-2d7cd011db47", "DSHS Cyber Defense"],
+  ["d4e5f6a7-b8c9-0123-defa-234567890123", "DSHS",   "72f988bf-86f1-41af-91ab-2d7cd011db47", "DSHS Compliance Team"],
+  ["e5f6a7b8-c9d0-1234-efab-345678901234", "DSHS",   "72f988bf-86f1-41af-91ab-2d7cd011db47", "DSHS Network Admins"],
+  ["f6a7b8c9-d0e1-2345-fabc-456789012345", "OFM",    "72f988bf-86f1-41af-91ab-2d7cd011db47", "OFM IT Security"],
+  ["SecurityTeam_AllAgencies",               "DES",    "",                                      ""],
+  ["SOC_Analysts_Group",                     "WaTech", "",                                      ""]
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// Schema pack + state
+// ═══════════════════════════════════════════════════════════════════
+var SCHEMA_PACKS = {netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",tables:[{name:"NetskopeEventsPage_CL",stream:"events_page",cat:"event"},{name:"NetskopeEventsApplication_CL",stream:"events_application",cat:"event"},{name:"NetskopeEventsAudit_CL",stream:"events_audit",cat:"event"},{name:"NetskopeEventsInfrastructure_CL",stream:"events_infrastructure",cat:"event"},{name:"NetskopeEventsNetwork_CL",stream:"events_network",cat:"event"},{name:"NetskopeEventsConnection_CL",stream:"events_connection",cat:"event"},{name:"NetskopeEventsEndpoint_CL",stream:"events_endpoint",cat:"event"},{name:"NetskopeEventsIncident_CL",stream:"events_incident",cat:"event"},{name:"NetskopeAlertsPolicy_CL",stream:"alerts_policy",cat:"alert"},{name:"NetskopeAlertsUba_CL",stream:"alerts_uba",cat:"alert"},{name:"NetskopeAlertsCompromisedCredential_CL",stream:"alerts_compromisedcredential",cat:"alert"},{name:"NetskopeAlertsRemediation_CL",stream:"alerts_remediation",cat:"alert"},{name:"NetskopeAlertsSecurityAssessment_CL",stream:"alerts_securityassessment",cat:"alert"},{name:"NetskopeAlertsQuarantine_CL",stream:"alerts_quarantine",cat:"alert"},{name:"NetskopeAlertsMalware_CL",stream:"alerts_malware",cat:"alert"},{name:"NetskopeAlertsMalsite_CL",stream:"alerts_malsite",cat:"alert"},{name:"NetskopeAlertsDlp_CL",stream:"alerts_dlp",cat:"alert"},{name:"NetskopeAlertsCtep_CL",stream:"alerts_ctep",cat:"alert"},{name:"NetskopeAlertsWatchlist_CL",stream:"alerts_watchlist",cat:"alert"},{name:"NetskopeAlertsDevice_CL",stream:"alerts_device",cat:"alert"},{name:"NetskopeAlertsContent_CL",stream:"alerts_content",cat:"alert"}],folder:"Netskope"}};
+
+var state = {
+  globalConfig: { clusterUri:"https://testcluster.westus2.kusto.windows.net", database:"NetskopeDB", tenantId:"72f988bf-86f1-41af-91ab-2d7cd011db47" },
+  activePack: "netskope",
+  rls: {
+    rlsFunction: true,
+    applyPolicies: true,
+    selectedTables: [],
+    // Each mapping pair: {group, domain, tenantId, enabled}
+    mappingPairs: []
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Utilities
+// ═══════════════════════════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function getAllTables(){var p=getPack();return p?p.tables:[]}
+
+function getRlsGroupId(pair){
+  // Use displayName as the AAD group identifier when available.
+  // Fall back to group (raw ID) if no display name.
+  // Always append ;tenantId when available (AAD group format: name;tenantId).
+  var id = pair.displayName || pair.group;
+  var tenantId = pair.tenantId || state.globalConfig.tenantId;
+  if(tenantId) return id + ";" + tenantId;
+  return id;
+}
+
+function copyToClipboard(btn, taId){
+  var ta = document.getElementById(taId);
+  if(!ta) return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    btn.classList.add("btn-copied"); btn.textContent = "Copied!";
+    setTimeout(function(){ btn.classList.remove("btn-copied"); btn.textContent = "Copy" }, 1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Toggles
+// ═══════════════════════════════════════════════════════════════════
+function toggleSwitch(el, key){
+  var isOn = !el.classList.contains("on");
+  if(isOn) el.classList.add("on"); else el.classList.remove("on");
+  if(key === "rlsFunction") state.rls.rlsFunction = isOn;
+  if(key === "applyPolicies") state.rls.applyPolicies = isOn;
+  var warn = document.getElementById("rlsDependencyWarn");
+  if(warn){
+    if(state.rls.applyPolicies && !state.rls.rlsFunction) warn.classList.remove("hidden");
+    else warn.classList.add("hidden");
+  }
+  generateRLS();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Mapping Pairs — select/deselect group→agency pairs for RLS
+// ═══════════════════════════════════════════════════════════════════
+function loadMappingPairs(data){
+  // In prod, data comes from getMappedTriples + optional display name column
+  // Each entry: [groupId, domain, tenantId, displayName?]
+  state.rls.mappingPairs = data.map(function(t){
+    return { group: t[0], domain: t[1], tenantId: t[2] || "", displayName: t[3] || "", enabled: true };
+  });
+  renderMappingPairs();
+}
+
+function renderMappingPairs(){
+  var area = document.getElementById("mappingPairsArea");
+  var pairs = state.rls.mappingPairs;
+  if(!pairs.length){
+    area.innerHTML = '<div class="alert alert-warn"><span>!</span><div>No mapping data loaded. In prod, upload a CSV on the Data &amp; Mapping tab with Group Name + Domain Filter columns.</div></div>';
+    updatePairBadge();
+    return;
+  }
+
+  // Group by agency domain
+  var byAgency = {}, agencyOrder = [];
+  for(var i = 0; i < pairs.length; i++){
+    var d = pairs[i].domain;
+    if(!byAgency[d]){ byAgency[d] = []; agencyOrder.push(d); }
+    byAgency[d].push({ idx: i, pair: pairs[i] });
+  }
+
+  var html = '';
+  for(var a = 0; a < agencyOrder.length; a++){
+    var domain = agencyOrder[a];
+    var entries = byAgency[domain];
+    var enabledCount = 0;
+    for(var e = 0; e < entries.length; e++){ if(entries[e].pair.enabled) enabledCount++; }
+
+    html += '<div class="pair-group">';
+    html += '<div class="pair-group-header" onclick="togglePairGroup(this)">';
+    html += '<span class="arrow">&#9660;</span>';
+    html += '<span class="agency-label">' + esc(domain) + '</span>';
+    html += '<span class="pair-count">' + enabledCount + '/' + entries.length + '</span>';
+    html += '<span class="pair-actions" onclick="event.stopPropagation()">';
+    html += '<a onclick="toggleAgencyPairs(\'' + esc(domain) + '\',true)">All</a>';
+    html += '<a onclick="toggleAgencyPairs(\'' + esc(domain) + '\',false)">None</a>';
+    html += '</span>';
+    html += '</div>';
+    html += '<div class="pair-group-body">';
+
+    for(var e = 0; e < entries.length; e++){
+      var idx = entries[e].idx, p = entries[e].pair;
+      var rlsId = getRlsGroupId(p);
+      var label = p.displayName || p.group;
+      var showUuid = p.displayName && p.displayName !== p.group;
+      html += '<div class="pair-row' + (p.enabled ? '' : ' disabled') + '">';
+      html += '<input type="checkbox" ' + (p.enabled ? 'checked' : '') + ' onchange="togglePair(' + idx + ')">';
+      html += '<div class="pair-detail">';
+      html += '<div class="group-name">' + esc(label) + '</div>';
+      if(showUuid) html += '<div class="group-uuid">' + esc(p.group) + '</div>';
+      html += '</div>';
+      html += '<span class="rls-id" title="aadgroup=' + esc(rlsId) + '">→ ' + esc(rlsId) + '</span>';
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+  }
+
+  area.innerHTML = html;
+  updatePairBadge();
+}
+
+function togglePair(idx){
+  state.rls.mappingPairs[idx].enabled = !state.rls.mappingPairs[idx].enabled;
+  renderMappingPairs();
+  generateRLS();
+}
+
+function toggleAgencyPairs(domain, enabled){
+  var pairs = state.rls.mappingPairs;
+  for(var i = 0; i < pairs.length; i++){
+    if(pairs[i].domain === domain) pairs[i].enabled = enabled;
+  }
+  renderMappingPairs();
+  generateRLS();
+}
+
+function togglePairGroup(header){
+  header.querySelector(".arrow").classList.toggle("collapsed");
+  header.nextElementSibling.classList.toggle("collapsed");
+}
+
+function collapseAllAgencies(collapse){
+  var headers = document.querySelectorAll("#mappingPairsArea .pair-group-header");
+  for(var i = 0; i < headers.length; i++){
+    var arrow = headers[i].querySelector(".arrow");
+    var body = headers[i].nextElementSibling;
+    if(collapse){
+      arrow.classList.add("collapsed");
+      body.classList.add("collapsed");
+    } else {
+      arrow.classList.remove("collapsed");
+      body.classList.remove("collapsed");
+    }
+  }
+}
+
+function updatePairBadge(){
+  var pairs = state.rls.mappingPairs;
+  var enabled = 0;
+  for(var i = 0; i < pairs.length; i++){ if(pairs[i].enabled) enabled++; }
+  var badge = document.getElementById("pairCountBadge");
+  if(badge) badge.textContent = enabled + "/" + pairs.length + " included";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Table scope checklist
+// ═══════════════════════════════════════════════════════════════════
+function initChecklist(){
+  var pack = getPack(), container = document.getElementById("rlsChecklist");
+  if(!container || !pack) return;
+  var tables = pack.tables;
+  var events = tables.filter(function(t){ return t.cat === "event" });
+  var alerts = tables.filter(function(t){ return t.cat === "alert" });
+
+  var html = '<div class="tree-group"><div class="tree-header" onclick="toggleTreeGroup(this)"><span class="arrow">&#9660;</span><span class="tree-label">' + esc(pack.name) + '</span><span class="tree-count">' + tables.length + ' tables</span><span class="tree-actions"><a onclick="event.stopPropagation();toggleAllTables(true)">All</a><a onclick="event.stopPropagation();toggleAllTables(false)">None</a></span></div><div class="tree-body">';
+
+  html += '<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(34,197,94,.15);color:var(--color-success);padding:1px 6px;border-radius:3px;font-size:10px">Events</span><span class="tree-count">' + events.length + '</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleCat(\'event\',true)">All</a><a onclick="event.stopPropagation();toggleCat(\'event\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i = 0; i < events.length; i++)
+    html += '<label class="table-check"><input type="checkbox" checked data-table="' + events[i].name + '" onchange="onTableCheck()"><span>' + events[i].name + '</span></label>';
+  html += '</div></div>';
+
+  html += '<div class="tree-sub-header" onclick="toggleTreeSub(this)"><span class="arrow">&#9660;</span><span class="sub-label" style="background:rgba(245,158,11,.15);color:var(--color-warn);padding:1px 6px;border-radius:3px;font-size:10px">Alerts</span><span class="tree-count">' + alerts.length + '</span><span class="sub-actions"><a onclick="event.stopPropagation();toggleCat(\'alert\',true)">All</a><a onclick="event.stopPropagation();toggleCat(\'alert\',false)">None</a></span></div><div class="tree-sub-body"><div class="table-checklist">';
+  for(var i = 0; i < alerts.length; i++)
+    html += '<label class="table-check"><input type="checkbox" checked data-table="' + alerts[i].name + '" onchange="onTableCheck()"><span>' + alerts[i].name + '</span></label>';
+  html += '</div></div></div></div>';
+
+  container.innerHTML = html;
+  onTableCheck();
+}
+
+function onTableCheck(){
+  var cks = document.querySelectorAll('input[data-table]:checked'), sel = [];
+  for(var i = 0; i < cks.length; i++) sel.push(cks[i].getAttribute("data-table"));
+  state.rls.selectedTables = sel;
+  var badge = document.getElementById("tableCountBadge");
+  var total = document.querySelectorAll('input[data-table]').length;
+  if(badge) badge.textContent = sel.length + "/" + total + " selected";
+}
+
+function toggleAllTables(c){ var cbs = document.querySelectorAll('input[data-table]'); for(var i=0;i<cbs.length;i++) cbs[i].checked=c; onTableCheck() }
+function toggleCat(cat,c){ var tables=getAllTables(),cbs=document.querySelectorAll('input[data-table]'); for(var i=0;i<cbs.length;i++){var n=cbs[i].getAttribute("data-table"),t=null;for(var j=0;j<tables.length;j++){if(tables[j].name===n){t=tables[j];break}}if(t&&t.cat===cat)cbs[i].checked=c} onTableCheck() }
+function toggleTreeGroup(h){ h.querySelector(".arrow").classList.toggle("collapsed"); h.nextElementSibling.classList.toggle("collapsed") }
+function toggleTreeSub(h){ h.querySelector(".arrow").classList.toggle("collapsed"); h.nextElementSibling.classList.toggle("collapsed") }
+
+// ═══════════════════════════════════════════════════════════════════
+// KQL rendering + Copy All
+// ═══════════════════════════════════════════════════════════════════
+var _lastRlsBlocks = [];
+function renderKqlBlocks(container, blocks, prefix){
+  _lastRlsBlocks = blocks;
+  var copyAllBtn = document.getElementById("rlsCopyAllBtn");
+  if(copyAllBtn) copyAllBtn.style.display = blocks.length > 1 ? "inline-flex" : "none";
+  if(!blocks.length){ container.innerHTML = '<div class="text-sm text-muted">Enable at least one toggle.</div>'; return }
+  var html = "";
+  for(var i = 0; i < blocks.length; i++){
+    var b = blocks[i], id = prefix + "_kql_" + i;
+    var lines = b.kql.split("\n").length;
+    var rows = Math.min(Math.max(lines + 2, 4), 30);
+    html += '<div class="kql-block"><div class="block-header"><span class="block-title">' + esc(b.title) + '</span><button class="btn btn-sm" onclick="copyToClipboard(this,\'' + id + '\')">Copy</button></div><textarea id="' + id + '" readonly rows="' + rows + '">' + esc(b.kql) + '</textarea></div>';
+  }
+  container.innerHTML = html;
+}
+
+function makeSeparator(label){
+  var line = "////////////////////////////////////////";
+  return "\n" + line + "\n// " + label + "\n// Run the command below separately in ADX Web UI\n" + line + "\n";
+}
+
+function copyAllRlsKql(){
+  var parts = [];
+  for(var i = 0; i < _lastRlsBlocks.length; i++){
+    parts.push(makeSeparator(_lastRlsBlocks[i].title) + _lastRlsBlocks[i].kql);
+  }
+  var all = parts.join("\n");
+  var btn = document.getElementById("rlsCopyAllBtn");
+  navigator.clipboard.writeText(all).then(function(){
+    btn.classList.add("btn-copied"); btn.textContent = "Copied All!";
+    setTimeout(function(){ btn.classList.remove("btn-copied"); btn.textContent = "Copy All"; }, 1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RLS generation — reads only ENABLED pairs
+// ═══════════════════════════════════════════════════════════════════
+function generateRLS(){
+  var out = document.getElementById("rlsOutput");
+  if(!out) return;
+  var db = state.globalConfig.database || "{database}";
+  var cluster = state.globalConfig.clusterUri || "{cluster}";
+  var enabledPairs = getEnabledPairs();
+  var blocks = [];
+
+  if(state.rls.rlsFunction){
+    var lines = [];
+    if(!enabledPairs.length){
+      lines.push("// No group-to-domain mappings enabled.");
+      lines.push("// Check the Agency \u2192 Group Mappings card above.");
+      lines.push(".create-or-alter function RLS_AgencyFilter(TableName:string) {");
+      lines.push("    table(TableName)");
+      lines.push("    | where");
+      lines.push("        (current_principal_is_member_of('aadgroup=PLACEHOLDER') and AgencyDomain == 'PLACEHOLDER')");
+      lines.push("}");
+    } else {
+      // Group enabled pairs by agency
+      var byAgency = {}, agencyOrder = [];
+      for(var i = 0; i < enabledPairs.length; i++){
+        var p = enabledPairs[i];
+        if(!byAgency[p.domain]){ byAgency[p.domain] = []; agencyOrder.push(p.domain); }
+        byAgency[p.domain].push(p);
+      }
+      var totalPairs = enabledPairs.length;
+
+      // Header
+      lines.push("// Generated by ADX Schema Builder V2");
+      lines.push("// Cluster: " + cluster + "  Database: " + db);
+      lines.push("// " + totalPairs + " mapping(s) across " + agencyOrder.length + " agencies");
+      lines.push("//");
+      // Reference block — human-readable summary
+      lines.push("// \u2500\u2500 Mapping Reference \u2500\u2500");
+      for(var a = 0; a < agencyOrder.length; a++){
+        var domain = agencyOrder[a];
+        var entries = byAgency[domain];
+        var names = [];
+        for(var e = 0; e < entries.length; e++){
+          names.push(entries[e].displayName || entries[e].group);
+        }
+        lines.push("//   " + domain + ": " + names.join(", "));
+      }
+      lines.push("//");
+
+      // Function definition
+      lines.push(".create-or-alter function");
+      lines.push("    with (folder=\"Functions/RLS\", skipvalidation=\"true\")");
+      lines.push("RLS_AgencyFilter(TableName:string) {");
+      lines.push("    table(TableName)");
+      lines.push("    | where");
+
+      // Agency-grouped OR clauses
+      var clauseIdx = 0;
+      for(var a = 0; a < agencyOrder.length; a++){
+        var domain = agencyOrder[a];
+        var entries = byAgency[domain];
+        // Agency section comment
+        lines.push("        // \u2500\u2500 " + domain + " (" + entries.length + " group" + (entries.length > 1 ? "s" : "") + ") \u2500\u2500");
+        for(var e = 0; e < entries.length; e++){
+          var p = entries[e];
+          var rlsId = getRlsGroupId(p);
+          var prefix = clauseIdx === 0 ? "        " : "        or ";
+          var comment = p.displayName ? "  // " + p.displayName : "";
+          lines.push(prefix + "(current_principal_is_member_of('aadgroup=" + rlsId + "') and AgencyDomain == '" + domain + "')" + comment);
+          clauseIdx++;
+        }
+      }
+      lines.push("}");
+    }
+    blocks.push({ title: "Block 1 \u2014 RLS Function (" + enabledPairs.length + " clauses, " + countUniqueAgencies(enabledPairs) + " agencies)", kql: lines.join("\n") });
+  }
+
+  if(state.rls.applyPolicies){
+    var selected = state.rls.selectedTables;
+    if(!selected.length){
+      blocks.push({ title: "Block 2 \u2014 No tables selected", kql: "// Select tables in Table Scope above" });
+    } else {
+      for(var i = 0; i < selected.length; i++){
+        blocks.push({
+          title: "Apply RLS: " + selected[i],
+          kql: '.alter table ' + selected[i] + ' policy row_level_security enable "RLS_AgencyFilter(\'' + selected[i] + '\')"'
+        });
+      }
+    }
+  }
+
+  renderKqlBlocks(out, blocks, "rls");
+}
+
+function getEnabledPairs(){
+  // Returns full pair objects (not just triples) for enabled mappings
+  var pairs = state.rls.mappingPairs, result = [];
+  for(var i = 0; i < pairs.length; i++){
+    if(pairs[i].enabled) result.push(pairs[i]);
+  }
+  return result;
+}
+
+function countUniqueAgencies(pairs){
+  var seen = {};
+  for(var i = 0; i < pairs.length; i++) seen[pairs[i].domain] = 1;
+  return Object.keys(seen).length;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  loadMappingPairs(TEST_MAPPING_DATA);
+  initChecklist();
+  generateRLS();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

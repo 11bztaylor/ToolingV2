@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — Data &amp; Mapping</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
+.hidden{display:none!important}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:960px}
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text-secondary)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--color-info);background:rgba(74,158,237,.06)}
+.drop-zone .hint{font-size:12px;margin-top:4px;color:var(--text-secondary)}
+.paste-area{width:100%;height:80px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none}
+.paste-area:focus{border-color:var(--border-focus)}
+/* File chips */
+.file-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.file-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg-raised);border:1px solid var(--border);border-radius:12px;font-size:12px}
+.file-chip .count{color:var(--text-secondary);font-size:11px}
+.file-chip .remove{color:var(--color-error);cursor:pointer;font-size:14px;margin-left:4px}
+.file-chip .remove:hover{color:#ff6b6b}
+/* Mapping grid */
+.mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mapping-slot{background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.mapping-slot select{width:100%;padding:6px 8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;margin-top:8px;outline:none;cursor:pointer}
+.mapping-slot select:focus{border-color:var(--border-focus)}
+.slot-label{font-size:12px;font-weight:600;margin-bottom:2px}
+.slot-label.info{color:var(--color-info)}
+.slot-label.purple{color:var(--color-purple)}
+.slot-label.teal{color:var(--color-teal)}
+.slot-label.warn{color:var(--color-warn)}
+.sample{font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);margin-top:6px;min-height:16px}
+/* Summary table */
+.summary-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono)}
+.summary-table th{padding:6px 10px;border:1px solid var(--border);background:var(--bg-raised);text-align:left;font-size:11px;text-transform:uppercase;color:var(--text-secondary)}
+.summary-table td{padding:5px 10px;border:1px solid var(--border);vertical-align:top}
+.summary-table .agency-cell{font-weight:700;color:var(--color-teal);font-size:13px;white-space:nowrap}
+.summary-table .group-list{list-style:none;padding:0;margin:0}
+.summary-table .group-list li{padding:2px 0;color:var(--text-primary)}
+.summary-table .count-badge{display:inline-block;background:rgba(45,212,191,.15);color:var(--color-teal);font-size:10px;padding:1px 6px;border-radius:8px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — Data &amp; Mapping panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:960px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Data &amp; Mapping</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Upload or paste data, then assign columns to semantic roles used by the generators.</p>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-info)"></span> Upload / Paste Data</div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div>Drop CSV, TSV, or JSON files here — or click to browse</div>
+      <div class="hint">Multiple files supported. Headers become available columns.</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".csv,.tsv,.json,.jsonl,.txt" style="display:none" onchange="handleFiles(this.files)">
+    <div style="margin-top:12px">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Or paste tab/comma-separated data:</div>
+      <textarea class="paste-area" id="pasteArea" placeholder="Header1,Header2,Header3"></textarea>
+      <button class="btn btn-sm mt-8" onclick="parsePastedData()">Parse Pasted Data</button>
+    </div>
+    <div class="file-chips" id="fileChips"></div>
+  </div>
+
+  <div class="card" id="mappingCard">
+    <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Column Mapping</div>
+    <div class="text-sm text-muted mb-12">Assign uploaded columns to roles. Each generator uses the roles it needs.</div>
+    <div class="mapping-grid" id="mappingGrid">
+      <div class="mapping-slot"><div class="slot-label info">Group Name / Principal ID</div><div class="text-sm text-muted">AAD Group identifier for RLS</div><select data-role="groupName" onchange="updateMapping(this)"><option value="">-- select column --</option></select><div class="sample" id="sampleGroupName"></div></div>
+      <div class="mapping-slot"><div class="slot-label purple">Domain Filter / Agency</div><div class="text-sm text-muted">Agency domain value paired with group</div><select data-role="domainFilter" onchange="updateMapping(this)"><option value="">-- select column --</option></select><div class="sample" id="sampleDomainFilter"></div></div>
+      <div class="mapping-slot"><div class="slot-label teal">Tenant ID</div><div class="text-sm text-muted">AAD Tenant ID per row. Falls back to header if unmapped.</div><select data-role="tenantId" onchange="updateMapping(this)"><option value="">-- select column --</option></select><div class="sample" id="sampleTenantId"></div></div>
+      <div class="mapping-slot"><div class="slot-label warn">Additional Field (optional)</div><div class="text-sm text-muted">Any extra column to reference in outputs</div><select data-role="customField" onchange="updateMapping(this)"><option value="">-- select column --</option></select><div class="sample" id="sampleCustomField"></div></div>
+    </div>
+  </div>
+
+  <div class="card" id="previewCard" style="display:none">
+    <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Data Preview</div>
+    <div id="dataPreview" style="overflow-x:auto"></div>
+  </div>
+
+  <div class="card" id="summaryCard" style="display:none">
+    <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Mapping Summary &mdash; Agency &rarr; Groups</div>
+    <div class="text-sm text-muted mb-8">Grouped view of your data. Assign both Group Name and Domain Filter above to populate.</div>
+    <div id="mappingSummary"></div>
+  </div>
+</div>
+
+<script>
+/* ── State ── */
+var state = {
+  globalConfig: { clusterUri: "", database: "", tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47" },
+  files: [],
+  mapping: {
+    groupName:    { fileId: null, column: null },
+    domainFilter: { fileId: null, column: null },
+    tenantId:     { fileId: null, column: null },
+    customField:  { fileId: null, column: null }
+  }
+};
+var fileIdCounter = 0;
+
+/* ── Utilities ── */
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+function formatGroupForRLS(group, rowTenantId){
+  var tenantId = rowTenantId || state.globalConfig.tenantId;
+  var isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(group);
+  if(isUuid && tenantId) return group + ";" + tenantId;
+  return group;
+}
+
+/* ── Drop zone ── */
+function setupDropZone(){
+  var dz = document.getElementById("dropZone");
+  dz.addEventListener("dragover", function(e){ e.preventDefault(); dz.classList.add("dragover") });
+  dz.addEventListener("dragleave", function(){ dz.classList.remove("dragover") });
+  dz.addEventListener("drop", function(e){ e.preventDefault(); dz.classList.remove("dragover"); handleFiles(e.dataTransfer.files) });
+}
+
+/* ── File handling ── */
+function handleFiles(fileList){
+  for(var i = 0; i < fileList.length; i++){
+    (function(file){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var text = e.target.result.replace(/^\uFEFF/, "");
+        var parsed = parseFileContent(file.name, text);
+        if(parsed){
+          state.files.push(parsed);
+          renderFileChips();
+          updateMappingDropdowns();
+        }
+      };
+      reader.readAsText(file);
+    })(fileList[i]);
+  }
+}
+
+function parseFileContent(name, text){
+  var id = "file_" + (++fileIdCounter);
+  var ext = name.split(".").pop().toLowerCase();
+  var columns = [], rows = [];
+  if(ext === "json" || ext === "jsonl"){
+    var arr;
+    if(text.trim().charAt(0) === "["){
+      try { arr = JSON.parse(text) } catch(e){ return null }
+    } else {
+      arr = text.trim().split("\n").map(function(line){
+        try { return JSON.parse(line) } catch(e){ return null }
+      }).filter(Boolean);
+    }
+    if(!arr.length) return null;
+    var keySet = {};
+    for(var i = 0; i < Math.min(arr.length, 20); i++){
+      var keys = Object.keys(arr[i]);
+      for(var j = 0; j < keys.length; j++) keySet[keys[j]] = 1;
+    }
+    columns = Object.keys(keySet);
+    rows = arr.map(function(obj){ return columns.map(function(c){ return obj[c] !== undefined ? String(obj[c]) : "" }) });
+  } else {
+    var lines = text.split("\n").map(function(l){ return l.replace(/\r$/, "") }).filter(function(l){ return l.trim() });
+    if(lines.length < 1) return null;
+    var delim = (ext === "tsv" || lines[0].indexOf("\t") >= 0) ? "\t" : ",";
+    columns = lines[0].split(delim).map(function(c){ return c.trim().replace(/^"|"$/g, "") });
+    rows = lines.slice(1).map(function(l){ return l.split(delim).map(function(c){ return c.trim().replace(/^"|"$/g, "") }) });
+  }
+  return { id: id, name: name, columns: columns, rows: rows, rowCount: rows.length };
+}
+
+function parsePastedData(){
+  var text = document.getElementById("pasteArea").value.trim();
+  if(!text) return;
+  var parsed = parseFileContent("pasted_data.csv", text);
+  if(parsed){
+    parsed.name = "Pasted Data (" + parsed.columns.length + " cols)";
+    state.files.push(parsed);
+    renderFileChips();
+    updateMappingDropdowns();
+    document.getElementById("pasteArea").value = "";
+  }
+}
+
+function renderFileChips(){
+  var cont = document.getElementById("fileChips");
+  var html = "";
+  for(var i = 0; i < state.files.length; i++){
+    var f = state.files[i];
+    html += '<div class="file-chip"><span>' + esc(f.name) + '</span><span class="count">' + f.rowCount + ' rows</span><span class="remove" onclick="removeFile(\'' + f.id + '\')" title="Remove">x</span></div>';
+  }
+  cont.innerHTML = html;
+  var prev = document.getElementById("previewCard");
+  if(state.files.length){ prev.style.display = ""; renderPreview() }
+  else { prev.style.display = "none" }
+}
+
+function removeFile(id){
+  state.files = state.files.filter(function(f){ return f.id !== id });
+  var roles = Object.keys(state.mapping);
+  for(var i = 0; i < roles.length; i++){
+    if(state.mapping[roles[i]].fileId === id) state.mapping[roles[i]] = { fileId: null, column: null };
+  }
+  renderFileChips();
+  updateMappingDropdowns();
+  renderMappingSummary();
+}
+
+/* ── Data preview ── */
+function renderPreview(){
+  if(!state.files.length) return;
+  var f = state.files[state.files.length - 1];
+  var maxRows = Math.min(f.rows.length, 8);
+  var html = '<div class="text-sm text-muted mb-8">Showing: ' + esc(f.name) + ' (first ' + maxRows + ' of ' + f.rowCount + ' rows)</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono)"><tr>';
+  for(var c = 0; c < f.columns.length; c++)
+    html += '<th style="padding:4px 8px;border:1px solid var(--border);background:var(--bg-raised);text-align:left;white-space:nowrap">' + esc(f.columns[c]) + '</th>';
+  html += '</tr>';
+  for(var r = 0; r < maxRows; r++){
+    html += '<tr>';
+    for(var c = 0; c < f.columns.length; c++)
+      html += '<td style="padding:4px 8px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.rows[r] ? f.rows[r][c] || "" : "") + '</td>';
+    html += '</tr>';
+  }
+  html += '</table>';
+  document.getElementById("dataPreview").innerHTML = html;
+}
+
+/* ── Column mapping ── */
+function updateMappingDropdowns(){
+  var selects = document.querySelectorAll('#mappingGrid select[data-role]');
+  for(var s = 0; s < selects.length; s++){
+    var sel = selects[s];
+    var role = sel.getAttribute("data-role");
+    var current = state.mapping[role];
+    sel.innerHTML = '<option value="">-- select column --</option>';
+    for(var fi = 0; fi < state.files.length; fi++){
+      var f = state.files[fi];
+      for(var ci = 0; ci < f.columns.length; ci++){
+        var val = f.id + "::" + f.columns[ci];
+        var label = (state.files.length > 1 ? f.name + " > " : "") + f.columns[ci];
+        var opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = label;
+        if(current && current.fileId === f.id && current.column === f.columns[ci]) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+    showSample(role);
+  }
+}
+
+function updateMapping(sel){
+  var role = sel.getAttribute("data-role");
+  var val = sel.value;
+  if(!val){ state.mapping[role] = { fileId: null, column: null } }
+  else { var parts = val.split("::"); state.mapping[role] = { fileId: parts[0], column: parts[1] } }
+  showSample(role);
+  renderMappingSummary();
+}
+
+function showSample(role){
+  var el = document.getElementById("sample" + role.charAt(0).toUpperCase() + role.slice(1));
+  if(!el) return;
+  var m = state.mapping[role];
+  if(!m || !m.fileId || !m.column){ el.textContent = ""; return }
+  var file = null;
+  for(var i = 0; i < state.files.length; i++){ if(state.files[i].id === m.fileId){ file = state.files[i]; break } }
+  if(!file){ el.textContent = ""; return }
+  var ci = file.columns.indexOf(m.column);
+  if(ci < 0){ el.textContent = ""; return }
+  var samples = [];
+  for(var i = 0; i < Math.min(file.rows.length, 4); i++) samples.push(file.rows[i][ci] || "--");
+  el.textContent = "Sample: " + samples.join(", ");
+}
+
+/* ── Mapped data helpers ── */
+function getMappedValues(role){
+  var m = state.mapping[role];
+  if(!m || !m.fileId || !m.column) return [];
+  var file = null;
+  for(var i = 0; i < state.files.length; i++){ if(state.files[i].id === m.fileId){ file = state.files[i]; break } }
+  if(!file) return [];
+  var ci = file.columns.indexOf(m.column);
+  if(ci < 0) return [];
+  return file.rows.map(function(r){ return r[ci] || "" });
+}
+
+function getMappedTriples(roleA, roleB, roleC){
+  var a = getMappedValues(roleA), b = getMappedValues(roleB), c = getMappedValues(roleC);
+  var len = Math.min(a.length, b.length);
+  var triples = [];
+  for(var i = 0; i < len; i++){ if(a[i] && b[i]) triples.push([a[i], b[i], c[i] || ""]) }
+  return triples;
+}
+
+/* ── Mapping summary ── */
+function renderMappingSummary(){
+  var card = document.getElementById("summaryCard");
+  var cont = document.getElementById("mappingSummary");
+  var triples = getMappedTriples("groupName", "domainFilter", "tenantId");
+  if(!triples.length){ card.style.display = "none"; cont.innerHTML = ""; return }
+  card.style.display = "";
+
+  var byAgency = {}, agencyOrder = [];
+  for(var i = 0; i < triples.length; i++){
+    var group = triples[i][0], domain = triples[i][1], tid = triples[i][2];
+    if(!byAgency[domain]){ byAgency[domain] = []; agencyOrder.push(domain) }
+    byAgency[domain].push({ group: group, tenantId: tid });
+  }
+
+  var hasTenantCol = triples.some(function(t){ return t[2] });
+  var html = '<table class="summary-table"><tr><th>Agency Domain</th><th>Groups (' + triples.length + ' total)</th>';
+  if(hasTenantCol) html += '<th>Tenant ID</th>';
+  html += '<th>RLS Identifier</th></tr>';
+
+  for(var a = 0; a < agencyOrder.length; a++){
+    var domain = agencyOrder[a];
+    var entries = byAgency[domain];
+    html += '<tr><td class="agency-cell">' + esc(domain) + '<span class="count-badge">' + entries.length + '</span></td><td><ul class="group-list">';
+    for(var g = 0; g < entries.length; g++) html += '<li>' + esc(entries[g].group) + '</li>';
+    html += '</ul></td>';
+    if(hasTenantCol){
+      html += '<td><ul class="group-list">';
+      for(var g = 0; g < entries.length; g++){
+        var tid = entries[g].tenantId || state.globalConfig.tenantId || "--";
+        html += '<li style="font-size:10px;color:var(--text-secondary)">' + esc(tid) + '</li>';
+      }
+      html += '</ul></td>';
+    }
+    html += '<td><ul class="group-list">';
+    for(var g = 0; g < entries.length; g++) html += '<li>' + esc(formatGroupForRLS(entries[g].group, entries[g].tenantId)) + '</li>';
+    html += '</ul></td></tr>';
+  }
+  html += '</table>';
+
+  if(!hasTenantCol && state.globalConfig.tenantId)
+    html += '<div class="text-sm mt-8" style="color:var(--color-teal)">Tenant ID from config: ' + esc(state.globalConfig.tenantId) + ' (applied to all UUID groups)</div>';
+  else if(!hasTenantCol)
+    html += '<div class="text-sm mt-8" style="color:var(--color-warn)">No Tenant ID mapped or configured. UUID groups won\'t have TenantId appended.</div>';
+
+  cont.innerHTML = html;
+}
+
+/* ── Init ── */
+function init(){
+  setupDropZone();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
