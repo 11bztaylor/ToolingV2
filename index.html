@@ -263,7 +263,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         </div>
         <textarea id="pasteArea" style="width:100%;height:100px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Or paste CSV/TSV/JSON here and press Ctrl+Enter or click Submit"></textarea>
         <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-          <button class="btn btn-sm" onclick="var pa=document.getElementById('pasteArea');var text=pa.value.trim();if(text){parsePastedData(text);pa.value=''}">Submit Pasted Data</button>
+          <button class="btn btn-sm" onclick="submitPastedData()">Submit Pasted Data</button>
           <span style="font-size:11px;color:var(--text-secondary)">or press Ctrl+Enter &nbsp;·&nbsp; Supports CSV, TSV (tab-delimited), or JSON arrays</span>
         </div>
         <div class="file-chips" id="fileChips"></div>
@@ -713,8 +713,9 @@ function setupDropZone(){
   dz.addEventListener("dragover",function(e){e.preventDefault();dz.classList.add("dragover")});
   dz.addEventListener("dragleave",function(){dz.classList.remove("dragover")});
   dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("dragover");handleFiles(e.dataTransfer.files)});
-  pa.addEventListener("keydown",function(e){if(e.ctrlKey&&e.key==="Enter"){var text=pa.value.trim();if(text)parsePastedData(text);pa.value=""}});
+  pa.addEventListener("keydown",function(e){if(e.ctrlKey&&e.key==="Enter")submitPastedData()});
 }
+function submitPastedData(){var pa=document.getElementById("pasteArea");var text=pa.value.trim();if(text){parsePastedData(text);pa.value=""}}
 
 function handleFiles(files){
   for(var i=0;i<files.length;i++){
@@ -1593,7 +1594,7 @@ function buildPerTableRLSBlock(tableName,fullEntries,byAgency,agencyOrder,applyP
     }
   }
   lines.push("}");
-  if(applyPolicy){lines.push("");lines.push(".alter table "+tableName+" policy row_level_security enable \"RLS_"+tableName+"()\"")}
+  if(applyPolicy){lines.push("");lines.push("// Step 2: Enable RLS policy (run separately from Step 1 above)");lines.push(".alter table "+tableName+" policy row_level_security enable \"RLS_"+tableName+"()\"")}
   return{lines:lines,clauseCount:clauseIdx};
 }
 function generateRLS(){

@@ -768,6 +768,7 @@ function buildPerTableRLS(tableName, fullEntries, byAgency, agencyOrder, applyPo
 
   if(applyPolicy){
     lines.push("");
+    lines.push("// Step 2: Enable RLS policy (run separately from Step 1 above)");
     lines.push('.alter table ' + tableName + ' policy row_level_security enable "RLS_' + tableName + '()"');
   }
 
