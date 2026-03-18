@@ -320,31 +320,8 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Mapping Configuration</div>
         <div class="text-sm text-muted mb-8">Assign columns from your data to system fields. Required for RLS policies.</div>
-        <div class="mapping-grid">
-          <div class="mapping-field">
-            <label>Group Name (AAD)</label>
-            <select id="mapGroupName" onchange="updateMapping('groupName')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Domain Filter (Agency)</label>
-            <select id="mapDomainFilter" onchange="updateMapping('domainFilter')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Tenant ID</label>
-            <select id="mapTenantId" onchange="updateMapping('tenantId')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Custom Field (optional)</label>
-            <select id="mapCustom" onchange="updateMapping('customField')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
+        <div class="mapping-grid" id="mappingGrid">
+          <!-- Populated dynamically by buildMappingGrid() from TAB_REGISTRY mappingDeps -->
         </div>
         <div id="mappingSummary"></div>
       </div>
@@ -827,7 +804,7 @@ var TAB_REGISTRY=[
   {
     id:"data",label:"Data & Mapping",position:0,panelId:"tab-data",
     mappingDeps:[],
-    init:function(){setupDropZone()},
+    init:function(){setupDropZone();buildMappingGrid()},
     onShow:function(){},
     generate:null
   },
@@ -1181,6 +1158,36 @@ function updateBadge(){
   }
 }
 
+// ── Mapping Hub: dynamic column dependencies from TAB_REGISTRY ──
+function collectMappingDeps(){
+  var seen={},result=[];
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    var deps=TAB_REGISTRY[i].mappingDeps||[];
+    for(var j=0;j<deps.length;j++){
+      if(!seen[deps[j].key]){seen[deps[j].key]=true;result.push(deps[j])}
+    }
+  }
+  return result;
+}
+function getMappingSelectId(key){return"map"+key.charAt(0).toUpperCase()+key.slice(1)}
+
+function buildMappingGrid(){
+  var grid=document.getElementById("mappingGrid");if(!grid)return;
+  var deps=collectMappingDeps();
+  var html="";
+  for(var i=0;i<deps.length;i++){
+    var d=deps[i],selId=getMappingSelectId(d.key);
+    html+='<div class="mapping-field"><label>'+esc(d.label)+(d.required?" *":"")+'</label>';
+    html+='<select id="'+selId+'" onchange="updateMapping(\''+d.key+'\')"><option value="">-- none --</option></select></div>';
+  }
+  grid.innerHTML=html;
+  // Ensure state.mapping has entries for all deps
+  for(var i=0;i<deps.length;i++){
+    if(!state.mapping[deps[i].key])state.mapping[deps[i].key]={fileId:null,column:null};
+  }
+  updateMappingDropdowns();
+}
+
 function updateMappingDropdowns(){
   var opts=['<option value="">-- none --</option>'];
   for(var i=0;i<state.files.length;i++){
@@ -1189,27 +1196,18 @@ function updateMappingDropdowns(){
       opts.push('<option value="'+f.id+'|'+f.columns[j]+'">'+esc(f.name)+'['+esc(f.columns[j])+']</option>');
     }
   }
-  var selects=["mapGroupName","mapDomainFilter","mapTenantId","mapCustom"];
-  for(var s=0;s<selects.length;s++){
-    var sel=document.getElementById(selects[s]);
-    if(sel){
-      var curVal=sel.value;
-      sel.innerHTML=opts.join("");
-      sel.value=curVal;
-    }
+  var deps=collectMappingDeps();
+  for(var s=0;s<deps.length;s++){
+    var sel=document.getElementById(getMappingSelectId(deps[s].key));
+    if(sel){var curVal=sel.value;sel.innerHTML=opts.join("");sel.value=curVal}
   }
 }
 
 function syncMappingDropdownSelections(){
-  var mapDefs=[
-    {id:"mapGroupName",key:"groupName"},
-    {id:"mapDomainFilter",key:"domainFilter"},
-    {id:"mapTenantId",key:"tenantId"},
-    {id:"mapCustom",key:"customField"}
-  ];
-  for(var i=0;i<mapDefs.length;i++){
-    var sel=document.getElementById(mapDefs[i].id);
-    var m=state.mapping[mapDefs[i].key];
+  var deps=collectMappingDeps();
+  for(var i=0;i<deps.length;i++){
+    var sel=document.getElementById(getMappingSelectId(deps[i].key));
+    var m=state.mapping[deps[i].key];
     if(!sel||!m||!m.fileId||!m.column){if(sel)sel.value="";continue}
     sel.value=m.fileId+"|"+m.column;
   }
