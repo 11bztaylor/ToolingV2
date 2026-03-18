@@ -804,14 +804,38 @@ var TAB_REGISTRY=[
     mappingDeps:[],
     init:function(){setupDropZone();buildMappingGrid()},
     onShow:function(){},
-    generate:null
+    generate:null,
+    restoreState:function(s){
+      if(s.files)state.files=s.files;
+      if(s.mapping)Object.assign(state.mapping,s.mapping);
+      renderFileChips();updateMappingDropdowns();syncMappingDropdownSelections();renderMappingSummary();
+    }
   },
   {
     id:"tables",label:"Table Builder",position:1,panelId:"tab-tables",
     mappingDeps:[],
     init:function(){initTBChecklists();setPhase("staging")},
     onShow:function(){generateTableBuilder()},
-    generate:function(){generateTableBuilder()}
+    generate:function(){generateTableBuilder()},
+    restoreState:function(s){
+      if(s.tableBuilder){
+        Object.assign(state.tableBuilder,s.tableBuilder);
+        if(!state.tableBuilder.fields||!Array.isArray(state.tableBuilder.fields)||state.tableBuilder.fields.length===0){
+          state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
+            return{cat:f.cat,raw:f.raw,col:f.col,type:f.type,tier:f.tier,sentinel:!!f.sentinel,enabled:(f.tier==="rec")}
+          });
+          state.tableBuilder.activePreset="rec";
+        }
+      }
+      initTBChecklists();
+      if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
+        var cbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');
+        for(var i=0;i<cbs.length;i++)cbs[i].checked=state.tableBuilder.selectedTables.indexOf(cbs[i].getAttribute("data-table"))>=0;
+      }
+      if(state.tableBuilder.phase)setPhase(state.tableBuilder.phase);
+      if(state.tableBuilder.emailFieldOverride){var efi=document.getElementById("emailFieldInput");if(efi)efi.value=state.tableBuilder.emailFieldOverride}
+      renderFieldEditor();
+    }
   },
   {
     id:"rls",label:"RLS Builder",position:2,panelId:"tab-rls",
@@ -823,21 +847,79 @@ var TAB_REGISTRY=[
     ],
     init:function(){syncRLSMappingsFromData();initRLSChecklists();makeRLSCardsCollapsible()},
     onShow:function(){generateRLS()},
-    generate:function(){generateRLS()}
+    generate:function(){generateRLS()},
+    restoreState:function(s){
+      if(s.rls)Object.assign(state.rls,s.rls);
+      if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={};
+      if(typeof state.rls.fullAccessTable!=="string")state.rls.fullAccessTable="";
+      initRLSChecklists();makeRLSCardsCollapsible();
+      if(state.rls.selectedTables&&state.rls.selectedTables.length){
+        var cbs=document.querySelectorAll('input[data-ctx="rls"]');
+        for(var i=0;i<cbs.length;i++)cbs[i].checked=state.rls.selectedTables.indexOf(cbs[i].getAttribute("data-table"))>=0;
+      }
+      var togRF=document.getElementById("togRlsFunc");
+      if(togRF){if(state.rls.rlsFunction)togRF.classList.add("on");else togRF.classList.remove("on")}
+      var togRA=document.getElementById("togRlsApply");
+      if(togRA){if(state.rls.applyPolicies)togRA.classList.add("on");else togRA.classList.remove("on")}
+      if(state.rls.mappingPairs&&state.rls.mappingPairs.length)renderRLSMappingPairs();
+      else syncRLSMappingsFromData();
+    }
   },
   {
     id:"retention",label:"Storage Policies",position:3,panelId:"tab-retention",
     mappingDeps:[],
     init:function(){buildStoragePolicyOverrides();updateProfilePills();updateOverrideCountBadge()},
     onShow:function(){generateStoragePolicies()},
-    generate:function(){generateStoragePolicies()}
+    generate:function(){generateStoragePolicies()},
+    restoreState:function(s){
+      if(s.retention)Object.assign(state.retention,s.retention);
+      // Migrate old sessions missing cache/batching
+      if(!state.retention.cache)state.retention.cache={staging:"10d",events:"30d",alerts:"30d",overrides:{}};
+      if(!state.retention.batching)state.retention.batching={enabled:false,maxTimeSpan:"00:00:30",maxItems:"",maxRawDataSize:"",overrides:{}};
+      if(!state.retention.storageProfile)state.retention.storageProfile="custom";
+      buildStoragePolicyOverrides();
+      // Restore retention + cache dropdowns
+      var cats=["Staging","Events","Alerts"];
+      for(var rc=0;rc<cats.length;rc++){
+        var key=cats[rc].toLowerCase();
+        var rsel=document.getElementById("ret"+cats[rc]);
+        if(rsel&&state.retention[key]){
+          var found=false;for(var o=0;o<rsel.options.length;o++){if(rsel.options[o].value===state.retention[key]){rsel.value=state.retention[key];found=true;break}}
+          if(!found){rsel.value="custom";var rc2=document.getElementById("ret"+cats[rc]+"Custom");if(rc2){rc2.style.display="";rc2.value=state.retention[key]}}
+        }
+        if(state.retention.cache){
+          var csel=document.getElementById("cache"+cats[rc]);
+          if(csel&&state.retention.cache[key]){
+            var cf=false;for(var o=0;o<csel.options.length;o++){if(csel.options[o].value===state.retention.cache[key]){csel.value=state.retention.cache[key];cf=true;break}}
+            if(!cf){csel.value="custom";var cc=document.getElementById("cache"+cats[rc]+"Custom");if(cc){cc.style.display="";cc.value=state.retention.cache[key]}}
+          }
+        }
+      }
+      // Restore toggle visuals
+      var togRet=document.getElementById("togRetention");if(togRet){if(state.retention.enableRetention!==false)togRet.classList.add("on");else togRet.classList.remove("on")}
+      var togCache=document.getElementById("togCaching");if(togCache){if(state.retention.enableCaching)togCache.classList.add("on");else togCache.classList.remove("on")}
+      var togBatch=document.getElementById("togBatching");if(togBatch){if(state.retention.batching&&state.retention.batching.enabled)togBatch.classList.add("on");else togBatch.classList.remove("on")}
+      var togRec=document.getElementById("togRecoverable");if(togRec){if(state.retention.recoverability)togRec.classList.add("on");else togRec.classList.remove("on")}
+      // Show/hide sections
+      var retSec=document.getElementById("retentionPresetsSection");if(retSec)retSec.style.display=state.retention.enableRetention!==false?"":"none";
+      var cacheSec=document.getElementById("cachingPresetsSection");if(cacheSec)cacheSec.style.display=state.retention.enableCaching?"":"none";
+      var batchSec=document.getElementById("batchingPresetsSection");if(batchSec)batchSec.style.display=(state.retention.batching&&state.retention.batching.enabled)?"":"none";
+      // Restore batching inputs
+      if(state.retention.batching){
+        var bts=document.getElementById("batchTimeSpan");if(bts&&state.retention.batching.maxTimeSpan)bts.value=state.retention.batching.maxTimeSpan;
+        var bmi=document.getElementById("batchMaxItems");if(bmi&&state.retention.batching.maxItems)bmi.value=state.retention.batching.maxItems;
+        var bms=document.getElementById("batchMaxSize");if(bms&&state.retention.batching.maxRawDataSize)bms.value=state.retention.batching.maxRawDataSize;
+      }
+      updateProfilePills();updateOverrideCountBadge();updateOverrideColumns();
+    }
   },
   {
     id:"deploy",label:"Deploy & Verify",position:4,panelId:"tab-deploy",
     mappingDeps:[],
     init:function(){},
     onShow:function(){generateDVRunbook();generateDVVerifyQueries()},
-    generate:null
+    generate:null,
+    restoreState:function(s){}
   }
 ];
 
@@ -905,8 +987,38 @@ function syncEmailFieldPlaceholder(){
   if(inp)inp.placeholder=p?p.userEmailField:"user";
 }
 
+function importSession(jsonData){
+  try{
+    var loaded=JSON.parse(jsonData);
+    // Support both raw state (v1/v2) and wrapped format (v3+)
+    var s=loaded._version>=3?loaded.state:loaded;
+    // Restore global config
+    if(s.globalConfig)Object.assign(state.globalConfig,s.globalConfig);
+    if(s.activePack)state.activePack=s.activePack;
+    // Restore global config UI
+    document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
+    document.getElementById("cfgDatabase").value=state.globalConfig.database;
+    document.getElementById("cfgTenantId").value=state.globalConfig.tenantId;
+    document.getElementById("cfgPack").value=state.activePack;
+    syncEmailFieldPlaceholder();
+    // Delegate per-tab restore to registry
+    for(var i=0;i<TAB_REGISTRY.length;i++){
+      if(TAB_REGISTRY[i].restoreState)TAB_REGISTRY[i].restoreState(s);
+    }
+    // Regenerate all outputs via registry
+    for(var i=0;i<TAB_REGISTRY.length;i++){
+      if(TAB_REGISTRY[i].generate)TAB_REGISTRY[i].generate();
+    }
+    return true;
+  }catch(e){
+    alert("Failed to load session: "+e.message);
+    return false;
+  }
+}
+
 function exportSession(){
-  var json=JSON.stringify(state,null,2);
+  var session={_version:3,state:state};
+  var json=JSON.stringify(session,null,2);
   var blob=new Blob([json],{type:"application/json"});
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
@@ -914,125 +1026,6 @@ function exportSession(){
   a.download="adx-schema-session.json";
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function importSession(jsonData){
-  try{
-    var loaded=JSON.parse(jsonData);
-    if(loaded.globalConfig)Object.assign(state.globalConfig,loaded.globalConfig);
-    if(loaded.activePack)state.activePack=loaded.activePack;
-    if(loaded.files)state.files=loaded.files;
-    if(loaded.mapping)Object.assign(state.mapping,loaded.mapping);
-    if(loaded.tableBuilder){
-      Object.assign(state.tableBuilder,loaded.tableBuilder);
-      if(!state.tableBuilder.fields||!Array.isArray(state.tableBuilder.fields)||state.tableBuilder.fields.length===0){
-        state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
-          return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
-        });
-        state.tableBuilder.activePreset="rec";
-      }
-    }
-    if(loaded.rls)Object.assign(state.rls,loaded.rls);
-    if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={};
-    if(typeof state.rls.fullAccessTable!=="string")state.rls.fullAccessTable="";
-    if(loaded.retention)Object.assign(state.retention,loaded.retention);
-    document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
-    document.getElementById("cfgDatabase").value=state.globalConfig.database;
-    document.getElementById("cfgTenantId").value=state.globalConfig.tenantId;
-    document.getElementById("cfgPack").value=state.activePack;
-    syncEmailFieldPlaceholder();
-    renderFileChips();
-    updateMappingDropdowns();
-    syncMappingDropdownSelections();
-    initTBChecklists();
-    initRLSChecklists();
-    makeRLSCardsCollapsible();
-    buildStoragePolicyOverrides();
-    // Restore saved Table Builder selections
-    if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
-      var tbCbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');
-      for(var i=0;i<tbCbs.length;i++){
-        tbCbs[i].checked=state.tableBuilder.selectedTables.indexOf(tbCbs[i].getAttribute("data-table"))>=0;
-      }
-    }
-    // Restore saved RLS table selections
-    if(state.rls.selectedTables&&state.rls.selectedTables.length){
-      var rlsCbs=document.querySelectorAll('input[data-ctx="rls"]');
-      for(var i=0;i<rlsCbs.length;i++){
-        rlsCbs[i].checked=state.rls.selectedTables.indexOf(rlsCbs[i].getAttribute("data-table"))>=0;
-      }
-    }
-    // Restore phase
-    if(state.tableBuilder.phase)setPhase(state.tableBuilder.phase);
-    // Restore email override
-    if(state.tableBuilder.emailFieldOverride){
-      var efi=document.getElementById("emailFieldInput");
-      if(efi)efi.value=state.tableBuilder.emailFieldOverride;
-    }
-    // Restore toggle visual states
-    var togRF=document.getElementById("togRlsFunc");
-    if(togRF){if(state.rls.rlsFunction)togRF.classList.add("on");else togRF.classList.remove("on")}
-    var togRA=document.getElementById("togRlsApply");
-    if(togRA){if(state.rls.applyPolicies)togRA.classList.add("on");else togRA.classList.remove("on")}
-    var togRec=document.getElementById("togRecoverable");
-    if(togRec){if(state.retention.recoverability)togRec.classList.add("on");else togRec.classList.remove("on")}
-    // Restore RLS mapping pairs
-    if(state.rls.mappingPairs&&state.rls.mappingPairs.length)renderRLSMappingPairs();
-    else syncRLSMappingsFromData();
-    // Restore storage policy dropdowns (retention + caching)
-    if(state.retention){
-      var retCats=["Staging","Events","Alerts"];
-      for(var rc=0;rc<retCats.length;rc++){
-        var catKey=retCats[rc].toLowerCase();
-        // Retention dropdowns
-        var selEl=document.getElementById("ret"+retCats[rc]);
-        if(selEl&&state.retention[catKey]){
-          var opts=selEl.options;var found=false;
-          for(var oi=0;oi<opts.length;oi++){if(opts[oi].value===state.retention[catKey]){selEl.value=state.retention[catKey];found=true;break}}
-          if(!found){selEl.value="custom";var cust=document.getElementById("ret"+retCats[rc]+"Custom");if(cust){cust.style.display="";cust.value=state.retention[catKey]}}
-        }
-        // Caching dropdowns
-        if(state.retention.cache){
-          var cacheEl=document.getElementById("cache"+retCats[rc]);
-          if(cacheEl&&state.retention.cache[catKey]){
-            var copts=cacheEl.options;var cfound=false;
-            for(var ci=0;ci<copts.length;ci++){if(copts[ci].value===state.retention.cache[catKey]){cacheEl.value=state.retention.cache[catKey];cfound=true;break}}
-            if(!cfound){cacheEl.value="custom";var ccust=document.getElementById("cache"+retCats[rc]+"Custom");if(ccust){ccust.style.display="";ccust.value=state.retention.cache[catKey]}}
-          }
-        }
-      }
-      // Restore policy toggle visual states
-      var togRet=document.getElementById("togRetention");
-      if(togRet){if(state.retention.enableRetention!==false)togRet.classList.add("on");else togRet.classList.remove("on")}
-      var togCache=document.getElementById("togCaching");
-      if(togCache){if(state.retention.enableCaching)togCache.classList.add("on");else togCache.classList.remove("on")}
-      var togBatch=document.getElementById("togBatching");
-      if(togBatch){if(state.retention.batching&&state.retention.batching.enabled)togBatch.classList.add("on");else togBatch.classList.remove("on")}
-      // Show/hide sections based on toggle state
-      var retSec=document.getElementById("retentionPresetsSection");if(retSec)retSec.style.display=state.retention.enableRetention!==false?"":"none";
-      var cacheSec=document.getElementById("cachingPresetsSection");if(cacheSec)cacheSec.style.display=state.retention.enableCaching?"":"none";
-      var batchSec=document.getElementById("batchingPresetsSection");if(batchSec)batchSec.style.display=(state.retention.batching&&state.retention.batching.enabled)?"":"none";
-      // Restore batching inputs
-      if(state.retention.batching){
-        var bts=document.getElementById("batchTimeSpan");if(bts&&state.retention.batching.maxTimeSpan)bts.value=state.retention.batching.maxTimeSpan;
-        var bmi=document.getElementById("batchMaxItems");if(bmi&&state.retention.batching.maxItems)bmi.value=state.retention.batching.maxItems;
-        var bms=document.getElementById("batchMaxSize");if(bms&&state.retention.batching.maxRawDataSize)bms.value=state.retention.batching.maxRawDataSize;
-      }
-      // Restore profile pills
-      updateProfilePills();
-      updateOverrideCountBadge();
-      updateOverrideColumns();
-    }
-    // Re-render field editor with loaded state
-    renderFieldEditor();
-    // Regenerate all outputs
-    generateRLS();
-    generateStoragePolicies();
-    return true;
-  }catch(e){
-    alert("Failed to load session: "+e.message);
-    return false;
-  }
 }
 
 function handleSessionImport(event){
