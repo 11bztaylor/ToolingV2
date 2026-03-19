@@ -443,7 +443,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
               </div>
               <div style="display:flex;align-items:center;gap:8px;padding-left:10px;color:var(--text-secondary)">
                 <span style="font-family:var(--font-mono)">&#9474;</span>
-                <span style="font-size:11px">Cold queries still work — same KQL, same results. Just slower: 10-30s vs 1-3s</span>
+                <span style="font-size:11px">Cold queries still work — all operators, all filters, full KQL. Just slower: think 10-30s vs 1-3s. For a targeted forensic query that's fine. For a dashboard refreshing every 60 seconds, it's not.</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <span style="background:var(--color-error);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">RETENTION&nbsp;EXPIRES</span>
@@ -454,15 +454,23 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
             <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-warn)">
               <strong style="color:var(--color-warn)">Retention</strong> <span style="color:var(--text-secondary)">&mdash; "how long does data exist?"</span>
-              <div style="margin-top:4px">This is your compliance knob. Legal says keep security logs for 1 year? Set retention to <code style="color:var(--color-success)">365d</code>. Once this expires the data is permanently deleted. Staging tables get short retention (7-30d) because data flows to typed tables almost immediately.</div>
+              <div style="margin-top:4px">This is your compliance knob. Legal says keep security logs for 1 year? Set retention to <code style="color:var(--color-success)">365d</code>. Need 2 years for audit? <code style="color:var(--color-success)">730d</code>. Once this expires the data is permanently deleted. Staging tables get short retention (7-30d) because data flows to typed tables almost immediately — no reason to keep the raw copy long.</div>
             </div>
             <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-info)">
               <strong style="color:var(--color-info)">Hot Cache</strong> <span style="color:var(--text-secondary)">&mdash; "how long are queries fast?"</span>
-              <div style="margin-top:4px">This is your <em>cost vs speed</em> knob. Hot cache keeps data on SSDs bolted to cluster nodes. More hot cache = bigger VMs = bigger bill. For SOC work, keep 14-30 days hot. Older data for compliance? Let it go cold. <strong style="color:var(--text-primary)">Cache must be &le; retention</strong>.</div>
+              <div style="margin-top:4px">This is your <em>cost vs speed</em> knob — and it's the biggest one you have. Hot cache keeps a copy of data on SSDs bolted to the cluster nodes. More hot cache = bigger SSDs needed = bigger VMs = bigger bill. For SOC work, you usually want the last 14-30 days hot (active investigation window). Older data for compliance? Let it go cold — your analysts aren't querying 8-month-old Netskope logs every day. <strong style="color:var(--text-primary)">Cache must be &le; retention</strong> (can't cache data that doesn't exist).</div>
+              <div style="margin-top:6px;font-size:11px;padding:6px 8px;background:var(--bg-base);border-radius:var(--radius-sm)"><strong style="color:var(--text-primary)">Searchability impact:</strong> Hot and cold data are both fully searchable — same KQL, same operators, same results. The difference is <em>speed</em>. Hot queries scan data already on local SSD (1-3s). Cold queries pull data from Azure blob first, then scan it (10-30s for a focused time range, longer for broad scans). If you have dashboards, alerts, or scheduled queries hitting a table regularly — keep that window hot. If it's just occasional forensic lookups, cold is fine.</div>
             </div>
             <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-purple)">
               <strong style="color:var(--color-purple)">Ingestion Batching</strong> <span style="color:var(--text-secondary)">&mdash; "how fast does data show up?"</span>
-              <div style="margin-top:4px">ADX batches writes — default waits up to 5 minutes. For alerts where SOC is actively triaging, drop to 30 seconds. Smaller batches = more cluster work = higher cost.</div>
+              <div style="margin-top:4px">ADX doesn't write data one row at a time — it batches it up and writes in chunks. By default it waits up to 5 minutes (or 1 GB, or 1000 items — whichever comes first). That means there's up to a 5-minute gap between "event happened" and "data is queryable." For most event tables that's fine. For alerts where your SOC is actively triaging? Drop it to 30 seconds. Just know: smaller batches = more cluster work = higher cost.</div>
+            </div>
+          </div>
+          <div style="padding:10px 12px;background:rgba(74,158,237,.06);border:1px solid rgba(74,158,237,.15);border-radius:var(--radius-md);margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--color-info);margin-bottom:6px">Example — Netskope alert table with typical SOC settings</div>
+            <div style="font-size:12px">
+              Retention = <code style="color:var(--color-success)">365d</code>, Hot Cache = <code style="color:var(--color-success)">30d</code>, Batching = <code style="color:var(--color-success)">00:00:30</code><br>
+              <span style="color:var(--text-secondary)">&rarr; Alert data shows up within 30 seconds of ingestion. Analysts can query the last 30 days instantly. Older alerts (31-365 days) are still queryable for investigations/compliance but take a few seconds longer. After 1 year, data is deleted.</span>
             </div>
           </div>
           <div style="padding:8px 10px;background:var(--bg-base);border-radius:var(--radius-md);font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">
