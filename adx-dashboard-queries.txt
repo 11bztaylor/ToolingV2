@@ -1,0 +1,39 @@
+ADX Dashboard Queries
+=====================
+Paste each query as a separate tile in ADX Web UI Dashboards.
+https://dataexplorer.azure.com → Dashboards → New Dashboard → Add Tile
+
+
+Tile 1 — Table Sizes (bar chart)
+---------------------------------
+.show tables details
+| project TableName, SizeGB = TotalOriginalSize / 1024 / 1024 / 1024
+| order by SizeGB desc
+| render barchart
+
+
+Tile 2 — Row Counts (bar chart)
+---------------------------------
+.show tables details
+| project TableName, RowCount
+| order by RowCount desc
+| render barchart
+
+
+Tile 3 — Retention & Caching Overview (table)
+-----------------------------------------------
+.show tables details
+| project TableName, Folder, RetentionPolicy, CachingPolicy, TotalOriginalSize, RowCount
+| order by Folder, TableName
+
+
+Tile 4 — RLS Status (table)
+-----------------------------
+.show table * policy row_level_security
+| project TableName, IsEnabled
+
+
+Tile 5 — Functions (table)
+----------------------------
+.show functions
+| project Name, Folder, Body
