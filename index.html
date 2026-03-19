@@ -38,6 +38,10 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .app-main{grid-area:main;overflow-y:auto;padding:20px;background:var(--bg-base)}
 .tab{display:none}
 .tab.active{display:block}
+.dv-collapsed .dv-body{display:none}
+.dv-collapsed .dv-chev{transform:rotate(-90deg)}
+.collapsed .dv-chev{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
 .tab-title{font-size:20px;font-weight:600;margin-bottom:4px}
 .tab-subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:20px}
 .card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:960px}
@@ -209,7 +213,75 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 /* Time format hint */
 .time-hint{font-size:10px;color:var(--text-secondary);padding:2px 0 0 70px}
 /* Override row resolved value */
-.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:60px;text-align:right}
+.override-resolved{font-size:10px;color:var(--text-secondary);font-family:var(--font-mono);min-width:100px;text-align:right}
+/* Storage profile pills */
+.profile-pills{display:flex;gap:8px;flex-wrap:wrap}
+.profile-pill{padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.profile-pill:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.profile-pill.active{background:rgba(74,158,237,.15);border-color:var(--color-info);color:var(--color-info)}
+.profile-desc{font-size:10px;color:var(--text-secondary);margin-top:2px;font-weight:400}
+/* Override dual columns */
+.override-header{display:flex;align-items:center;gap:10px;padding:4px 10px;font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+.override-header .col-label{width:80px;text-align:center}
+/* Batching config */
+.batching-config{padding:8px 0}
+.batching-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.batching-row label{font-size:12px;min-width:180px}
+.batching-row input{padding:5px 8px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;width:120px;outline:none}
+.batching-row input:focus{border-color:var(--border-focus)}
+/* Collapsible cards */
+.card-title.collapsible{cursor:pointer;user-select:none}
+.card-title.collapsible:hover{opacity:.85}
+.card-title .chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s;margin-left:auto;line-height:1}
+.collapsed .chevron{transform:rotate(-90deg)}
+/* Collapsible KQL sections */
+.kql-section{margin-top:16px}
+.kql-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;user-select:none;transition:background .15s}
+.kql-section-header:hover{background:var(--bg-hover)}
+.kql-section-title{font-size:12px;font-weight:700;color:var(--color-info);display:flex;align-items:center;gap:8px}
+.kql-section-badge{font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:1px 8px;border-radius:10px}
+.kql-section-chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s}
+.kql-section.collapsed .kql-section-chevron{transform:rotate(-90deg)}
+.kql-section.collapsed .kql-section-body{display:none}
+.kql-section-body{padding-top:8px}
+/* URI status (Cross-Workspace) */
+.uri-status{padding:10px 14px;border-radius:var(--radius-md);font-size:12px;margin-bottom:14px}
+.uri-status.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--color-success)}
+.uri-status.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--color-warn)}
+.uri-status.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--color-error)}
+/* DB Overview dashboard */
+.ov-stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.ov-stat{flex:1;min-width:120px;padding:12px 16px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);text-align:center}
+.ov-stat-val{font-size:22px;font-weight:700;font-family:var(--font-mono)}
+.ov-stat-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.ov-table{width:100%;border-collapse:collapse;font-size:12px}
+.ov-table th{text-align:left;padding:8px 10px;background:var(--bg-base);color:var(--text-secondary);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ov-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ov-table tr:hover td{background:var(--bg-hover)}
+.ov-table .tname{font-family:var(--font-mono);font-weight:500;white-space:nowrap}
+.icon-pass{color:var(--color-success)}.icon-fail{color:var(--text-secondary)}.icon-active{color:var(--color-info)}
+.fn-row{padding:8px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:8px;cursor:pointer}
+.fn-row:hover{background:var(--bg-hover)}
+.fn-header{display:flex;align-items:center;gap:8px;font-size:12px}
+.fn-name{font-family:var(--font-mono);font-weight:600;color:var(--color-info)}
+.fn-folder{font-size:11px;color:var(--text-secondary)}
+.fn-body{display:none;margin-top:8px;padding:8px;background:var(--bg-base);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;color:var(--color-success);white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.fn-row.expanded .fn-body{display:block}
+.pol-group{margin-bottom:12px}
+.pol-group-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pol-row{display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:12px}
+.pol-val{font-family:var(--font-mono);font-weight:600;min-width:60px}
+.pol-tables{color:var(--text-secondary);font-size:11px}
+/* Policy toggle row */
+.policy-toggle-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-base);border-radius:var(--radius-md);margin-bottom:8px}
+.policy-toggle-row .toggle-switch{flex-shrink:0}
+.policy-toggle-row .policy-label{font-size:13px;font-weight:600;flex:1}
+.policy-toggle-row .policy-hint{font-size:11px;color:var(--text-secondary)}
+/* Sub-section divider */
+.sub-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.sub-section-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+/* Disabled preset rows */
+.preset-row.disabled{opacity:.35;pointer-events:none}
 </style>
 </head>
 <body>
@@ -232,16 +304,15 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="config-field">
         <label>Schema Pack</label>
         <select id="cfgPack" onchange="bindConfig()">
-          <option value="netskope">Netskope N2Av2</option>
+          <!-- Populated by buildPackSelector() from PACK_REGISTRY -->
         </select>
       </div>
     </div>
   </div>
   <div class="app-nav">
-    <button class="nav-btn active" onclick="showTab('data')">Data & Mapping</button>
-    <button class="nav-btn" onclick="showTab('tables')">Table Builder</button>
-    <button class="nav-btn" onclick="showTab('rls')">RLS Builder</button>
-    <button class="nav-btn" onclick="showTab('retention')">Retention</button>
+    <div id="navTabs">
+      <!-- Populated by buildNav() from TAB_REGISTRY -->
+    </div>
     <div class="nav-divider"></div>
     <div class="session-buttons">
       <button class="btn btn-sm" onclick="exportSession()">Save Session</button>
@@ -275,31 +346,8 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Mapping Configuration</div>
         <div class="text-sm text-muted mb-8">Assign columns from your data to system fields. Required for RLS policies.</div>
-        <div class="mapping-grid">
-          <div class="mapping-field">
-            <label>Group Name (AAD)</label>
-            <select id="mapGroupName" onchange="updateMapping('groupName')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Domain Filter (Agency)</label>
-            <select id="mapDomainFilter" onchange="updateMapping('domainFilter')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Tenant ID</label>
-            <select id="mapTenantId" onchange="updateMapping('tenantId')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
-          <div class="mapping-field">
-            <label>Custom Field (optional)</label>
-            <select id="mapCustom" onchange="updateMapping('customField')">
-              <option value="">-- none --</option>
-            </select>
-          </div>
+        <div class="mapping-grid" id="mappingGrid">
+          <!-- Populated dynamically by buildMappingGrid() from TAB_REGISTRY mappingDeps -->
         </div>
         <div id="mappingSummary"></div>
       </div>
@@ -393,79 +441,386 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     </section>
 
     <!-- ══════════════════════════════════════════════════════════════
-         TAB: Retention
+         TAB: Storage Policies (Retention + Caching + Batching)
          ══════════════════════════════════════════════════════════════ -->
     <section class="tab" id="tab-retention">
-      <div class="tab-title">Retention</div>
-      <div class="tab-subtitle">Configure soft-delete retention periods per category or per table.</div>
+      <div class="tab-title">Storage Policies</div>
+      <div class="tab-subtitle">Configure retention, hot cache, and ingestion batching policies per category or per table.</div>
 
-      <div class="alert alert-info">
-        <span>i</span>
-        <div><strong>ADX timespan format:</strong> Use <code>d</code> for days, <code>h</code> for hours, <code>m</code> for minutes. No month shorthand — convert to days (e.g., 6 months = <code>180d</code>, 1 year = <code>365d</code>). Full format also supported: <code>90.00:00:00</code></div>
+      <!-- Explainer card — collapsible -->
+      <div class="card" id="cardExplainer" style="border-color:rgba(74,158,237,.3)">
+        <div class="card-title collapsible" onclick="toggleCard('cardExplainer')"><span class="dot" style="background:var(--color-info)"></span> How ADX Storage Actually Works <span class="chevron">&#9660;</span></div>
+        <div class="card-body text-sm" style="line-height:1.8;color:var(--text-secondary)">
+          <div style="margin-bottom:12px">
+            Here's the thing that trips people up: <strong style="color:var(--text-primary)">ALL your data always lives in cold storage (Azure blob)</strong>. That's the baseline. Cold storage is cheap — pennies per GB. The question is whether a <em>copy</em> of that data also lives somewhere faster.
+          </div>
+          <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Data lifecycle — what happens to a log after it's ingested</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="background:var(--color-success);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">INGESTED</span>
+                <span>Data arrives &rarr; stored in <strong style="color:var(--color-info)">hot cache (SSD)</strong> AND <strong style="color:var(--text-secondary)">cold storage (blob)</strong></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding-left:10px;color:var(--text-secondary)">
+                <span style="font-family:var(--font-mono)">&#9474;</span>
+                <span style="font-size:11px">Your analysts query this data in seconds — it's on fast SSD right on the cluster nodes</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="background:var(--color-warn);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">CACHE&nbsp;EXPIRES</span>
+                <span>Hot cache copy evicted &rarr; data now <strong style="color:var(--text-secondary)">cold-only</strong>. Still queryable, just slower (pulls from blob)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding-left:10px;color:var(--text-secondary)">
+                <span style="font-family:var(--font-mono)">&#9474;</span>
+                <span style="font-size:11px">Cold queries still work — all operators, all filters, full KQL. Just slower: think 10-30s vs 1-3s. For a targeted forensic query that's fine. For a dashboard refreshing every 60 seconds, it's not.</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="background:var(--color-error);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;min-width:70px;text-align:center">RETENTION&nbsp;EXPIRES</span>
+                <span>Data deleted from <em>everywhere</em> &rarr; <strong style="color:var(--color-error)">gone</strong>. Can't query it, can't recover it (unless recoverability is on)</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+            <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-warn)">
+              <strong style="color:var(--color-warn)">Retention</strong> <span style="color:var(--text-secondary)">&mdash; "how long does data exist?"</span>
+              <div style="margin-top:4px">This is your compliance knob. Legal says keep security logs for 1 year? Set retention to <code style="color:var(--color-success)">365d</code>. Need 2 years for audit? <code style="color:var(--color-success)">730d</code>. Once this expires the data is permanently deleted. Staging tables get short retention (7-30d) because data flows to typed tables almost immediately — no reason to keep the raw copy long.</div>
+            </div>
+            <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-info)">
+              <strong style="color:var(--color-info)">Hot Cache</strong> <span style="color:var(--text-secondary)">&mdash; "how long are queries fast?"</span>
+              <div style="margin-top:4px">This is your <em>cost vs speed</em> knob — and it's the biggest one you have. Hot cache keeps a copy of data on SSDs bolted to the cluster nodes. More hot cache = bigger SSDs needed = bigger VMs = bigger bill. For SOC work, you usually want the last 14-30 days hot (active investigation window). Older data for compliance? Let it go cold — your analysts aren't querying 8-month-old Netskope logs every day. <strong style="color:var(--text-primary)">Cache must be &le; retention</strong> (can't cache data that doesn't exist).</div>
+              <div style="margin-top:6px;font-size:11px;padding:6px 8px;background:var(--bg-base);border-radius:var(--radius-sm)"><strong style="color:var(--text-primary)">Searchability impact:</strong> Hot and cold data are both fully searchable — same KQL, same operators, same results. The difference is <em>speed</em>. Hot queries scan data already on local SSD (1-3s). Cold queries pull data from Azure blob first, then scan it (10-30s for a focused time range, longer for broad scans). If you have dashboards, alerts, or scheduled queries hitting a table regularly — keep that window hot. If it's just occasional forensic lookups, cold is fine.</div>
+            </div>
+            <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);border-left:3px solid var(--color-purple)">
+              <strong style="color:var(--color-purple)">Ingestion Batching</strong> <span style="color:var(--text-secondary)">&mdash; "how fast does data show up?"</span>
+              <div style="margin-top:4px">ADX doesn't write data one row at a time — it batches it up and writes in chunks. By default it waits up to 5 minutes (or 1 GB, or 1000 items — whichever comes first). That means there's up to a 5-minute gap between "event happened" and "data is queryable." For most event tables that's fine. For alerts where your SOC is actively triaging? Drop it to 30 seconds. Just know: smaller batches = more cluster work = higher cost.</div>
+            </div>
+          </div>
+          <div style="padding:10px 12px;background:rgba(74,158,237,.06);border:1px solid rgba(74,158,237,.15);border-radius:var(--radius-md);margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--color-info);margin-bottom:6px">Example — Netskope alert table with typical SOC settings</div>
+            <div style="font-size:12px">
+              Retention = <code style="color:var(--color-success)">365d</code>, Hot Cache = <code style="color:var(--color-success)">30d</code>, Batching = <code style="color:var(--color-success)">00:00:30</code><br>
+              <span style="color:var(--text-secondary)">&rarr; Alert data shows up within 30 seconds of ingestion. Analysts can query the last 30 days instantly. Older alerts (31-365 days) are still queryable for investigations/compliance but take a few seconds longer. After 1 year, data is deleted.</span>
+            </div>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg-base);border-radius:var(--radius-md);font-size:11px;font-family:var(--font-mono);color:var(--text-secondary)">
+            <strong style="color:var(--text-primary)">Format:</strong> Use <code style="color:var(--color-success)">d</code> for days, <code style="color:var(--color-success)">h</code> for hours. No month shorthand — 6 months = <code style="color:var(--color-success)">180d</code>, 1 year = <code style="color:var(--color-success)">365d</code>. Batching uses <code style="color:var(--color-success)">HH:MM:SS</code>.
+          </div>
+        </div>
       </div>
 
+      <!-- Combined: Profiles + Presets + Batching -->
       <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Category Presets</div>
-        <div class="text-sm text-muted mb-12">Set defaults by table category. Per-table overrides below take priority.</div>
-        <div class="preset-row">
-          <span class="preset-label" style="color:var(--color-info)">Staging</span>
-          <select id="retStaging" onchange="updateRetention()">
-            <option value="7d">7 days</option>
-            <option value="10d" selected>10 days</option>
-            <option value="14d">14 days</option>
-            <option value="30d">30 days</option>
-            <option value="custom">Custom</option>
-          </select>
-          <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="updateRetention()">
-          <span class="text-sm text-muted">Netskope_Raw — short retention, data flows to typed tables</span>
+        <div class="card-title"><span class="dot" style="background:var(--color-warn)"></span> Storage Configuration</div>
+
+        <!-- Profiles sub-section -->
+        <div class="text-sm text-muted mb-8">Quick presets that configure both retention and hot cache, or customize below.</div>
+        <div class="profile-pills" style="margin-bottom:14px">
+          <div class="profile-pill" onclick="applyStorageProfile('operations')">Operations<div class="profile-desc">Active SOC, long hot cache</div></div>
+          <div class="profile-pill" onclick="applyStorageProfile('investigative')">Investigative<div class="profile-desc">Moderate cache, standard retention</div></div>
+          <div class="profile-pill" onclick="applyStorageProfile('compliance')">Compliance<div class="profile-desc">Minimal cache, long-term storage</div></div>
+          <div class="profile-pill active" onclick="applyStorageProfile('custom')">Custom<div class="profile-desc">Manual configuration</div></div>
         </div>
-        <div class="preset-row">
-          <span class="preset-label" style="color:var(--color-success)">Events</span>
-          <select id="retEvents" onchange="updateRetention()">
-            <option value="90d">90 days (3 mo)</option>
-            <option value="180d" selected>180 days (6 mo)</option>
-            <option value="365d">365 days (1 yr)</option>
-            <option value="730d">730 days (2 yr)</option>
-            <option value="custom">Custom</option>
-          </select>
-          <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="updateRetention()">
-          <span class="text-sm text-muted">8 event tables</span>
+
+        <!-- Policy toggles -->
+        <div class="sub-section" style="margin-top:0;padding-top:0;border-top:none">
+          <div class="sub-section-title">Enable / Disable Policy Types</div>
+          <div class="policy-toggle-row">
+            <div class="toggle-switch on" id="togRetention" onclick="togglePolicy(this,'retention')"><div class="knob"></div></div>
+            <span class="policy-label" style="color:var(--color-warn)">Retention</span>
+            <span class="policy-hint">Soft-delete + recoverability</span>
+          </div>
+          <div class="policy-toggle-row">
+            <div class="toggle-switch on" id="togCaching" onclick="togglePolicy(this,'caching')"><div class="knob"></div></div>
+            <span class="policy-label" style="color:var(--color-info)">Hot Cache</span>
+            <span class="policy-hint">SSD cache duration</span>
+          </div>
+          <div class="policy-toggle-row">
+            <div class="toggle-switch" id="togBatching" onclick="togglePolicy(this,'batching')"><div class="knob"></div></div>
+            <span class="policy-label" style="color:var(--color-purple)">Ingestion Batching</span>
+            <span class="policy-hint">Override default 5 min batch window</span>
+          </div>
         </div>
-        <div class="preset-row">
-          <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
-          <select id="retAlerts" onchange="updateRetention()">
-            <option value="180d">180 days (6 mo)</option>
-            <option value="365d" selected>365 days (1 yr)</option>
-            <option value="730d">730 days (2 yr)</option>
-            <option value="1095d">1095 days (3 yr)</option>
-            <option value="custom">Custom</option>
-          </select>
-          <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="updateRetention()">
-          <span class="text-sm text-muted">13 alert tables</span>
+
+        <!-- Retention presets -->
+        <div class="sub-section" id="retentionPresetsSection">
+          <div class="sub-section-title" style="color:var(--color-warn)">Retention Presets</div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-info)">Staging</span>
+            <select id="retStaging" onchange="onPresetChange()">
+              <option value="7d">7 days</option>
+              <option value="10d" selected>10 days</option>
+              <option value="14d">14 days</option>
+              <option value="30d">30 days</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="retStagingCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="onPresetChange()">
+            <span class="text-sm text-muted">Netskope_Raw</span>
+          </div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-success)">Events</span>
+            <select id="retEvents" onchange="onPresetChange()">
+              <option value="90d">90 days (3 mo)</option>
+              <option value="180d" selected>180 days (6 mo)</option>
+              <option value="365d">365 days (1 yr)</option>
+              <option value="730d">730 days (2 yr)</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="retEventsCustom" type="text" placeholder="e.g. 270d" style="display:none" onchange="onPresetChange()">
+            <span class="text-sm text-muted">8 event tables</span>
+          </div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+            <select id="retAlerts" onchange="onPresetChange()">
+              <option value="180d">180 days (6 mo)</option>
+              <option value="365d" selected>365 days (1 yr)</option>
+              <option value="730d">730 days (2 yr)</option>
+              <option value="1095d">1095 days (3 yr)</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="retAlertsCustom" type="text" placeholder="e.g. 540d" style="display:none" onchange="onPresetChange()">
+            <span class="text-sm text-muted">13 alert tables</span>
+          </div>
+          <div class="toggle-row" style="margin-top:6px">
+            <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
+            <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')" style="font-size:12px">Enable recoverability</label>
+            <span class="text-sm text-muted" style="flex:none">Adds storage overhead</span>
+          </div>
+        </div>
+
+        <!-- Caching presets -->
+        <div class="sub-section" id="cachingPresetsSection">
+          <div class="sub-section-title" style="color:var(--color-info)">Hot Cache Presets</div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-info)">Staging</span>
+            <select id="cacheStaging" onchange="onPresetChange()">
+              <option value="3d">3 days</option>
+              <option value="7d">7 days</option>
+              <option value="10d" selected>10 days</option>
+              <option value="14d">14 days</option>
+              <option value="30d">30 days</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="cacheStagingCustom" type="text" placeholder="e.g. 5d" style="display:none" onchange="onPresetChange()">
+          </div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-success)">Events</span>
+            <select id="cacheEvents" onchange="onPresetChange()">
+              <option value="3d">3 days</option>
+              <option value="7d">7 days</option>
+              <option value="14d">14 days</option>
+              <option value="30d" selected>30 days</option>
+              <option value="90d">90 days</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="cacheEventsCustom" type="text" placeholder="e.g. 21d" style="display:none" onchange="onPresetChange()">
+          </div>
+          <div class="preset-row">
+            <span class="preset-label" style="color:var(--color-warn)">Alerts</span>
+            <select id="cacheAlerts" onchange="onPresetChange()">
+              <option value="3d">3 days</option>
+              <option value="7d">7 days</option>
+              <option value="14d">14 days</option>
+              <option value="30d" selected>30 days</option>
+              <option value="90d">90 days</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input id="cacheAlertsCustom" type="text" placeholder="e.g. 45d" style="display:none" onchange="onPresetChange()">
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);margin-top:6px">Cache &le; retention. Data on fast SSD for cache duration, then cold (blob).</div>
+        </div>
+
+        <!-- Batching config -->
+        <div class="sub-section" id="batchingPresetsSection" style="display:none">
+          <div class="sub-section-title" style="color:var(--color-purple)">Batching Configuration</div>
+          <div class="batching-row">
+            <label>Max batching time span</label>
+            <input type="text" id="batchTimeSpan" value="00:00:30" placeholder="HH:MM:SS" onchange="updateBatching()">
+            <span class="text-sm text-muted">Default: 00:05:00 (5 min)</span>
+          </div>
+          <div class="batching-row">
+            <label>Max number of items <span class="text-muted">(optional)</span></label>
+            <input type="text" id="batchMaxItems" placeholder="default" onchange="updateBatching()">
+            <span class="text-sm text-muted">Default: 1000</span>
+          </div>
+          <div class="batching-row">
+            <label>Max raw data size MB <span class="text-muted">(optional)</span></label>
+            <input type="text" id="batchMaxSize" placeholder="default" onchange="updateBatching()">
+            <span class="text-sm text-muted">Default: 1024 (1 GB)</span>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides</div>
-        <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset. Enter a timespan like <code>90d</code>, <code>365d</code>, or <code>730d</code>.</div>
-        <div id="retentionOverrides"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--color-purple)"></span> Options</div>
-        <div class="toggle-row">
-          <div class="toggle-switch" id="togRecoverable" onclick="toggleSwitch(this,'recoverability')"><div class="knob"></div></div>
-          <label onclick="toggleSwitch(document.getElementById('togRecoverable'),'recoverability')">Enable recoverability</label>
-          <span class="text-sm text-muted" style="flex:none">Allows recovery of deleted data. Adds storage overhead.</span>
+      <!-- Per-Table Overrides — collapsible -->
+      <div class="card" id="cardOverrides">
+        <div class="card-title collapsible" onclick="toggleCard('cardOverrides')"><span class="dot" style="background:var(--color-teal)"></span> Per-Table Overrides <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="overrideCountBadge"></span> <span class="chevron">&#9660;</span></div>
+        <div class="card-body">
+          <div class="text-sm text-muted mb-12">Override category defaults for specific tables. Leave blank to use the category preset.</div>
+          <div class="override-header" id="overrideHeaderRow">
+            <span style="min-width:32px"></span>
+            <span style="flex:1">Table</span>
+            <span class="col-label" id="overrideRetCol">Retention</span>
+            <span class="col-label" id="overrideCacheCol">Hot Cache</span>
+            <span style="min-width:100px;text-align:right">Resolved</span>
+          </div>
+          <div id="retentionOverrides"></div>
         </div>
       </div>
 
+      <!-- Generated KQL -->
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
           <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated KQL</span>
-          <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateRetention()">Refresh</button></div>
+          <div style="display:flex;gap:6px"><button class="btn btn-sm" id="retCopyAllBtn" style="display:none" onclick="copyAllRetKql()">Copy All</button><button class="btn btn-sm" onclick="generateStoragePolicies()">Refresh</button></div>
         </div>
         <div id="retentionOutput"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Deploy & Verify
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-deploy">
+      <div class="tab-title">Deployment &amp; Verification</div>
+      <div class="tab-subtitle">Full deployment runbook in execution order, plus verification queries to confirm everything applied correctly.</div>
+
+      <div class="card" id="cardRunbook">
+        <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="dot" style="background:var(--color-info)"></span> Deployment Runbook
+          <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="runbookCmdCount"></span>
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chev">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:8px">All commands in correct execution order. Run each command one at a time in ADX Web UI.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" id="runbookCopyAllBtn" onclick="copyAllDVRunbook()">Copy All</button>
+            <button class="btn btn-sm" onclick="generateDVRunbook()">Refresh</button>
+          </div>
+          <div id="dvRunbookOutput"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cardVerifyQueries">
+        <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="dot" style="background:var(--color-teal)"></span> Verification Queries
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chev">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" onclick="copyAllDVVerifyQueries(this)">Copy All Queries</button>
+            <button class="btn btn-sm" onclick="generateDVVerifyQueries()">Refresh</button>
+          </div>
+          <div id="dvVerifyQueriesOutput"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Verification Results</div>
+        <div class="text-sm text-muted" style="margin-bottom:8px">Paste the output from each verification query. The tool will parse it and show pass/fail for each check.</div>
+        <div id="dvVerifySummary" style="display:none;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-success)">&#10003;</span> <span id="dvPassCount">0</span> passed</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-error)">&#10007;</span> <span id="dvFailCount">0</span> failed</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--text-secondary)">&#9679;</span> <span id="dvPendingCount">0</span> pending</div>
+        </div>
+        <textarea style="width:100%;min-height:120px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5" id="dvVerifyPasteArea" placeholder="Paste .show command results here (one or more)..."></textarea>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-sm" onclick="parseDVVerifyResults()">Analyze Results</button>
+          <button class="btn btn-sm" onclick="clearDVVerifyResults()">Clear</button>
+        </div>
+        <div id="dvVerifyResultsGrid" style="margin-top:12px"></div>
+      </div>
+
+      <!-- DB Overview: Discovery Commands -->
+      <div class="card" id="cardOvCommands">
+        <div class="card-title collapsible" onclick="toggleCard('cardOvCommands')">
+          <span class="dot" style="background:var(--color-teal)"></span> Database Discovery
+          <span class="text-sm text-muted" style="font-weight:400;margin-left:4px">Full database audit commands</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:10px">Run each command in ADX Web UI. After each result loads, select all rows and copy. Paste all output into the area below.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" id="ovCopyAllCmdsBtn" onclick="copyAllOvCommands(this)">Copy All Commands</button>
+          </div>
+          <div id="ovCommandBlocks"></div>
+        </div>
+      </div>
+
+      <!-- DB Overview: Paste + Dashboard -->
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Database Overview</div>
+        <textarea style="width:100%;min-height:120px;max-height:400px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5" id="dbPasteArea" placeholder="Paste .show command output here...&#10;&#10;Supports tab-separated (copied from ADX Web UI results grid) or JSON format."></textarea>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze</button>
+          <button class="btn btn-sm" onclick="clearDBOverview()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Dashboard (shown after analysis) -->
+      <div id="dbDashboard" style="display:none">
+        <div class="ov-stats" id="ovSummaryStats"></div>
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Table Inventory</div>
+          <div style="overflow-x:auto">
+            <table class="ov-table" id="ovTableGrid"><thead id="ovTableHead"></thead><tbody id="ovTableBody"></tbody></table>
+          </div>
+        </div>
+        <div class="card" id="cardPolicySummary">
+          <div class="card-title collapsible" onclick="toggleCard('cardPolicySummary')">
+            <span class="dot" style="background:var(--color-warn)"></span> Policy Summary
+            <span class="chevron">&#9660;</span>
+          </div>
+          <div class="card-body" id="ovPolicySummary"></div>
+        </div>
+        <div class="card" id="cardFunctions">
+          <div class="card-title collapsible" onclick="toggleCard('cardFunctions')">
+            <span class="dot" style="background:var(--color-purple)"></span> Functions
+            <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="ovFnCount"></span>
+            <span class="chevron">&#9660;</span>
+          </div>
+          <div class="card-body" id="ovFunctionsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: Cross-Workspace Queries
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-crossworkspace">
+      <div class="tab-title">Cross-Workspace Queries</div>
+      <div class="tab-subtitle">Generate <code style="color:var(--color-info)">adx()</code> proxy queries for use in Log Analytics / Sentinel workspaces.</div>
+
+      <!-- Explainer card -->
+      <div class="card" id="cardCWExplainer" style="border-color:rgba(74,158,237,.3)">
+        <div class="card-title collapsible" onclick="toggleCard('cardCWExplainer')"><span class="dot" style="background:var(--color-info)"></span> What Are Cross-Workspace Queries? <span class="chevron">&#9660;</span></div>
+        <div class="card-body text-sm" style="line-height:1.8;color:var(--text-secondary)">
+          <div style="margin-bottom:10px">
+            The <code style="color:var(--color-info)">adx()</code> function lets Sentinel / Log Analytics users query data that lives in an ADX cluster without moving it. Your analysts run these queries from their LA workspace and get back results from ADX tables in real time.
+          </div>
+          <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:10px;border-left:3px solid var(--color-info)">
+            <strong style="color:var(--text-primary)">How it works:</strong> LA sends the query to ADX via a cross-service proxy. The ADX cluster executes it and returns results to the LA workspace. No data replication, no data movement &mdash; just a remote query.
+          </div>
+          <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:10px;border-left:3px solid var(--color-warn)">
+            <strong style="color:var(--color-warn)">Prerequisite:</strong> The ADX cluster must be linked to the LA workspace. In Azure Portal: Log Analytics workspace &rarr; Settings &rarr; Linked services &rarr; add your ADX cluster. Without this, <code style="color:var(--color-info)">adx()</code> calls will fail with a permissions error.
+          </div>
+          <div style="font-size:11px;padding:6px 8px;background:var(--bg-base);border-radius:var(--radius-sm);font-family:var(--font-mono)">
+            <strong style="color:var(--text-primary)">Format:</strong> <code style="color:var(--color-success)">adx("https://{cluster}.{region}.kusto.windows.net/{database}").{TableName}</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- URI Status -->
+      <div id="cwUriStatus"></div>
+
+      <!-- Generated Queries card -->
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated Queries</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" id="cwCopyAllBtn" style="display:none" onclick="copyAllCWQueries()">Copy All</button>
+            <button class="btn btn-sm" onclick="generateCrossWorkspace()">Refresh</button>
+          </div>
+        </div>
+        <div id="cwOutput"></div>
       </div>
     </section>
   </div>
@@ -550,12 +905,167 @@ var state={
   mapping:{groupName:{fileId:null,column:null},domainFilter:{fileId:null,column:null},tenantId:{fileId:null,column:null},customField:{fileId:null,column:null}},
   tableBuilder:{phase:"staging",selectedTables:[],emailFieldOverride:"",addAgencyFilter:true,flattenFields:true,fields:[],activePreset:"rec"},
   rls:{rlsFunction:true,applyPolicies:true,selectedTables:[],mappingPairs:[],fullAccessTable:"",fullAccessByTable:{}},
-  retention:{staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{}}
+  retention:{storageProfile:"custom",enableRetention:true,enableCaching:true,staging:"10d",events:"180d",alerts:"365d",recoverability:false,overrides:{},cache:{staging:"10d",events:"30d",alerts:"30d",overrides:{}},batching:{enabled:false,maxTimeSpan:"00:00:30",maxItems:"",maxRawDataSize:"",overrides:{}}}
 };
+
+var STORAGE_PROFILES={
+  operations:    {retStaging:"10d",retEvents:"365d", retAlerts:"365d", cacheStaging:"10d",cacheEvents:"30d",cacheAlerts:"30d"},
+  investigative: {retStaging:"10d",retEvents:"365d", retAlerts:"365d", cacheStaging:"10d",cacheEvents:"14d",cacheAlerts:"14d"},
+  compliance:    {retStaging:"10d",retEvents:"730d", retAlerts:"1095d",cacheStaging:"10d",cacheEvents:"3d", cacheAlerts:"3d"}
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// PACK REGISTRY
+// ═══════════════════════════════════════════════════════════════════
+var PACK_REGISTRY={
+  _packs:{},
+  register:function(id,packDef){this._packs[id]=packDef},
+  get:function(id){return this._packs[id]||null},
+  list:function(){return Object.keys(this._packs)}
+};
+PACK_REGISTRY.register("netskope",SCHEMA_PACKS.netskope);
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB REGISTRY
+// ═══════════════════════════════════════════════════════════════════
+var TAB_REGISTRY=[
+  {
+    id:"data",label:"Data & Mapping",position:0,panelId:"tab-data",
+    mappingDeps:[],
+    init:function(){setupDropZone();buildMappingGrid()},
+    onShow:function(){},
+    generate:null,
+    restoreState:function(s){
+      if(s.files){state.files=s.files;var maxId=0;for(var fi=0;fi<state.files.length;fi++){var num=parseInt((state.files[fi].id||"").replace("file_",""),10);if(num>maxId)maxId=num}fileIdCounter=maxId+1}
+      if(s.mapping)Object.assign(state.mapping,s.mapping);
+      renderFileChips();updateMappingDropdowns();syncMappingDropdownSelections();renderMappingSummary();
+    }
+  },
+  {
+    id:"tables",label:"Table Builder",position:1,panelId:"tab-tables",
+    mappingDeps:[],
+    init:function(){initTBChecklists();setPhase("staging")},
+    onShow:function(){generateTableBuilder()},
+    generate:function(){generateTableBuilder()},
+    restoreState:function(s){
+      if(s.tableBuilder){
+        Object.assign(state.tableBuilder,s.tableBuilder);
+        if(!state.tableBuilder.fields||!Array.isArray(state.tableBuilder.fields)||state.tableBuilder.fields.length===0){
+          state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
+            return{cat:f.cat,raw:f.raw,col:f.col,type:f.type,tier:f.tier,sentinel:!!f.sentinel,enabled:(f.tier==="rec")}
+          });
+          state.tableBuilder.activePreset="rec";
+        }
+      }
+      initTBChecklists();
+      if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
+        var cbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');
+        for(var i=0;i<cbs.length;i++)cbs[i].checked=state.tableBuilder.selectedTables.indexOf(cbs[i].getAttribute("data-table"))>=0;
+      }
+      if(state.tableBuilder.phase)setPhase(state.tableBuilder.phase);
+      if(state.tableBuilder.emailFieldOverride){var efi=document.getElementById("emailFieldInput");if(efi)efi.value=state.tableBuilder.emailFieldOverride}
+      renderFieldEditor();
+    }
+  },
+  {
+    id:"rls",label:"RLS Builder",position:2,panelId:"tab-rls",
+    mappingDeps:[
+      {key:"groupName",label:"Group Name (AAD)",required:true},
+      {key:"domainFilter",label:"Domain Filter (Agency)",required:true},
+      {key:"tenantId",label:"Tenant ID",required:false},
+      {key:"customField",label:"Display Name / Custom",required:false}
+    ],
+    init:function(){syncRLSMappingsFromData();initRLSChecklists();makeRLSCardsCollapsible()},
+    onShow:function(){generateRLS()},
+    generate:function(){generateRLS()},
+    restoreState:function(s){
+      if(s.rls)Object.assign(state.rls,s.rls);
+      if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={};
+      if(typeof state.rls.fullAccessTable!=="string")state.rls.fullAccessTable="";
+      initRLSChecklists();makeRLSCardsCollapsible();
+      if(state.rls.selectedTables&&state.rls.selectedTables.length){
+        var cbs=document.querySelectorAll('input[data-ctx="rls"]');
+        for(var i=0;i<cbs.length;i++)cbs[i].checked=state.rls.selectedTables.indexOf(cbs[i].getAttribute("data-table"))>=0;
+      }
+      var togRF=document.getElementById("togRlsFunc");
+      if(togRF){if(state.rls.rlsFunction)togRF.classList.add("on");else togRF.classList.remove("on")}
+      var togRA=document.getElementById("togRlsApply");
+      if(togRA){if(state.rls.applyPolicies)togRA.classList.add("on");else togRA.classList.remove("on")}
+      if(state.rls.mappingPairs&&state.rls.mappingPairs.length)renderRLSMappingPairs();
+      else syncRLSMappingsFromData();
+    }
+  },
+  {
+    id:"retention",label:"Storage Policies",position:3,panelId:"tab-retention",
+    mappingDeps:[],
+    init:function(){buildStoragePolicyOverrides();updateProfilePills();updateOverrideCountBadge()},
+    onShow:function(){generateStoragePolicies()},
+    generate:function(){generateStoragePolicies()},
+    restoreState:function(s){
+      if(s.retention)Object.assign(state.retention,s.retention);
+      // Migrate old sessions missing cache/batching
+      if(!state.retention.cache)state.retention.cache={staging:"10d",events:"30d",alerts:"30d",overrides:{}};
+      if(!state.retention.batching)state.retention.batching={enabled:false,maxTimeSpan:"00:00:30",maxItems:"",maxRawDataSize:"",overrides:{}};
+      if(!state.retention.storageProfile)state.retention.storageProfile="custom";
+      buildStoragePolicyOverrides();
+      // Restore retention + cache dropdowns
+      var cats=["Staging","Events","Alerts"];
+      for(var rc=0;rc<cats.length;rc++){
+        var key=cats[rc].toLowerCase();
+        var rsel=document.getElementById("ret"+cats[rc]);
+        if(rsel&&state.retention[key]){
+          var found=false;for(var o=0;o<rsel.options.length;o++){if(rsel.options[o].value===state.retention[key]){rsel.value=state.retention[key];found=true;break}}
+          if(!found){rsel.value="custom";var rc2=document.getElementById("ret"+cats[rc]+"Custom");if(rc2){rc2.style.display="";rc2.value=state.retention[key]}}
+        }
+        if(state.retention.cache){
+          var csel=document.getElementById("cache"+cats[rc]);
+          if(csel&&state.retention.cache[key]){
+            var cf=false;for(var o=0;o<csel.options.length;o++){if(csel.options[o].value===state.retention.cache[key]){csel.value=state.retention.cache[key];cf=true;break}}
+            if(!cf){csel.value="custom";var cc=document.getElementById("cache"+cats[rc]+"Custom");if(cc){cc.style.display="";cc.value=state.retention.cache[key]}}
+          }
+        }
+      }
+      // Restore toggle visuals
+      var togRet=document.getElementById("togRetention");if(togRet){if(state.retention.enableRetention!==false)togRet.classList.add("on");else togRet.classList.remove("on")}
+      var togCache=document.getElementById("togCaching");if(togCache){if(state.retention.enableCaching)togCache.classList.add("on");else togCache.classList.remove("on")}
+      var togBatch=document.getElementById("togBatching");if(togBatch){if(state.retention.batching&&state.retention.batching.enabled)togBatch.classList.add("on");else togBatch.classList.remove("on")}
+      var togRec=document.getElementById("togRecoverable");if(togRec){if(state.retention.recoverability)togRec.classList.add("on");else togRec.classList.remove("on")}
+      // Show/hide sections
+      var retSec=document.getElementById("retentionPresetsSection");if(retSec)retSec.style.display=state.retention.enableRetention!==false?"":"none";
+      var cacheSec=document.getElementById("cachingPresetsSection");if(cacheSec)cacheSec.style.display=state.retention.enableCaching?"":"none";
+      var batchSec=document.getElementById("batchingPresetsSection");if(batchSec)batchSec.style.display=(state.retention.batching&&state.retention.batching.enabled)?"":"none";
+      // Restore batching inputs
+      if(state.retention.batching){
+        var bts=document.getElementById("batchTimeSpan");if(bts&&state.retention.batching.maxTimeSpan)bts.value=state.retention.batching.maxTimeSpan;
+        var bmi=document.getElementById("batchMaxItems");if(bmi&&state.retention.batching.maxItems)bmi.value=state.retention.batching.maxItems;
+        var bms=document.getElementById("batchMaxSize");if(bms&&state.retention.batching.maxRawDataSize)bms.value=state.retention.batching.maxRawDataSize;
+      }
+      updateProfilePills();updateOverrideCountBadge();updateOverrideColumns();
+    }
+  },
+  {
+    id:"deploy",label:"Deploy & Verify",position:4,panelId:"tab-deploy",
+    mappingDeps:[],
+    init:function(){},
+    onShow:function(){generateDVRunbook();generateDVVerifyQueries();renderOvCommands()},
+    generate:null,
+    restoreState:function(s){}
+  },
+  {
+    id:"crossworkspace",label:"Cross-Workspace",position:5,panelId:"tab-crossworkspace",
+    mappingDeps:[],
+    init:function(){},
+    onShow:function(){generateCrossWorkspace()},
+    generate:null,
+    restoreState:function(s){}
+  }
+];
+
+function getTabEntry(id){for(var i=0;i<TAB_REGISTRY.length;i++){if(TAB_REGISTRY[i].id===id)return TAB_REGISTRY[i]}return null}
 
 var fileIdCounter=1;
 
-function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function getPack(){return PACK_REGISTRY.get(state.activePack)}
 function getAllTables(){var p=getPack();return p?p.tables:[]}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function jsStrEsc(s){return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[\r\n]/g," ")}
@@ -570,11 +1080,32 @@ function showTab(tabName){
   for(var i=0;i<tabs.length;i++)tabs[i].classList.remove("active");
   document.getElementById("tab-"+tabName).classList.add("active");
   var btns=document.querySelectorAll(".nav-btn");
-  for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
-  event.target.classList.add("active");
-  if(tabName==="tables")generateTableBuilder();
-  if(tabName==="rls")generateRLS();
-  if(tabName==="retention")generateRetention();
+  for(var i=0;i<btns.length;i++){btns[i].classList.remove("active");if(btns[i].getAttribute("data-tab")===tabName)btns[i].classList.add("active")}
+  var entry=getTabEntry(tabName);
+  if(entry&&entry.onShow)entry.onShow();
+}
+
+function buildNav(){
+  var container=document.getElementById("navTabs");if(!container)return;
+  var sorted=TAB_REGISTRY.slice().sort(function(a,b){return a.position-b.position});
+  var html="";
+  for(var i=0;i<sorted.length;i++){
+    var t=sorted[i];
+    html+='<button class="nav-btn'+(i===0?" active":"")+'" data-tab="'+t.id+'" onclick="showTab(\''+t.id+'\')">'+esc(t.label)+'</button>';
+  }
+  container.innerHTML=html;
+}
+
+function buildPackSelector(){
+  var sel=document.getElementById("cfgPack");if(!sel)return;
+  var packs=PACK_REGISTRY.list();
+  var html="";
+  for(var i=0;i<packs.length;i++){
+    var p=PACK_REGISTRY.get(packs[i]);
+    html+='<option value="'+packs[i]+'">'+esc(p.name)+'</option>';
+  }
+  sel.innerHTML=html;
+  sel.value=state.activePack;
 }
 
 function bindConfig(){
@@ -593,8 +1124,38 @@ function syncEmailFieldPlaceholder(){
   if(inp)inp.placeholder=p?p.userEmailField:"user";
 }
 
+function importSession(jsonData){
+  try{
+    var loaded=JSON.parse(jsonData);
+    // Support both raw state (v1/v2) and wrapped format (v3+)
+    var s=loaded._version>=3?loaded.state:loaded;
+    // Restore global config
+    if(s.globalConfig)Object.assign(state.globalConfig,s.globalConfig);
+    if(s.activePack)state.activePack=s.activePack;
+    // Restore global config UI
+    document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
+    document.getElementById("cfgDatabase").value=state.globalConfig.database;
+    document.getElementById("cfgTenantId").value=state.globalConfig.tenantId;
+    document.getElementById("cfgPack").value=state.activePack;
+    syncEmailFieldPlaceholder();
+    // Delegate per-tab restore to registry
+    for(var i=0;i<TAB_REGISTRY.length;i++){
+      if(TAB_REGISTRY[i].restoreState)TAB_REGISTRY[i].restoreState(s);
+    }
+    // Regenerate all outputs via registry
+    for(var i=0;i<TAB_REGISTRY.length;i++){
+      if(TAB_REGISTRY[i].generate)TAB_REGISTRY[i].generate();
+    }
+    return true;
+  }catch(e){
+    alert("Failed to load session: "+e.message);
+    return false;
+  }
+}
+
 function exportSession(){
-  var json=JSON.stringify(state,null,2);
+  var session={_version:3,state:state};
+  var json=JSON.stringify(session,null,2);
   var blob=new Blob([json],{type:"application/json"});
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
@@ -602,95 +1163,6 @@ function exportSession(){
   a.download="adx-schema-session.json";
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function importSession(jsonData){
-  try{
-    var loaded=JSON.parse(jsonData);
-    if(loaded.globalConfig)Object.assign(state.globalConfig,loaded.globalConfig);
-    if(loaded.activePack)state.activePack=loaded.activePack;
-    if(loaded.files)state.files=loaded.files;
-    if(loaded.mapping)Object.assign(state.mapping,loaded.mapping);
-    if(loaded.tableBuilder){
-      Object.assign(state.tableBuilder,loaded.tableBuilder);
-      if(!state.tableBuilder.fields||!Array.isArray(state.tableBuilder.fields)||state.tableBuilder.fields.length===0){
-        state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
-          return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
-        });
-        state.tableBuilder.activePreset="rec";
-      }
-    }
-    if(loaded.rls)Object.assign(state.rls,loaded.rls);
-    if(!state.rls.fullAccessByTable||typeof state.rls.fullAccessByTable!=="object")state.rls.fullAccessByTable={};
-    if(typeof state.rls.fullAccessTable!=="string")state.rls.fullAccessTable="";
-    if(loaded.retention)Object.assign(state.retention,loaded.retention);
-    document.getElementById("cfgCluster").value=state.globalConfig.clusterUri;
-    document.getElementById("cfgDatabase").value=state.globalConfig.database;
-    document.getElementById("cfgTenantId").value=state.globalConfig.tenantId;
-    document.getElementById("cfgPack").value=state.activePack;
-    syncEmailFieldPlaceholder();
-    renderFileChips();
-    updateMappingDropdowns();
-    syncMappingDropdownSelections();
-    initTBChecklists();
-    initRLSChecklists();
-    makeRLSCardsCollapsible();
-    buildRetentionOverrides();
-    // Restore saved Table Builder selections
-    if(state.tableBuilder.selectedTables&&state.tableBuilder.selectedTables.length){
-      var tbCbs=document.querySelectorAll('input[data-ctx="tableBuilder"]');
-      for(var i=0;i<tbCbs.length;i++){
-        tbCbs[i].checked=state.tableBuilder.selectedTables.indexOf(tbCbs[i].getAttribute("data-table"))>=0;
-      }
-    }
-    // Restore saved RLS table selections
-    if(state.rls.selectedTables&&state.rls.selectedTables.length){
-      var rlsCbs=document.querySelectorAll('input[data-ctx="rls"]');
-      for(var i=0;i<rlsCbs.length;i++){
-        rlsCbs[i].checked=state.rls.selectedTables.indexOf(rlsCbs[i].getAttribute("data-table"))>=0;
-      }
-    }
-    // Restore phase
-    if(state.tableBuilder.phase)setPhase(state.tableBuilder.phase);
-    // Restore email override
-    if(state.tableBuilder.emailFieldOverride){
-      var efi=document.getElementById("emailFieldInput");
-      if(efi)efi.value=state.tableBuilder.emailFieldOverride;
-    }
-    // Restore toggle visual states
-    var togRF=document.getElementById("togRlsFunc");
-    if(togRF){if(state.rls.rlsFunction)togRF.classList.add("on");else togRF.classList.remove("on")}
-    var togRA=document.getElementById("togRlsApply");
-    if(togRA){if(state.rls.applyPolicies)togRA.classList.add("on");else togRA.classList.remove("on")}
-    var togRec=document.getElementById("togRecoverable");
-    if(togRec){if(state.retention.recoverability)togRec.classList.add("on");else togRec.classList.remove("on")}
-    // Restore RLS mapping pairs
-    if(state.rls.mappingPairs&&state.rls.mappingPairs.length)renderRLSMappingPairs();
-    else syncRLSMappingsFromData();
-    // Restore retention preset dropdowns
-    if(state.retention){
-      var retCats=["Staging","Events","Alerts"];
-      for(var rc=0;rc<retCats.length;rc++){
-        var catKey=retCats[rc].toLowerCase();
-        var selEl=document.getElementById("ret"+retCats[rc]);
-        if(selEl&&state.retention[catKey]){
-          // Check if value matches a preset option
-          var opts=selEl.options;var found=false;
-          for(var oi=0;oi<opts.length;oi++){if(opts[oi].value===state.retention[catKey]){selEl.value=state.retention[catKey];found=true;break}}
-          if(!found){selEl.value="custom";var cust=document.getElementById("ret"+retCats[rc]+"Custom");if(cust){cust.style.display="";cust.value=state.retention[catKey]}}
-        }
-      }
-    }
-    // Re-render field editor with loaded state
-    renderFieldEditor();
-    // Regenerate all outputs
-    generateRLS();
-    generateRetention();
-    return true;
-  }catch(e){
-    alert("Failed to load session: "+e.message);
-    return false;
-  }
 }
 
 function handleSessionImport(event){
@@ -837,6 +1309,36 @@ function updateBadge(){
   }
 }
 
+// ── Mapping Hub: dynamic column dependencies from TAB_REGISTRY ──
+function collectMappingDeps(){
+  var seen={},result=[];
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    var deps=TAB_REGISTRY[i].mappingDeps||[];
+    for(var j=0;j<deps.length;j++){
+      if(!seen[deps[j].key]){seen[deps[j].key]=true;result.push(deps[j])}
+    }
+  }
+  return result;
+}
+function getMappingSelectId(key){return"map"+key.charAt(0).toUpperCase()+key.slice(1)}
+
+function buildMappingGrid(){
+  var grid=document.getElementById("mappingGrid");if(!grid)return;
+  var deps=collectMappingDeps();
+  var html="";
+  for(var i=0;i<deps.length;i++){
+    var d=deps[i],selId=getMappingSelectId(d.key);
+    html+='<div class="mapping-field"><label>'+esc(d.label)+(d.required?" *":"")+'</label>';
+    html+='<select id="'+selId+'" onchange="updateMapping(\''+d.key+'\')"><option value="">-- none --</option></select></div>';
+  }
+  grid.innerHTML=html;
+  // Ensure state.mapping has entries for all deps
+  for(var i=0;i<deps.length;i++){
+    if(!state.mapping[deps[i].key])state.mapping[deps[i].key]={fileId:null,column:null};
+  }
+  updateMappingDropdowns();
+}
+
 function updateMappingDropdowns(){
   var opts=['<option value="">-- none --</option>'];
   for(var i=0;i<state.files.length;i++){
@@ -845,27 +1347,18 @@ function updateMappingDropdowns(){
       opts.push('<option value="'+f.id+'|'+f.columns[j]+'">'+esc(f.name)+'['+esc(f.columns[j])+']</option>');
     }
   }
-  var selects=["mapGroupName","mapDomainFilter","mapTenantId","mapCustom"];
-  for(var s=0;s<selects.length;s++){
-    var sel=document.getElementById(selects[s]);
-    if(sel){
-      var curVal=sel.value;
-      sel.innerHTML=opts.join("");
-      sel.value=curVal;
-    }
+  var deps=collectMappingDeps();
+  for(var s=0;s<deps.length;s++){
+    var sel=document.getElementById(getMappingSelectId(deps[s].key));
+    if(sel){var curVal=sel.value;sel.innerHTML=opts.join("");sel.value=curVal}
   }
 }
 
 function syncMappingDropdownSelections(){
-  var mapDefs=[
-    {id:"mapGroupName",key:"groupName"},
-    {id:"mapDomainFilter",key:"domainFilter"},
-    {id:"mapTenantId",key:"tenantId"},
-    {id:"mapCustom",key:"customField"}
-  ];
-  for(var i=0;i<mapDefs.length;i++){
-    var sel=document.getElementById(mapDefs[i].id);
-    var m=state.mapping[mapDefs[i].key];
+  var deps=collectMappingDeps();
+  for(var i=0;i<deps.length;i++){
+    var sel=document.getElementById(getMappingSelectId(deps[i].key));
+    var m=state.mapping[deps[i].key];
     if(!sel||!m||!m.fileId||!m.column){if(sel)sel.value="";continue}
     sel.value=m.fileId+"|"+m.column;
   }
@@ -1311,7 +1804,8 @@ function toggleSwitch(el,key){
     if(state.rls.applyPolicies&&!state.rls.rlsFunction)warn.classList.remove("hidden");
     else warn.classList.add("hidden");
   }
-  generateRLS();
+  if(key==="rlsFunction"||key==="applyPolicies")generateRLS();
+  if(key==="recoverability")generateStoragePolicies();
 }
 
 // ── Mapping pairs ──
@@ -1654,26 +2148,90 @@ function makeRLSCardsCollapsible(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// TAB: Retention
+// TAB: Storage Policies (Retention + Caching + Batching)
 // ═══════════════════════════════════════════════════════════════════
-function updateRetention(){
-  var cats=["Staging","Events","Alerts"];
-  for(var i=0;i<cats.length;i++){
-    var cat=cats[i];
-    var sel=document.getElementById("ret"+cat);
-    var custom=document.getElementById("ret"+cat+"Custom");
-    if(sel.value==="custom"){
-      custom.style.display="";
-      state.retention[cat.toLowerCase()]=custom.value.trim()||"365d";
-    }else{
-      custom.style.display="none";
-      state.retention[cat.toLowerCase()]=sel.value;
-    }
-  }
-  updateOverrideResolvedValues();
-  generateRetention();
+function toggleCard(id){var card=document.getElementById(id);if(card)card.classList.toggle("collapsed")}
+
+function togglePolicy(el,policy){
+  var isOn=!el.classList.contains("on");
+  if(isOn)el.classList.add("on");else el.classList.remove("on");
+  if(policy==="retention"){state.retention.enableRetention=isOn;document.getElementById("retentionPresetsSection").style.display=isOn?"":"none"}
+  if(policy==="caching"){state.retention.enableCaching=isOn;document.getElementById("cachingPresetsSection").style.display=isOn?"":"none"}
+  if(policy==="batching"){state.retention.batching.enabled=isOn;document.getElementById("batchingPresetsSection").style.display=isOn?"":"none"}
+  updateOverrideColumns();
+  generateStoragePolicies();
 }
 
+function updateOverrideColumns(){
+  var retOn=state.retention.enableRetention,cacheOn=state.retention.enableCaching;
+  var retCol=document.getElementById("overrideRetCol"),cacheCol=document.getElementById("overrideCacheCol");
+  if(retCol)retCol.style.display=retOn?"":"none";
+  if(cacheCol)cacheCol.style.display=cacheOn?"":"none";
+  buildStoragePolicyOverrides();
+}
+
+// Storage Profiles
+function applyStorageProfile(profile){
+  state.retention.storageProfile=profile;
+  updateProfilePills();
+  if(profile==="custom")return;
+  var p=STORAGE_PROFILES[profile];if(!p)return;
+  setDropdown("retStaging",p.retStaging);setDropdown("retEvents",p.retEvents);setDropdown("retAlerts",p.retAlerts);
+  setDropdown("cacheStaging",p.cacheStaging);setDropdown("cacheEvents",p.cacheEvents);setDropdown("cacheAlerts",p.cacheAlerts);
+  syncPresetsToState();updateAllResolvedValues();generateStoragePolicies();
+}
+function setDropdown(id,value){
+  var sel=document.getElementById(id),custom=document.getElementById(id+"Custom");
+  for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===value){sel.selectedIndex=i;if(custom)custom.style.display="none";return}}
+  sel.value="custom";if(custom){custom.style.display="";custom.value=value}
+}
+function updateProfilePills(){
+  var pills=document.querySelectorAll(".profile-pill");
+  for(var i=0;i<pills.length;i++)pills[i].classList.remove("active");
+  var idx={operations:0,investigative:1,compliance:2,custom:3}[state.retention.storageProfile];
+  if(idx!==undefined&&pills[idx])pills[idx].classList.add("active");
+}
+function detectStorageProfile(){
+  var r=state.retention,c=r.cache;
+  for(var name in STORAGE_PROFILES){
+    var p=STORAGE_PROFILES[name];
+    if(r.staging===p.retStaging&&r.events===p.retEvents&&r.alerts===p.retAlerts&&
+       c.staging===p.cacheStaging&&c.events===p.cacheEvents&&c.alerts===p.cacheAlerts)return name;
+  }
+  return"custom";
+}
+
+// Category presets
+function onPresetChange(){
+  syncPresetsToState();
+  state.retention.storageProfile=detectStorageProfile();
+  updateProfilePills();updateAllResolvedValues();generateStoragePolicies();
+}
+function syncPresetsToState(){
+  var cats=["Staging","Events","Alerts"];
+  for(var i=0;i<cats.length;i++){
+    var cat=cats[i],key=cat.toLowerCase();
+    var sel=document.getElementById("ret"+cat),custom=document.getElementById("ret"+cat+"Custom");
+    var retDefault=key==="staging"?"10d":key==="events"?"180d":"365d";
+    if(sel.value==="custom"){custom.style.display="";state.retention[key]=custom.value.trim()||retDefault}
+    else{custom.style.display="none";state.retention[key]=sel.value}
+    var csel=document.getElementById("cache"+cat),ccustom=document.getElementById("cache"+cat+"Custom");
+    var cacheDefault=key==="staging"?"10d":"30d";
+    if(csel.value==="custom"){ccustom.style.display="";state.retention.cache[key]=ccustom.value.trim()||cacheDefault}
+    else{ccustom.style.display="none";state.retention.cache[key]=csel.value}
+  }
+}
+
+// Batching
+function updateBatching(){
+  var b=state.retention.batching;
+  b.maxTimeSpan=document.getElementById("batchTimeSpan").value.trim()||"00:00:30";
+  b.maxItems=document.getElementById("batchMaxItems").value.trim();
+  b.maxRawDataSize=document.getElementById("batchMaxSize").value.trim();
+  generateStoragePolicies();
+}
+
+// Resolve functions
 function resolveRet(tableName,cat){
   if(state.retention.overrides[tableName])return state.retention.overrides[tableName];
   if(cat==="staging")return state.retention.staging;
@@ -1681,123 +2239,776 @@ function resolveRet(tableName,cat){
   if(cat==="alert")return state.retention.alerts;
   return"365d";
 }
+function resolveCache(tableName,cat){
+  var c=state.retention.cache;if(!c)return"30d";
+  if(c.overrides&&c.overrides[tableName])return c.overrides[tableName];
+  if(cat==="staging")return c.staging||"10d";
+  if(cat==="event")return c.events||"30d";
+  if(cat==="alert")return c.alerts||"30d";
+  return"30d";
+}
 
-function buildRetentionOverrides(){
+// Per-table overrides (dual column: retention + cache)
+function buildStoragePolicyOverrides(){
   var pack=getPack();if(!pack)return;
   var cont=document.getElementById("retentionOverrides");if(!cont)return;
   var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var retOn=state.retention.enableRetention,cacheOn=state.retention.enableCaching;
   var html="";
   for(var i=0;i<allTables.length;i++){
     var t=allTables[i];
     var catClass=t.cat==="event"?"cat-event":(t.cat==="alert"?"cat-alert":"cat-staging");
     var catLabel=t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"STG");
-    var resolved=resolveRet(t.name,t.cat);
+    var retResolved=resolveRet(t.name,t.cat),cacheResolved=resolveCache(t.name,t.cat);
+    var retOverride=state.retention.overrides[t.name]||"",cacheOverride=(state.retention.cache.overrides||{})[t.name]||"";
+    var resolvedParts=[];
+    if(retOn)resolvedParts.push("ret:"+retResolved);
+    if(cacheOn)resolvedParts.push("cache:"+cacheResolved);
     html+='<div class="preset-row" style="padding:4px 10px">';
     html+='<span class="cat '+catClass+'" style="min-width:32px;text-align:center">'+catLabel+'</span>';
     html+='<span class="text-mono text-sm" style="flex:1">'+t.name+'</span>';
-    html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+(t.cat||"staging")+'" placeholder="'+resolved+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
-    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+resolved+'</span>';
+    if(retOn)html+='<input type="text" data-ret-table="'+t.name+'" data-ret-cat="'+t.cat+'" placeholder="'+retResolved+'" value="'+retOverride+'" style="width:80px;font-size:11px" onchange="updateRetentionOverride(this)">';
+    if(cacheOn)html+='<input type="text" data-cache-table="'+t.name+'" data-cache-cat="'+t.cat+'" placeholder="'+cacheResolved+'" value="'+cacheOverride+'" style="width:80px;font-size:11px" onchange="updateCacheOverride(this)">';
+    html+='<span class="override-resolved" data-resolved-for="'+t.name+'">'+(resolvedParts.join(" | ")||"\u2014")+'</span>';
     html+='</div>';
   }
   cont.innerHTML=html;
 }
-
 function updateRetentionOverride(input){
-  var table=input.getAttribute("data-ret-table");
-  var val=input.value.trim();
-  if(val)state.retention.overrides[table]=val;
-  else delete state.retention.overrides[table];
-  updateOverrideResolvedValues();
-  generateRetention();
+  var table=input.getAttribute("data-ret-table"),val=input.value.trim();
+  if(val)state.retention.overrides[table]=val;else delete state.retention.overrides[table];
+  updateAllResolvedValues();updateOverrideCountBadge();generateStoragePolicies();
 }
-
-function updateOverrideResolvedValues(){
+function updateCacheOverride(input){
+  var table=input.getAttribute("data-cache-table"),val=input.value.trim();
+  if(val)state.retention.cache.overrides[table]=val;else delete state.retention.cache.overrides[table];
+  updateAllResolvedValues();updateOverrideCountBadge();generateStoragePolicies();
+}
+function updateOverrideCountBadge(){
+  var retCount=Object.keys(state.retention.overrides).length;
+  var cacheCount=Object.keys(state.retention.cache.overrides||{}).length;
+  var badge=document.getElementById("overrideCountBadge");if(!badge)return;
+  var total=retCount+cacheCount;
+  var pack=getPack();var tableCount=pack?pack.tables.length+1:22;
+  badge.textContent=total>0?"("+total+" override"+(total>1?"s":"")+" set)":"("+tableCount+" tables)";
+}
+function updateAllResolvedValues(){
   var pack=getPack();if(!pack)return;
   var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var retOn=state.retention.enableRetention,cacheOn=state.retention.enableCaching;
   for(var i=0;i<allTables.length;i++){
-    var t=allTables[i];
-    var resolved=resolveRet(t.name,t.cat);
+    var t=allTables[i],parts=[];
+    if(retOn)parts.push("ret:"+resolveRet(t.name,t.cat));
+    if(cacheOn)parts.push("cache:"+resolveCache(t.name,t.cat));
     var el=document.querySelector('[data-resolved-for="'+t.name+'"]');
-    if(el)el.textContent=resolved;
-    // Update placeholder to reflect current category default
-    var inp=document.querySelector('[data-ret-table="'+t.name+'"]');
-    if(inp&&!inp.value.trim())inp.placeholder=resolved;
+    if(el)el.textContent=parts.join(" | ")||"\u2014";
+    var retInp=document.querySelector('[data-ret-table="'+t.name+'"]');
+    if(retInp&&!retInp.value.trim())retInp.placeholder=resolveRet(t.name,t.cat);
+    var cacheInp=document.querySelector('[data-cache-table="'+t.name+'"]');
+    if(cacheInp&&!cacheInp.value.trim())cacheInp.placeholder=resolveCache(t.name,t.cat);
   }
 }
 
+// KQL rendering with collapsible sections
 var _lastRetBlocks=[];
+function toggleKqlSection(el){var s=el.closest(".kql-section");if(s)s.classList.toggle("collapsed")}
 function renderRetKqlBlocks(container,blocks){
   _lastRetBlocks=blocks;
   var copyAllBtn=document.getElementById("retCopyAllBtn");
   if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
-  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
-  var html="";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No policies enabled. Toggle at least one policy type above.</div>';return}
+  var sections=[],currentSection=null;
   for(var i=0;i<blocks.length;i++){
-    var b=blocks[i],id="ret_kql_"+i,lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
-    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    var b=blocks[i];
+    if(b.section){currentSection={name:b.section,blocks:[]};sections.push(currentSection)}
+    if(currentSection)currentSection.blocks.push({block:b,globalIdx:i});
+    else sections.push({name:null,blocks:[{block:b,globalIdx:i}]});
+  }
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    if(!sec.name){
+      var b=sec.blocks[0].block,id="ret_kql_"+sec.blocks[0].globalIdx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    }else{
+      html+='<div class="kql-section"><div class="kql-section-header" onclick="toggleKqlSection(this)"><span class="kql-section-title">'+esc(sec.name)+' <span class="kql-section-badge">'+sec.blocks.length+' command'+(sec.blocks.length>1?"s":"")+'</span></span><span class="kql-section-chevron">&#9660;</span></div><div class="kql-section-body">';
+      for(var j=0;j<sec.blocks.length;j++){
+        var b=sec.blocks[j].block,id="ret_kql_"+sec.blocks[j].globalIdx;
+        var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+2,3),15);
+        html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+      }
+      html+='</div></div>';
+    }
   }
   container.innerHTML=html;
 }
-
 function copyAllRetKql(){
-  var sep="////////////////////////////////////////";
-  var parts=[];
+  var sep="////////////////////////////////////////";var parts=[];
   for(var i=0;i<_lastRetBlocks.length;i++){
     parts.push("\n"+sep+"\n// "+_lastRetBlocks[i].title+"\n// Run separately in ADX Web UI\n"+sep+"\n"+_lastRetBlocks[i].kql);
   }
-  var all=parts.join("\n");
   var btn=document.getElementById("retCopyAllBtn");
-  navigator.clipboard.writeText(all).then(function(){
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
     btn.classList.add("btn-copied");btn.textContent="Copied All!";
     setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
   });
 }
 
-function generateRetention(){
+// Batched KQL generation
+function groupTablesByValue(allTables,resolveFn){
+  var groups={},order=[];
+  for(var i=0;i<allTables.length;i++){
+    var t=allTables[i],val=resolveFn(t.name,t.cat);
+    if(!groups[val]){groups[val]=[];order.push(val)}
+    groups[val].push(t.name);
+  }
+  return{groups:groups,order:order};
+}
+
+function generateStoragePolicies(){
   var out=document.getElementById("retentionOutput");if(!out)return;
   var pack=getPack();
   if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
   var db=state.globalConfig.database||"{database}";
   var cluster=state.globalConfig.clusterUri||"{cluster}";
   var recover=state.retention.recoverability?"enabled":"disabled";
+  var profileLabel=state.retention.storageProfile==="custom"?"Custom":
+    state.retention.storageProfile.charAt(0).toUpperCase()+state.retention.storageProfile.slice(1);
   var blocks=[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var retOn=state.retention.enableRetention,cacheOn=state.retention.enableCaching,batchOn=state.retention.batching.enabled;
 
-  // Header block
-  blocks.push({title:"Retention — run each separately",kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Recoverability: "+recover+"\n// Run each .alter-merge command separately in ADX Web UI"});
+  if(!retOn&&!cacheOn&&!batchOn){renderRetKqlBlocks(out,[]);return}
 
-  // Staging table
-  var stagingRet=resolveRet(pack.stagingTable,"staging");
-  blocks.push({title:pack.stagingTable+" — "+stagingRet,kql:".alter-merge table "+pack.stagingTable+" policy retention softdelete = "+stagingRet+" recoverability = "+recover});
+  var enabledList=[];
+  if(retOn)enabledList.push("Retention");if(cacheOn)enabledList.push("Caching");if(batchOn)enabledList.push("Batching");
+  blocks.push({title:"Storage Policies \u2014 "+enabledList.join(" + "),kql:"// Generated by ADX Schema Builder V2\n// Cluster: "+cluster+"  Database: "+db+"\n// Storage Profile: "+profileLabel+"\n// Policies: "+enabledList.join(", ")+"\n"+(retOn?"// Recoverability: "+recover+"\n":"")+"// Run each .alter command separately in ADX Web UI"});
 
-  // Typed tables
-  for(var i=0;i<pack.tables.length;i++){
-    var t=pack.tables[i];
-    var ret=resolveRet(t.name,t.cat);
-    blocks.push({title:t.name+" — "+ret,kql:".alter-merge table "+t.name+" policy retention softdelete = "+ret+" recoverability = "+recover});
+  // Retention (batched by value)
+  if(retOn){
+    var rg=groupTablesByValue(allTables,resolveRet);
+    for(var v=0;v<rg.order.length;v++){
+      var val=rg.order[v],tables=rg.groups[val];
+      var kql=tables.length===1?
+        ".alter-merge table "+tables[0]+" policy retention softdelete = "+val+" recoverability = "+recover:
+        ".alter-merge tables ("+tables.join(", ")+")\n    policy retention softdelete = "+val+" recoverability = "+recover;
+      blocks.push({section:v===0?"\u2500\u2500 Retention Policies \u2500\u2500":undefined,title:"Retention \u2014 "+val+" ("+tables.length+" table"+(tables.length>1?"s":"")+")",kql:kql});
+    }
+  }
+
+  // Caching (batched by value)
+  if(cacheOn){
+    var cg=groupTablesByValue(allTables,resolveCache);
+    for(var v=0;v<cg.order.length;v++){
+      var val=cg.order[v],tables=cg.groups[val];
+      var kql=tables.length===1?
+        ".alter table "+tables[0]+" policy caching hot = "+val:
+        ".alter tables ("+tables.join(", ")+")\n    policy caching hot = "+val;
+      blocks.push({section:v===0?"\u2500\u2500 Caching Policies (Hot Cache) \u2500\u2500":undefined,title:"Caching \u2014 hot "+val+" ("+tables.length+" table"+(tables.length>1?"s":"")+")",kql:kql});
+    }
+  }
+
+  // Batching
+  if(batchOn){
+    var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
+    if(state.retention.batching.maxItems){var mi=parseInt(state.retention.batching.maxItems,10);if(isFinite(mi)&&mi>0)batchObj.MaximumNumberOfItems=mi}
+    if(state.retention.batching.maxRawDataSize){var ms=parseInt(state.retention.batching.maxRawDataSize,10);if(isFinite(ms)&&ms>0)batchObj.MaximumRawDataSizeMB=ms}
+    var batchJson=JSON.stringify(batchObj);
+    var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
+    var kql=names.length===1?
+      ".alter table "+names[0]+" policy ingestionbatching @'"+batchJson+"'":
+      ".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+batchJson+"'";
+    blocks.push({section:"\u2500\u2500 Ingestion Batching \u2500\u2500",title:"Batching \u2014 "+names.length+" table"+(names.length>1?"s":""),kql:kql});
   }
 
   renderRetKqlBlocks(out,blocks);
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// TAB: Deploy & Verify
+// ═══════════════════════════════════════════════════════════════════
+var _dvRunbookBlocks=[];
+var _dvVerifyBlocks=[];
+
+function toggleDVSection(el){el.closest(".dv-section").classList.toggle("dv-collapsed")}
+
+function generateDVRunbook(){
+  var out=document.getElementById("dvRunbookOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var db=state.globalConfig.database||"{database}";
+  var cluster=state.globalConfig.clusterUri||"{cluster}";
+  var recover=state.retention.recoverability?"enabled":"disabled";
+  var blocks=[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  // Phase 1: Staging
+  blocks.push({section:"Phase 1 \u2014 Staging Table",sectionColor:"var(--color-info)",title:"Create staging table: "+pack.stagingTable,kql:".create-merge table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")"});
+  blocks.push({title:"Create ingestion mapping: "+pack.mappingName,kql:".create-or-alter table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"});
+  // Phase 2: Typed tables
+  if(selectedTyped.length){
+    var first=true;
+    for(var i=0;i<selectedTyped.length;i++){
+      var tName=selectedTyped[i],tDef=null;
+      for(var j=0;j<pack.tables.length;j++){if(pack.tables[j].name===tName){tDef=pack.tables[j];break}}
+      if(!tDef)continue;
+      var cat=tDef.cat==="event"?"Events":"Alerts";
+      blocks.push({section:first?"Phase 2 \u2014 Typed Tables + Functions + Update Policies":undefined,sectionColor:first?"var(--color-success)":undefined,title:"Create table: "+tName,kql:"// Run these 3 commands for "+tName+" in order:\n\n// Step 1: Create table\n.create-merge table "+tName+" ("+pack.baseTypedSchema+")\n    with (folder=\""+pack.folder+"/"+cat+"\")\n\n// Step 2: Create transform function\n// (Use the full function from Table Builder \u2014 includes field extraction)\n.create-or-alter function\n    with (folder=\""+pack.folder+"/Functions/"+cat+"\", skipvalidation=\"true\")\nfn_"+tName.replace(/_CL$/,"")+"() {\n    "+pack.stagingTable+"\n    | where StreamType == \""+tDef.stream+"\"\n    // ... extend + project from Table Builder output\n}\n\n// Step 3: Attach update policy\n.alter table "+tName+" policy update\n@'[{\"IsEnabled\": true, \"Source\": \""+pack.stagingTable+"\", \"Query\": \"fn_"+tName.replace(/_CL$/,"")+"()\", \"IsTransactional\": false}]'"});
+      first=false;
+    }
+  }
+  // Phase 3: RLS
+  var rlsTables=state.rls.selectedTables||[];
+  if(state.rls.rlsFunction&&rlsTables.length){
+    var first=true;
+    for(var i=0;i<rlsTables.length;i++){
+      blocks.push({section:first?"Phase 3 \u2014 Row-Level Security":undefined,sectionColor:first?"var(--color-purple)":undefined,title:"RLS function + policy: "+rlsTables[i],kql:"// Step 1: Create RLS function\n.create-or-alter function\n    with (folder=\"Functions/RLS\", skipvalidation=\"true\")\nRLS_"+rlsTables[i]+"() {\n    "+rlsTables[i]+"\n    | where\n        // ... clauses from RLS Builder output\n}\n\n// Step 2: Enable RLS policy (run separately)\n.alter table "+rlsTables[i]+" policy row_level_security enable \"RLS_"+rlsTables[i]+"()\""});
+      first=false;
+    }
+  }
+  // Phase 4: Retention
+  if(state.retention.enableRetention!==false){
+    var rg={};var ro=[];
+    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveRet(t.name,t.cat);if(!rg[val]){rg[val]=[];ro.push(val)}rg[val].push(t.name)}
+    var first=true;
+    for(var v=0;v<ro.length;v++){
+      var val=ro[v],names=rg[val];
+      var cmd=names.length===1?".alter-merge table "+names[0]+" policy retention softdelete = "+val+" recoverability = "+recover:".alter-merge tables ("+names.join(", ")+")\n    policy retention softdelete = "+val+" recoverability = "+recover;
+      blocks.push({section:first?"Phase 4 \u2014 Retention Policies":undefined,sectionColor:first?"var(--color-warn)":undefined,title:"Retention "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",kql:cmd});
+      first=false;
+    }
+  }
+  // Phase 5: Caching
+  if(state.retention.enableCaching===true){
+    var cg={};var co=[];
+    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveCache(t.name,t.cat);if(!cg[val]){cg[val]=[];co.push(val)}cg[val].push(t.name)}
+    var first=true;
+    for(var v=0;v<co.length;v++){
+      var val=co[v],names=cg[val];
+      var cmd=names.length===1?".alter table "+names[0]+" policy caching hot = "+val:".alter tables ("+names.join(", ")+")\n    policy caching hot = "+val;
+      blocks.push({section:first?"Phase 5 \u2014 Caching Policies":undefined,sectionColor:first?"var(--color-info)":undefined,title:"Cache hot "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",kql:cmd});
+      first=false;
+    }
+  }
+  // Phase 6: Batching
+  if(state.retention.batching&&state.retention.batching.enabled){
+    var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
+    if(state.retention.batching.maxItems){var mi=parseInt(state.retention.batching.maxItems,10);if(isFinite(mi)&&mi>0)batchObj.MaximumNumberOfItems=mi}
+    if(state.retention.batching.maxRawDataSize){var ms=parseInt(state.retention.batching.maxRawDataSize,10);if(isFinite(ms)&&ms>0)batchObj.MaximumRawDataSizeMB=ms}
+    var json=JSON.stringify(batchObj);var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
+    blocks.push({section:"Phase 6 \u2014 Ingestion Batching",sectionColor:"var(--color-purple)",title:"Batching ("+names.length+" tables)",kql:names.length===1?".alter table "+names[0]+" policy ingestionbatching @'"+json+"'":".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+json+"'"});
+  }
+  _dvRunbookBlocks=blocks;
+  renderDVSections(out,blocks);
+  var badge=document.getElementById("runbookCmdCount");if(badge)badge.textContent="("+blocks.length+" commands)";
+}
+
+function generateDVVerifyQueries(){
+  var out=document.getElementById("dvVerifyQueriesOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  var allTableNames=[pack.stagingTable].concat(selectedTyped);
+  var rlsTables=state.rls.selectedTables||[];
+  var blocks=[];
+  // Tables
+  var tableList=allTableNames.map(function(t){return"'"+t+"'"}).join(", ");
+  blocks.push({section:"Schema Verification",sectionColor:"var(--color-info)",title:"Verify all tables exist",kql:".show tables\n| where TableName in ("+tableList+")\n| project TableName, Folder\n| order by TableName asc"});
+  blocks.push({title:"Verify ingestion mapping",kql:".show table "+pack.stagingTable+" ingestion json mapping\n| where Name == '"+pack.mappingName+"'\n| project Name, Mapping"});
+  // Update policies
+  if(selectedTyped.length){
+    blocks.push({section:"Update Policy Verification",sectionColor:"var(--color-success)",title:"Verify update policies",kql:".show tables ("+selectedTyped.join(", ")+") policy update\n| project TableName, IsEnabled, Source, Query\n| order by TableName asc"});
+  }
+  // RLS
+  if(rlsTables.length){
+    var funcNames=rlsTables.map(function(t){return"'RLS_"+t+"'"}).join(", ");
+    blocks.push({section:"RLS Verification",sectionColor:"var(--color-purple)",title:"Verify RLS functions exist",kql:".show functions\n| where Name in ("+funcNames+")\n| project Name, Folder, Body\n| order by Name asc"});
+    if(state.rls.applyPolicies){
+      blocks.push({title:"Verify RLS policies enabled",kql:".show tables ("+rlsTables.join(", ")+") policy row_level_security\n| project TableName, IsEnabled, Query\n| order by TableName asc"});
+    }
+  }
+  // Retention + Caching
+  if(state.retention.enableRetention===true){
+    blocks.push({section:"Retention & Caching Verification",sectionColor:"var(--color-warn)",title:"Verify retention policies",kql:".show tables ("+allTableNames.join(", ")+") policy retention\n| project TableName, SoftDeletePeriod, Recoverability\n| order by TableName asc"});
+  }
+  if(state.retention.enableCaching===true){
+    blocks.push({title:"Verify caching policies",kql:".show tables ("+allTableNames.join(", ")+") policy caching\n| project TableName, DataHotSpan\n| order by TableName asc"});
+  }
+  if(state.retention.batching&&state.retention.batching.enabled){
+    blocks.push({title:"Verify batching policies",kql:".show tables ("+allTableNames.join(", ")+") policy ingestionbatching\n| project TableName, MaximumBatchingTimeSpan\n| order by TableName asc"});
+  }
+  // Health check
+  blocks.push({section:"Quick Health Check",sectionColor:"var(--color-teal)",title:"Full deployment summary",kql:".show tables ("+allTableNames.join(", ")+") details\n| project TableName, Folder, TotalRowCount, TotalExtentSize,\n    HotExtentSize, RetentionPolicy, CachingPolicy\n| order by TableName asc"});
+  _dvVerifyBlocks=blocks;
+  renderDVSections(out,blocks);
+}
+
+function renderDVSections(container,blocks){
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No output.</div>';return}
+  var sections=[];var cur=null;
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){cur={name:b.section,color:b.sectionColor||"var(--color-info)",blocks:[]};sections.push(cur)}
+    if(cur)cur.blocks.push({b:b,idx:i});
+  }
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    html+='<div class="dv-section" style="margin-top:16px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle(\'dv-collapsed\')">';
+    html+='<span style="font-size:12px;font-weight:700;color:'+sec.color+'">'+esc(sec.name)+' <span style="font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:1px 8px;border-radius:10px">'+sec.blocks.length+'</span></span>';
+    html+='<span style="font-size:16px;color:var(--text-secondary);transition:transform .2s" class="dv-chev">&#9660;</span>';
+    html+='</div><div class="dv-body" style="padding-top:8px">';
+    for(var j=0;j<sec.blocks.length;j++){
+      var b=sec.blocks[j].b,id=container.id+"_kql_"+sec.blocks[j].idx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,3),20);
+      html+='<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'" style="width:100%;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5">'+esc(b.kql)+'</textarea></div>';
+    }
+    html+='</div></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllDVRunbook(){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_dvRunbookBlocks.length;i++){
+    var b=_dvRunbookBlocks[i];
+    parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"")+"\n// "+b.title+"\n"+b.kql);
+  }
+  var btn=document.getElementById("runbookCopyAllBtn");
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+function copyAllDVVerifyQueries(btnEl){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_dvVerifyBlocks.length;i++){
+    var b=_dvVerifyBlocks[i];
+    parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"")+"\n// "+b.title+"\n"+b.kql);
+  }
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
+    btnEl.classList.add("btn-copied");btnEl.textContent="Copied!";
+    setTimeout(function(){btnEl.classList.remove("btn-copied");btnEl.textContent="Copy All Queries"},1500);
+  });
+}
+
+function parseDVVerifyResults(){
+  var text=document.getElementById("dvVerifyPasteArea").value.trim();
+  if(!text)return;
+  var pack=getPack();if(!pack)return;
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  var allTableNames=[pack.stagingTable].concat(selectedTyped);
+  var rlsTables=state.rls.selectedTables||[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var results=[];
+  for(var i=0;i<allTableNames.length;i++){
+    var found=text.indexOf(allTableNames[i])>-1;
+    results.push({name:allTableNames[i],check:"Table exists",status:found?"pass":"fail"});
+  }
+  if(text.indexOf(pack.mappingName)>-1)results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pass"});
+  else results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pending"});
+  for(var i=0;i<rlsTables.length;i++){
+    var found=text.indexOf("RLS_"+rlsTables[i])>-1;
+    results.push({name:"RLS_"+rlsTables[i],check:"RLS function",status:found?"pass":"pending"});
+  }
+  if(state.rls.applyPolicies){
+    for(var i=0;i<rlsTables.length;i++){
+      var re=new RegExp(rlsTables[i]+"[\\s\\S]{0,100}(True|true)","i");
+      results.push({name:rlsTables[i],check:"RLS policy enabled",status:re.test(text)?"pass":"pending"});
+    }
+  }
+  if(state.retention.enableRetention===true){
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      var expected=resolveRet(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        results.push({name:t.name,check:"Retention = "+expected,status:(actualDays===expectedDays)?"pass":"fail"});
+      }else{
+        results.push({name:t.name,check:"Retention = "+expected,status:"pending"});
+      }
+    }
+  }
+  if(state.retention.enableCaching===true){
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      var expected=resolveCache(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        results.push({name:t.name,check:"Cache hot = "+expected,status:(actualDays===expectedDays)?"pass":"fail"});
+      }else{
+        results.push({name:t.name,check:"Cache hot = "+expected,status:"pending"});
+      }
+    }
+  }
+  renderDVVerifyResults(results);
+}
+
+function renderDVVerifyResults(results){
+  var grid=document.getElementById("dvVerifyResultsGrid");
+  var summary=document.getElementById("dvVerifySummary");
+  var pass=0,fail=0,pending=0;
+  for(var i=0;i<results.length;i++){if(results[i].status==="pass")pass++;else if(results[i].status==="fail")fail++;else pending++}
+  document.getElementById("dvPassCount").textContent=pass;
+  document.getElementById("dvFailCount").textContent=fail;
+  document.getElementById("dvPendingCount").textContent=pending;
+  summary.style.display="flex";
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  for(var i=0;i<results.length;i++){
+    var r=results[i];
+    var icon=r.status==="pass"?"&#10003;":r.status==="fail"?"&#10007;":"?";
+    var bgColor=r.status==="pass"?"rgba(34,197,94,.15)":r.status==="fail"?"rgba(239,68,68,.15)":"rgba(139,148,158,.15)";
+    var fgColor=r.status==="pass"?"var(--color-success)":r.status==="fail"?"var(--color-error)":"var(--text-secondary)";
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-raised);border-radius:var(--radius-md);font-size:12px">';
+    html+='<span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:'+bgColor+';color:'+fgColor+'">'+icon+'</span>';
+    html+='<span style="flex:1;font-family:var(--font-mono)">'+esc(r.name)+'</span>';
+    html+='<span style="font-size:10px;color:var(--text-secondary)">'+esc(r.check)+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+function clearDVVerifyResults(){
+  document.getElementById("dvVerifyPasteArea").value="";
+  document.getElementById("dvVerifyResultsGrid").innerHTML="";
+  document.getElementById("dvVerifySummary").style.display="none";
+}
+
+// ── DB Overview (within Deploy & Verify) ──
+
+var OV_COMMANDS=[
+  {title:"Tables + Details",kql:".show tables details"},
+  {title:"Update Policies",kql:".show table * policy update"},
+  {title:"Row-Level Security",kql:".show table * policy row_level_security"},
+  {title:"Functions",kql:".show functions"},
+  {title:"Ingestion Batching",kql:".show table * policy ingestionbatching"}
+];
+
+function renderOvCommands(){
+  var cont=document.getElementById("ovCommandBlocks");if(!cont)return;
+  var html="";
+  for(var i=0;i<OV_COMMANDS.length;i++){
+    var c=OV_COMMANDS[i],id="ov_cmd_"+i;
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(c.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="1" style="min-height:30px">'+esc(c.kql)+'</textarea></div>';
+  }
+  cont.innerHTML=html;
+}
+function copyAllOvCommands(btn){
+  var parts=[];
+  for(var i=0;i<OV_COMMANDS.length;i++)parts.push("// "+OV_COMMANDS[i].title+"\n"+OV_COMMANDS[i].kql);
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Commands"},1500);
+  });
+}
+
+// Parsing helpers
+function parseTSVBlock(text){
+  var lines=text.trim().split("\n");if(lines.length<2)return null;
+  var headers=lines[0].split("\t"),rows=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=lines[i].split("\t");if(vals.length<2)continue;
+    var row={};for(var j=0;j<headers.length;j++)row[headers[j].trim()]=j<vals.length?vals[j].trim():"";
+    rows.push(row);
+  }
+  return{headers:headers.map(function(h){return h.trim()}),rows:rows};
+}
+function detectBlockType(headers){
+  var h=headers.join("|").toLowerCase();
+  if(h.indexOf("totalextentsize")>-1||h.indexOf("totalrowcount")>-1||h.indexOf("hotextentsize")>-1)return"tables_details";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("body")>-1&&h.indexOf("source")>-1)return"update_policy";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("query")>-1)return"rls_policy";
+  if(h.indexOf("body")>-1&&h.indexOf("parameters")>-1&&h.indexOf("folder")>-1)return"functions";
+  if(h.indexOf("maximumbatchingtimespan")>-1)return"batching";
+  return"unknown";
+}
+function splitOvBlocks(text){
+  var lines=text.split("\n"),blocks=[],current=[];
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(line.trim()===""&&current.length>0){
+      var nextLine=i+1<lines.length?lines[i+1]:"";
+      if(nextLine.trim()&&nextLine.indexOf("\t")>-1&&current.length>=2){blocks.push(current.join("\n"));current=[];continue}
+    }
+    if(line.trim())current.push(line);
+  }
+  if(current.length>0)blocks.push(current.join("\n"));
+  return blocks;
+}
+function ovFormatNum(n){n=parseInt(n,10)||0;if(n>=1000000)return(n/1000000).toFixed(1)+"M";if(n>=1000)return(n/1000).toFixed(1)+"K";return n.toString()}
+function ovFormatBytes(b){b=parseFloat(b)||0;if(b>=1073741824)return(b/1073741824).toFixed(1)+" GB";if(b>=1048576)return(b/1048576).toFixed(1)+" MB";if(b>=1024)return(b/1024).toFixed(1)+" KB";return b+" B"}
+function ovParseDuration(dur){if(!dur||dur==="-")return"--";var m=dur.match(/(\d+)\.(\d{2}):(\d{2}):(\d{2})/);if(m)return m[1]+"d";var m2=dur.match(/(\d+)/);if(m2)return m2[1]+"d";return dur}
+function ovGuessCategory(name){var n=name.toLowerCase();if(n.indexOf("_raw")>-1||n.indexOf("staging")>-1)return"staging";if(n.indexOf("alert")>-1)return"alert";if(n.indexOf("event")>-1)return"event";return"unknown"}
+
+function analyzeDBOutput(){
+  var text=document.getElementById("dbPasteArea").value.trim();
+  if(!text)return;
+  var parsed={tables:null,updatePolicies:null,rlsPolicies:null,functions:null,batching:null};
+  var rawBlocks=splitOvBlocks(text);
+  for(var i=0;i<rawBlocks.length;i++){
+    var block=parseTSVBlock(rawBlocks[i]);if(!block||!block.rows.length)continue;
+    var type=detectBlockType(block.headers);
+    if(type==="tables_details")parsed.tables=block;
+    else if(type==="update_policy")parsed.updatePolicies=block;
+    else if(type==="rls_policy")parsed.rlsPolicies=block;
+    else if(type==="functions")parsed.functions=block;
+    else if(type==="batching")parsed.batching=block;
+  }
+  if(!parsed.tables){try{var json=JSON.parse(text);if(Array.isArray(json)&&json.length>0){var h=Object.keys(json[0]);if(detectBlockType(h)==="tables_details")parsed.tables={headers:h,rows:json}}}catch(e){}}
+  renderOvDashboard(parsed);
+}
+
+function renderOvDashboard(parsed){
+  document.getElementById("dbDashboard").style.display="block";
+  var tableMap={};
+
+  if(parsed.tables){
+    for(var i=0;i<parsed.tables.rows.length;i++){
+      var r=parsed.tables.rows[i];
+      var name=r.TableName||r.tableName||r.Name||r.name||"";if(!name)continue;
+      var entry={name:name,cat:ovGuessCategory(name),rows:r.TotalRowCount||r.totalRowCount||r.RowCount||"0",
+        size:r.TotalExtentSize||r.totalExtentSize||r.TotalOriginalSize||"0",
+        retention:ovParseDuration(r.RetentionPolicy||""),caching:ovParseDuration(r.CachingPolicy||""),
+        folder:r.Folder||r.folder||"",updatePolicy:false,rlsEnabled:false,batchingCustom:false};
+      if(r.RetentionPolicy&&typeof r.RetentionPolicy==="string"){try{var rp=JSON.parse(r.RetentionPolicy);if(rp.SoftDeletePeriod)entry.retention=ovParseDuration(rp.SoftDeletePeriod)}catch(e){}}
+      if(r.CachingPolicy&&typeof r.CachingPolicy==="string"){try{var cp=JSON.parse(r.CachingPolicy);if(cp.DataHotSpan)entry.caching=ovParseDuration(cp.DataHotSpan)}catch(e){}}
+      tableMap[name]=entry;
+    }
+  }
+  if(parsed.updatePolicies){for(var i=0;i<parsed.updatePolicies.rows.length;i++){var r=parsed.updatePolicies.rows[i];var n=r.TableName||r.EntityName||"";var p=r.Policy||r.policy||"";if(n&&tableMap[n]&&p&&p!=="[]"&&p!=="null")tableMap[n].updatePolicy=true}}
+  if(parsed.rlsPolicies){for(var i=0;i<parsed.rlsPolicies.rows.length;i++){var r=parsed.rlsPolicies.rows[i];var n=r.TableName||r.EntityName||"";var e=r.IsEnabled||r.isEnabled||"";if(n&&tableMap[n])tableMap[n].rlsEnabled=(e==="true"||e==="True"||e===true)}}
+  if(parsed.batching){for(var i=0;i<parsed.batching.rows.length;i++){var r=parsed.batching.rows[i];var n=r.TableName||r.EntityName||"";var p=r.Policy||r.policy||"";if(n&&tableMap[n]&&p&&p!=="null"&&p!==""){tableMap[n].batchingCustom=true;try{var bp=JSON.parse(p);if(bp.MaximumBatchingTimeSpan)tableMap[n].batchingVal=bp.MaximumBatchingTimeSpan}catch(e){}}}}
+
+  var tables=[];for(var k in tableMap)tables.push(tableMap[k]);
+  tables.sort(function(a,b){var o={staging:0,event:1,alert:2,unknown:3};var ca=o[a.cat]||3,cb=o[b.cat]||3;return ca!==cb?ca-cb:a.name.localeCompare(b.name)});
+
+  var totalRows=0,totalSize=0,rlsCount=0,updCount=0;
+  for(var i=0;i<tables.length;i++){totalRows+=parseInt(tables[i].rows,10)||0;totalSize+=parseFloat(tables[i].size)||0;if(tables[i].rlsEnabled)rlsCount++;if(tables[i].updatePolicy)updCount++}
+
+  document.getElementById("ovSummaryStats").innerHTML=
+    '<div class="ov-stat"><div class="ov-stat-val">'+tables.length+'</div><div class="ov-stat-label">Tables</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+ovFormatNum(totalRows)+'</div><div class="ov-stat-label">Total Rows</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+ovFormatBytes(totalSize)+'</div><div class="ov-stat-label">Total Size</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-success)">'+updCount+'</div><div class="ov-stat-label">Update Policies</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-purple)">'+rlsCount+'</div><div class="ov-stat-label">RLS Enabled</div></div>';
+
+  document.getElementById("ovTableHead").innerHTML='<tr><th>Cat</th><th>Table</th><th style="text-align:right">Rows</th><th style="text-align:right">Size</th><th>Retention</th><th>Cache</th><th style="text-align:center">Upd</th><th style="text-align:center">RLS</th><th style="text-align:center">Batch</th></tr>';
+  var bHtml="";
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i],catCls="cat-"+(t.cat==="unknown"?"unknown":t.cat),catLbl=t.cat==="staging"?"STG":(t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"???"));
+    bHtml+='<tr><td><span class="cat '+catCls+'">'+catLbl+'</span></td><td class="tname">'+esc(t.name)+'</td>';
+    bHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+ovFormatNum(parseInt(t.rows,10)||0)+'</td>';
+    bHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+ovFormatBytes(parseFloat(t.size)||0)+'</td>';
+    bHtml+='<td style="font-family:var(--font-mono)">'+esc(t.retention||"--")+'</td><td style="font-family:var(--font-mono)">'+esc(t.caching||"--")+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.updatePolicy?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.rlsEnabled?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">&#10007;</span>')+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.batchingCustom?'<span class="icon-active" title="'+(t.batchingVal||"custom")+'">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td></tr>';
+  }
+  document.getElementById("ovTableBody").innerHTML=bHtml;
+
+  // Policy summary
+  var retG={},cacheG={};
+  for(var i=0;i<tables.length;i++){var ret=tables[i].retention||"--",cache=tables[i].caching||"--";if(!retG[ret])retG[ret]=[];retG[ret].push(tables[i].name);if(!cacheG[cache])cacheG[cache]=[];cacheG[cache].push(tables[i].name)}
+  var pHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div class="pol-group"><div class="pol-group-title" style="color:var(--color-warn)">Retention by Value</div>';
+  for(var v in retG)pHtml+='<div class="pol-row"><span class="pol-val" style="color:var(--color-warn)">'+esc(v)+'</span><span class="pol-tables">'+retG[v].length+' table'+(retG[v].length>1?"s":"")+'</span></div>';
+  pHtml+='</div><div class="pol-group"><div class="pol-group-title" style="color:var(--color-info)">Hot Cache by Value</div>';
+  for(var v in cacheG)pHtml+='<div class="pol-row"><span class="pol-val" style="color:var(--color-info)">'+esc(v)+'</span><span class="pol-tables">'+cacheG[v].length+' table'+(cacheG[v].length>1?"s":"")+'</span></div>';
+  pHtml+='</div></div>';
+  document.getElementById("ovPolicySummary").innerHTML=pHtml;
+
+  // Functions
+  var fnEl=document.getElementById("ovFunctionsList"),fnCount=document.getElementById("ovFnCount");
+  if(parsed.functions&&parsed.functions.rows.length){
+    fnCount.textContent="("+parsed.functions.rows.length+" function"+(parsed.functions.rows.length>1?"s":"")+")";
+    var fHtml="";
+    for(var i=0;i<parsed.functions.rows.length;i++){
+      var f=parsed.functions.rows[i],nm=f.Name||f.name||"",fl=f.Folder||f.folder||"",bd=f.Body||f.body||"";
+      fHtml+='<div class="fn-row" onclick="this.classList.toggle(\'expanded\')"><div class="fn-header"><span class="fn-name">'+esc(nm)+'</span>';
+      if(fl)fHtml+='<span class="fn-folder">'+esc(fl)+'</span>';
+      fHtml+='</div><div class="fn-body">'+esc(bd)+'</div></div>';
+    }
+    fnEl.innerHTML=fHtml;
+  }else{
+    fnCount.textContent="";
+    fnEl.innerHTML='<div class="text-sm text-muted">No function data. Run <code style="color:var(--color-info)">.show functions</code> and include in paste.</div>';
+  }
+}
+
+function clearDBOverview(){
+  document.getElementById("dbPasteArea").value="";
+  document.getElementById("dbDashboard").style.display="none";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB: Cross-Workspace Queries
+// ═══════════════════════════════════════════════════════════════════
+
+function parseClusterUri(uri){
+  if(!uri)return null;
+  var m=uri.match(/https?:\/\/([^.]+)\.([^.]+)\.kusto\.windows\.net/i);
+  return m?{name:m[1],region:m[2],full:"https://"+m[1]+"."+m[2]+".kusto.windows.net"}:null;
+}
+
+function getCWTables(){
+  var selected=state.tableBuilder.selectedTables;
+  if(selected&&selected.length>0)return selected;
+  var pack=getPack();
+  return pack?pack.tables.map(function(t){return t.name}):[];
+}
+
+function buildAdxUri(){
+  var parsed=parseClusterUri(state.globalConfig.clusterUri);
+  var db=state.globalConfig.database;
+  if(!parsed)return null;
+  return parsed.full+"/"+(db||"{database}");
+}
+
+function updateCWUriStatus(){
+  var el=document.getElementById("cwUriStatus");if(!el)return;
+  var parsed=parseClusterUri(state.globalConfig.clusterUri);
+  var db=state.globalConfig.database;
+  if(!state.globalConfig.clusterUri||!state.globalConfig.clusterUri.trim()){
+    el.innerHTML='<div class="uri-status error">No Cluster URI configured. Set it in the header: <code style="color:var(--text-primary)">https://yourcluster.region.kusto.windows.net</code></div>';
+    return;
+  }
+  if(!parsed){
+    el.innerHTML='<div class="uri-status warn">Could not parse Cluster URI. Expected format: <code style="color:var(--text-primary)">https://{clusterName}.{region}.kusto.windows.net</code></div>';
+    return;
+  }
+  if(!db||!db.trim()){
+    el.innerHTML='<div class="uri-status warn">Cluster parsed: <strong>'+esc(parsed.name)+'</strong> in <strong>'+esc(parsed.region)+'</strong>. Set a database name in the header to complete the URI.</div>';
+    return;
+  }
+  el.innerHTML='<div class="uri-status ok">ADX proxy URI: <code style="color:var(--text-primary)">adx("'+esc(parsed.full)+'/'+esc(db)+'")</code></div>';
+}
+
+var _lastCWBlocks=[];
+
+function generateCrossWorkspace(){
+  var out=document.getElementById("cwOutput");if(!out)return;
+  updateCWUriStatus();
+
+  var adxUri=buildAdxUri();
+  var tables=getCWTables();
+  var copyAllBtn=document.getElementById("cwCopyAllBtn");
+
+  if(!adxUri){
+    out.innerHTML='<div class="text-sm text-muted">Configure the Cluster URI in the header to generate queries.</div>';
+    if(copyAllBtn)copyAllBtn.style.display="none";
+    return;
+  }
+  if(!tables.length){
+    out.innerHTML='<div class="text-sm text-muted">No tables selected. Select tables in the Table Builder tab first.</div>';
+    if(copyAllBtn)copyAllBtn.style.display="none";
+    return;
+  }
+
+  var blocks=[];
+
+  // Per-table queries
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i];
+    var kql='adx("'+adxUri+'").'+t+'\n| project-away RawData';
+    blocks.push({
+      section:i===0?"\u2500\u2500 Per-Table Queries ("+tables.length+") \u2500\u2500":undefined,
+      title:t,
+      kql:kql
+    });
+  }
+
+  // Union query
+  if(tables.length>1){
+    var parts=[];
+    for(var j=0;j<tables.length;j++){
+      parts.push('  adx("'+adxUri+'").'+tables[j]);
+    }
+    var unionKql="union\n"+parts.join(",\n")+"\n| project-away RawData";
+    blocks.push({
+      section:"\u2500\u2500 Combined Union Query \u2500\u2500",
+      title:"All "+tables.length+" tables",
+      kql:unionKql
+    });
+  }
+
+  renderCWBlocks(out,blocks);
+}
+
+function renderCWBlocks(container,blocks){
+  _lastCWBlocks=blocks;
+  var copyAllBtn=document.getElementById("cwCopyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No queries generated.</div>';return}
+
+  var sections=[],currentSection=null;
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){currentSection={name:b.section,blocks:[]};sections.push(currentSection)}
+    if(currentSection)currentSection.blocks.push({block:b,globalIdx:i});
+    else sections.push({name:null,blocks:[{block:b,globalIdx:i}]});
+  }
+
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    if(!sec.name){
+      var b2=sec.blocks[0].block,id2="cw_kql_"+sec.blocks[0].globalIdx;
+      var lines2=b2.kql.split("\n").length,rows2=Math.min(Math.max(lines2+1,2),15);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b2.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id2+'\')">Copy</button></div><textarea id="'+id2+'" readonly rows="'+rows2+'">'+esc(b2.kql)+'</textarea></div>';
+    }else{
+      html+='<div class="kql-section"><div class="kql-section-header" onclick="toggleKqlSection(this)"><span class="kql-section-title">'+esc(sec.name)+' <span class="kql-section-badge">'+sec.blocks.length+' quer'+(sec.blocks.length>1?"ies":"y")+'</span></span><span class="kql-section-chevron">&#9660;</span></div><div class="kql-section-body">';
+      for(var j=0;j<sec.blocks.length;j++){
+        var b3=sec.blocks[j].block,id3="cw_kql_"+sec.blocks[j].globalIdx;
+        var lines3=b3.kql.split("\n").length,rows3=Math.min(Math.max(lines3+1,2),15);
+        html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b3.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id3+'\')">Copy</button></div><textarea id="'+id3+'" readonly rows="'+rows3+'">'+esc(b3.kql)+'</textarea></div>';
+      }
+      html+='</div></div>';
+    }
+  }
+  container.innerHTML=html;
+}
+
+function copyAllCWQueries(){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_lastCWBlocks.length;i++){
+    parts.push("\n"+sep+"\n// "+_lastCWBlocks[i].title+"\n"+sep+"\n"+_lastCWBlocks[i].kql);
+  }
+  var btn=document.getElementById("cwCopyAllBtn");
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════════════════════════════
 function init(){
+  // Initialize flatten fields for Table Builder
   state.tableBuilder.fields=DEFAULT_FLATTEN_FIELDS.map(function(f){
     return{cat:f.cat, raw:f.raw, col:f.col, type:f.type, tier:f.tier, sentinel:!!f.sentinel, enabled:(f.tier==="rec")}
   });
   state.tableBuilder.activePreset="rec";
+  buildNav();
+  buildPackSelector();
   bindConfig();
-  makeRLSCardsCollapsible();
-  setupDropZone();
-  initTBChecklists();
-  syncRLSMappingsFromData();
-  initRLSChecklists();
-  buildRetentionOverrides();
   syncEmailFieldPlaceholder();
-  setPhase("staging");
-  generateRLS();
-  generateRetention();
+  // Init all tabs via registry
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    if(TAB_REGISTRY[i].init)TAB_REGISTRY[i].init();
+  }
+  // Generate outputs for tabs that have generators
+  for(var i=0;i<TAB_REGISTRY.length;i++){
+    if(TAB_REGISTRY[i].generate)TAB_REGISTRY[i].generate();
+  }
   renderMappingSummary();
 }
 

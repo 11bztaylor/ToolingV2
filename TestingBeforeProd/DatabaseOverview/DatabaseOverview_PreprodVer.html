@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — Database Overview</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:1200px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.card-body{}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.btn-primary{background:var(--color-info);border-color:var(--color-info);color:#fff}
+.btn-primary:hover{opacity:.9}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.hidden{display:none!important}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:1200px}
+/* Collapsible */
+.card-title.collapsible{cursor:pointer;user-select:none}
+.card-title.collapsible:hover{opacity:.85}
+.card-title .chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s;margin-left:auto;line-height:1}
+.card.collapsed .chevron{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
+/* KQL blocks */
+.kql-block{margin-bottom:10px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.kql-block .block-title{font-size:12px;font-weight:600}
+.kql-block textarea{width:100%;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5}
+/* Summary stats */
+.ov-stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.ov-stat{flex:1;min-width:120px;padding:12px 16px;background:var(--bg-raised);border-radius:var(--radius-md);text-align:center}
+.ov-stat-val{font-size:22px;font-weight:700;font-family:var(--font-mono)}
+.ov-stat-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+/* Table grid */
+.ov-table{width:100%;border-collapse:collapse;font-size:12px}
+.ov-table th{text-align:left;padding:8px 10px;background:var(--bg-base);color:var(--text-secondary);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ov-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ov-table tr:hover td{background:var(--bg-hover)}
+.ov-table .tname{font-family:var(--font-mono);font-weight:500;white-space:nowrap}
+.cat{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px}
+.cat-staging{background:rgba(74,158,237,.15);color:var(--color-info)}
+.cat-event{background:rgba(34,197,94,.15);color:var(--color-success)}
+.cat-alert{background:rgba(245,158,11,.15);color:var(--color-warn)}
+.cat-unknown{background:rgba(139,148,158,.15);color:var(--text-secondary)}
+.icon-pass{color:var(--color-success)}
+.icon-fail{color:var(--text-secondary)}
+.icon-active{color:var(--color-info)}
+/* Functions section */
+.fn-row{padding:8px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:8px;cursor:pointer}
+.fn-row:hover{background:var(--bg-hover)}
+.fn-header{display:flex;align-items:center;gap:8px;font-size:12px}
+.fn-name{font-family:var(--font-mono);font-weight:600;color:var(--color-info)}
+.fn-folder{font-size:11px;color:var(--text-secondary)}
+.fn-body{display:none;margin-top:8px;padding:8px;background:var(--bg-base);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;color:var(--color-success);white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.fn-row.expanded .fn-body{display:block}
+/* Paste area */
+#dbPasteArea{width:100%;min-height:120px;max-height:400px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none}
+#dbPasteArea:focus{border-color:var(--border-focus)}
+/* Policy summary */
+.pol-group{margin-bottom:12px}
+.pol-group-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pol-row{display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:12px}
+.pol-val{font-family:var(--font-mono);font-weight:600;min-width:60px}
+.pol-tables{color:var(--text-secondary);font-size:11px}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — Database Overview panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:1200px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Database Overview</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Run <code style="color:var(--color-info)">.show</code> commands, paste the output, and get a complete view of your database.</p>
+
+  <!-- Commands card -->
+  <div class="card" id="cardOvCommands">
+    <div class="card-title collapsible" onclick="toggleCard('cardOvCommands')">
+      <span class="dot" style="background:var(--color-info)"></span> Discovery Commands
+      <span class="text-sm text-muted" style="font-weight:400;margin-left:4px">Run in ADX Web UI, then paste output below</span>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="text-sm text-muted" style="margin-bottom:10px">Run each command one at a time in ADX Web UI. After each result loads, select all rows, copy, then paste all output into the text area below.</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="btn btn-sm" onclick="copyAllOvCommands(this)">Copy All Commands</button>
+      </div>
+      <div id="ovCommandBlocks"></div>
+    </div>
+  </div>
+
+  <!-- Paste Area card -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Paste Output</div>
+    <textarea id="dbPasteArea" placeholder="Paste .show command output here...&#10;&#10;Supports tab-separated (copied from ADX Web UI results grid) or JSON format."></textarea>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="btn btn-primary btn-sm" onclick="analyzeDBOutput()">Analyze</button>
+      <button class="btn btn-sm" onclick="clearDBOverview()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Dashboard (hidden until output analyzed) -->
+  <div id="dbDashboard" style="display:none">
+    <!-- Summary stats -->
+    <div class="ov-stats" id="ovSummaryStats"></div>
+
+    <!-- Table Inventory -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Table Inventory</div>
+      <div style="overflow-x:auto">
+        <table class="ov-table" id="ovTableGrid">
+          <thead id="ovTableHead"></thead>
+          <tbody id="ovTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Policy Summary -->
+    <div class="card" id="cardPolicySummary">
+      <div class="card-title collapsible" onclick="toggleCard('cardPolicySummary')">
+        <span class="dot" style="background:var(--color-warn)"></span> Policy Summary
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="card-body" id="ovPolicySummary"></div>
+    </div>
+
+    <!-- Functions -->
+    <div class="card" id="cardFunctions">
+      <div class="card-title collapsible" onclick="toggleCard('cardFunctions')">
+        <span class="dot" style="background:var(--color-purple)"></span> Functions
+        <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="ovFnCount"></span>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="card-body" id="ovFunctionsList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MOCK STATE (preprod only)
+// ═══════════════════════════════════════════════════════════════════
+var state={globalConfig:{clusterUri:"https://testcluster.westus2.kusto.windows.net",database:"NetskopeDB",tenantId:""}};
+function getPack(){return null}
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function toggleCard(id){var c=document.getElementById(id);if(c)c.classList.toggle("collapsed")}
+function copyToClipboard(btn,id){
+  var ta=document.getElementById(id);if(!ta)return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DB OVERVIEW — Commands
+// ═══════════════════════════════════════════════════════════════════
+
+var OV_COMMANDS=[
+  {title:"Tables + Details",kql:".show tables details"},
+  {title:"Update Policies",kql:".show table * policy update"},
+  {title:"Row-Level Security",kql:".show table * policy row_level_security"},
+  {title:"Functions",kql:".show functions"},
+  {title:"Ingestion Batching",kql:".show table * policy ingestionbatching"}
+];
+
+function renderOvCommands(){
+  var cont=document.getElementById("ovCommandBlocks");if(!cont)return;
+  var html="";
+  for(var i=0;i<OV_COMMANDS.length;i++){
+    var c=OV_COMMANDS[i],id="ov_cmd_"+i;
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(c.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="1" style="min-height:30px">'+esc(c.kql)+'</textarea></div>';
+  }
+  cont.innerHTML=html;
+}
+function copyAllOvCommands(btn){
+  var parts=[];
+  for(var i=0;i<OV_COMMANDS.length;i++){
+    parts.push("// "+OV_COMMANDS[i].title+"\n"+OV_COMMANDS[i].kql);
+  }
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Commands"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DB OVERVIEW — Parsing
+// ═══════════════════════════════════════════════════════════════════
+
+function parseTSVBlock(text){
+  var lines=text.trim().split("\n");
+  if(lines.length<2)return null;
+  var headers=lines[0].split("\t");
+  var rows=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=lines[i].split("\t");
+    if(vals.length<2)continue;
+    var row={};
+    for(var j=0;j<headers.length;j++){
+      row[headers[j].trim()]=j<vals.length?vals[j].trim():"";
+    }
+    rows.push(row);
+  }
+  return{headers:headers.map(function(h){return h.trim()}),rows:rows};
+}
+
+function detectBlockType(headers){
+  var h=headers.join("|").toLowerCase();
+  if(h.indexOf("totalextentsize")>-1||h.indexOf("totalrowcount")>-1||h.indexOf("hotextentsize")>-1)return"tables_details";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("body")>-1&&h.indexOf("source")>-1)return"update_policy";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("query")>-1)return"rls_policy";
+  if(h.indexOf("body")>-1&&h.indexOf("parameters")>-1&&h.indexOf("folder")>-1)return"functions";
+  if(h.indexOf("maximumbatchingtimespan")>-1)return"batching";
+  if(h.indexOf("tablename")>-1&&h.indexOf("policyname")>-1)return"generic_policy";
+  return"unknown";
+}
+
+function splitBlocks(text){
+  // Split on double newlines or lines that look like new headers
+  var lines=text.split("\n");
+  var blocks=[],current=[];
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    // Detect new block: a line with tabs that could be a header row followed by data
+    if(current.length>0&&line.trim()&&!line.match(/^\s/)&&line.indexOf("\t")>-1){
+      // Check if this looks like a header (not a data continuation)
+      var prevLine=current[current.length-1];
+      if(prevLine.trim()===""||(current.length>=2&&!isDataRow(line,current[0]))){
+        blocks.push(current.join("\n"));
+        current=[line];
+        continue;
+      }
+    }
+    if(line.trim()===""&&current.length>0){
+      // Blank line — could be separator between blocks
+      var nextLine=i+1<lines.length?lines[i+1]:"";
+      if(nextLine.trim()&&nextLine.indexOf("\t")>-1&&current.length>=2){
+        blocks.push(current.join("\n"));
+        current=[];
+        continue;
+      }
+    }
+    if(line.trim())current.push(line);
+  }
+  if(current.length>0)blocks.push(current.join("\n"));
+  return blocks;
+}
+
+function isDataRow(line,headerLine){
+  if(!headerLine)return false;
+  var hCols=headerLine.split("\t").length;
+  var dCols=line.split("\t").length;
+  return Math.abs(hCols-dCols)<=2;
+}
+
+function analyzeDBOutput(){
+  var text=document.getElementById("dbPasteArea").value.trim();
+  if(!text){alert("Paste .show command output first.");return}
+
+  var parsed={tables:null,updatePolicies:null,rlsPolicies:null,functions:null,batching:null};
+  var rawBlocks=splitBlocks(text);
+
+  for(var i=0;i<rawBlocks.length;i++){
+    var block=parseTSVBlock(rawBlocks[i]);
+    if(!block||!block.rows.length)continue;
+    var type=detectBlockType(block.headers);
+    if(type==="tables_details")parsed.tables=block;
+    else if(type==="update_policy")parsed.updatePolicies=block;
+    else if(type==="rls_policy")parsed.rlsPolicies=block;
+    else if(type==="functions")parsed.functions=block;
+    else if(type==="batching")parsed.batching=block;
+  }
+
+  // Also try JSON parsing as fallback
+  if(!parsed.tables){
+    try{
+      var json=JSON.parse(text);
+      if(Array.isArray(json)&&json.length>0){
+        var headers=Object.keys(json[0]);
+        var type2=detectBlockType(headers);
+        if(type2==="tables_details")parsed.tables={headers:headers,rows:json};
+      }
+    }catch(e){}
+  }
+
+  renderDashboard(parsed);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DB OVERVIEW — Dashboard Rendering
+// ═══════════════════════════════════════════════════════════════════
+
+function formatNum(n){
+  n=parseInt(n,10)||0;
+  if(n>=1000000)return(n/1000000).toFixed(1)+"M";
+  if(n>=1000)return(n/1000).toFixed(1)+"K";
+  return n.toString();
+}
+
+function formatBytes(bytes){
+  bytes=parseFloat(bytes)||0;
+  if(bytes>=1073741824)return(bytes/1073741824).toFixed(1)+" GB";
+  if(bytes>=1048576)return(bytes/1048576).toFixed(1)+" MB";
+  if(bytes>=1024)return(bytes/1024).toFixed(1)+" KB";
+  return bytes+" B";
+}
+
+function parseDuration(dur){
+  if(!dur||dur==="-")return"--";
+  var m=dur.match(/(\d+)\.(\d{2}):(\d{2}):(\d{2})/);
+  if(m)return m[1]+"d";
+  var m2=dur.match(/(\d+)/);
+  if(m2)return m2[1]+"d";
+  return dur;
+}
+
+function guessCategory(tableName){
+  var n=tableName.toLowerCase();
+  if(n.indexOf("_raw")>-1||n.indexOf("staging")>-1)return"staging";
+  if(n.indexOf("alert")>-1)return"alert";
+  if(n.indexOf("event")>-1)return"event";
+  return"unknown";
+}
+
+function boolIcon(val){
+  if(!val||val==="false"||val==="False"||val==="0")return'<span class="icon-fail">&#10007;</span>';
+  if(val==="true"||val==="True"||val==="1")return'<span class="icon-pass">&#10003;</span>';
+  return'<span class="icon-fail">\u2014</span>';
+}
+
+function renderDashboard(parsed){
+  var dashboard=document.getElementById("dbDashboard");
+  dashboard.style.display="block";
+
+  // Build unified table data
+  var tableMap={};
+
+  // From .show tables details
+  if(parsed.tables){
+    for(var i=0;i<parsed.tables.rows.length;i++){
+      var r=parsed.tables.rows[i];
+      var name=r.TableName||r.tableName||r.Name||r.name||"";
+      if(!name)continue;
+      tableMap[name]={
+        name:name,
+        cat:guessCategory(name),
+        rows:r.TotalRowCount||r.totalRowCount||r.RowCount||"0",
+        size:r.TotalExtentSize||r.totalExtentSize||r.TotalOriginalSize||"0",
+        hotSize:r.HotExtentSize||r.hotExtentSize||"0",
+        retention:parseDuration(r.RetentionPolicy||r.retentionPolicy||""),
+        caching:parseDuration(r.CachingPolicy||r.cachingPolicy||""),
+        folder:r.Folder||r.folder||"",
+        updatePolicy:false,
+        rlsEnabled:false,
+        batchingCustom:false
+      };
+      // Try to extract retention/caching from policy JSON strings
+      if(r.RetentionPolicy&&typeof r.RetentionPolicy==="string"){
+        try{var rp=JSON.parse(r.RetentionPolicy);if(rp.SoftDeletePeriod)tableMap[name].retention=parseDuration(rp.SoftDeletePeriod)}catch(e){}
+      }
+      if(r.CachingPolicy&&typeof r.CachingPolicy==="string"){
+        try{var cp=JSON.parse(r.CachingPolicy);if(cp.DataHotSpan)tableMap[name].caching=parseDuration(cp.DataHotSpan)}catch(e){}
+      }
+    }
+  }
+
+  // Overlay update policies
+  if(parsed.updatePolicies){
+    for(var i=0;i<parsed.updatePolicies.rows.length;i++){
+      var r=parsed.updatePolicies.rows[i];
+      var name=r.TableName||r.EntityName||r.tableName||"";
+      var policy=r.Policy||r.policy||"";
+      if(name&&tableMap[name]){
+        if(policy&&policy!=="[]"&&policy!=="null")tableMap[name].updatePolicy=true;
+      }
+    }
+  }
+
+  // Overlay RLS
+  if(parsed.rlsPolicies){
+    for(var i=0;i<parsed.rlsPolicies.rows.length;i++){
+      var r=parsed.rlsPolicies.rows[i];
+      var name=r.TableName||r.EntityName||r.tableName||"";
+      var enabled=r.IsEnabled||r.isEnabled||"";
+      if(name&&tableMap[name]){
+        tableMap[name].rlsEnabled=(enabled==="true"||enabled==="True"||enabled===true);
+      }
+    }
+  }
+
+  // Overlay batching
+  if(parsed.batching){
+    for(var i=0;i<parsed.batching.rows.length;i++){
+      var r=parsed.batching.rows[i];
+      var name=r.TableName||r.EntityName||r.tableName||"";
+      var policy=r.Policy||r.policy||"";
+      if(name&&tableMap[name]){
+        if(policy&&policy!=="null"&&policy!==""){
+          tableMap[name].batchingCustom=true;
+          try{var bp=JSON.parse(policy);if(bp.MaximumBatchingTimeSpan)tableMap[name].batchingVal=bp.MaximumBatchingTimeSpan}catch(e){}
+        }
+      }
+    }
+  }
+
+  // Convert map to sorted array
+  var tables=[];
+  for(var k in tableMap)tables.push(tableMap[k]);
+  tables.sort(function(a,b){
+    var catOrder={staging:0,event:1,alert:2,unknown:3};
+    var ca=catOrder[a.cat]||3,cb=catOrder[b.cat]||3;
+    if(ca!==cb)return ca-cb;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Summary stats
+  var totalRows=0,totalSize=0,rlsCount=0,updCount=0;
+  for(var i=0;i<tables.length;i++){
+    totalRows+=parseInt(tables[i].rows,10)||0;
+    totalSize+=parseFloat(tables[i].size)||0;
+    if(tables[i].rlsEnabled)rlsCount++;
+    if(tables[i].updatePolicy)updCount++;
+  }
+
+  var statsEl=document.getElementById("ovSummaryStats");
+  statsEl.innerHTML=
+    '<div class="ov-stat"><div class="ov-stat-val">'+tables.length+'</div><div class="ov-stat-label">Tables</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+formatNum(totalRows)+'</div><div class="ov-stat-label">Total Rows</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+formatBytes(totalSize)+'</div><div class="ov-stat-label">Total Size</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-success)">'+updCount+'</div><div class="ov-stat-label">Update Policies</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-purple)">'+rlsCount+'</div><div class="ov-stat-label">RLS Enabled</div></div>';
+
+  // Table inventory grid
+  var thead=document.getElementById("ovTableHead");
+  var tbody=document.getElementById("ovTableBody");
+  thead.innerHTML='<tr><th>Cat</th><th>Table</th><th style="text-align:right">Rows</th><th style="text-align:right">Size</th><th>Retention</th><th>Cache</th><th style="text-align:center">Upd</th><th style="text-align:center">RLS</th><th style="text-align:center">Batch</th></tr>';
+
+  var bodyHtml="";
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i];
+    var catCls="cat-"+t.cat;
+    var catLabel=t.cat==="staging"?"STG":(t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"???"));
+    bodyHtml+='<tr>';
+    bodyHtml+='<td><span class="cat '+catCls+'">'+catLabel+'</span></td>';
+    bodyHtml+='<td class="tname">'+esc(t.name)+'</td>';
+    bodyHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+formatNum(parseInt(t.rows,10)||0)+'</td>';
+    bodyHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+formatBytes(parseFloat(t.size)||0)+'</td>';
+    bodyHtml+='<td style="font-family:var(--font-mono)">'+esc(t.retention||"--")+'</td>';
+    bodyHtml+='<td style="font-family:var(--font-mono)">'+esc(t.caching||"--")+'</td>';
+    bodyHtml+='<td style="text-align:center">'+(t.updatePolicy?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td>';
+    bodyHtml+='<td style="text-align:center">'+(t.rlsEnabled?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">&#10007;</span>')+'</td>';
+    bodyHtml+='<td style="text-align:center">'+(t.batchingCustom?'<span class="icon-active" title="'+(t.batchingVal||"custom")+'">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td>';
+    bodyHtml+='</tr>';
+  }
+  tbody.innerHTML=bodyHtml;
+
+  // Policy summary — group by retention value, cache value
+  renderPolicySummary(tables);
+
+  // Functions
+  renderFunctions(parsed.functions);
+}
+
+function renderPolicySummary(tables){
+  var el=document.getElementById("ovPolicySummary");if(!el)return;
+  // Group by retention
+  var retGroups={},cacheGroups={};
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i],ret=t.retention||"--",cache=t.caching||"--";
+    if(!retGroups[ret])retGroups[ret]=[];
+    retGroups[ret].push(t.name);
+    if(!cacheGroups[cache])cacheGroups[cache]=[];
+    cacheGroups[cache].push(t.name);
+  }
+
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+
+  // Retention groups
+  html+='<div class="pol-group"><div class="pol-group-title" style="color:var(--color-warn)">Retention by Value</div>';
+  for(var val in retGroups){
+    html+='<div class="pol-row"><span class="pol-val" style="color:var(--color-warn)">'+esc(val)+'</span><span class="pol-tables">'+retGroups[val].length+' table'+(retGroups[val].length>1?"s":"")+'</span></div>';
+  }
+  html+='</div>';
+
+  // Cache groups
+  html+='<div class="pol-group"><div class="pol-group-title" style="color:var(--color-info)">Hot Cache by Value</div>';
+  for(var val in cacheGroups){
+    html+='<div class="pol-row"><span class="pol-val" style="color:var(--color-info)">'+esc(val)+'</span><span class="pol-tables">'+cacheGroups[val].length+' table'+(cacheGroups[val].length>1?"s":"")+'</span></div>';
+  }
+  html+='</div></div>';
+
+  el.innerHTML=html;
+}
+
+function renderFunctions(fnBlock){
+  var el=document.getElementById("ovFunctionsList");
+  var countEl=document.getElementById("ovFnCount");
+  if(!el)return;
+
+  if(!fnBlock||!fnBlock.rows.length){
+    el.innerHTML='<div class="text-sm text-muted">No function data found. Run <code style="color:var(--color-info)">.show functions</code> and include in paste.</div>';
+    if(countEl)countEl.textContent="";
+    return;
+  }
+
+  if(countEl)countEl.textContent="("+fnBlock.rows.length+" function"+(fnBlock.rows.length>1?"s":"")+")";
+
+  var html="";
+  for(var i=0;i<fnBlock.rows.length;i++){
+    var f=fnBlock.rows[i];
+    var name=f.Name||f.name||"";
+    var folder=f.Folder||f.folder||"";
+    var body=f.Body||f.body||"";
+    html+='<div class="fn-row" onclick="this.classList.toggle(\'expanded\')">';
+    html+='<div class="fn-header">';
+    html+='<span class="fn-name">'+esc(name)+'</span>';
+    if(folder)html+='<span class="fn-folder">'+esc(folder)+'</span>';
+    html+='</div>';
+    html+='<div class="fn-body">'+esc(body)+'</div>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+function clearDBOverview(){
+  document.getElementById("dbPasteArea").value="";
+  document.getElementById("dbDashboard").style.display="none";
+  document.getElementById("ovSummaryStats").innerHTML="";
+  document.getElementById("ovTableBody").innerHTML="";
+  document.getElementById("ovPolicySummary").innerHTML="";
+  document.getElementById("ovFunctionsList").innerHTML="";
+}
+
+function renderDBOverview(){
+  // Called by onShow — just render commands
+  renderOvCommands();
+}
+
+// Init
+renderOvCommands();
+</script>
+</body>
+</html>

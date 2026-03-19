@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — Deployment & Verification</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:1100px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.hidden{display:none!important}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:1100px}
+/* Collapsible */
+.card-title.collapsible{cursor:pointer;user-select:none}
+.card-title.collapsible:hover{opacity:.85}
+.card-title .chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s;margin-left:auto;line-height:1}
+.card.collapsed .chevron{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
+/* Deploy steps */
+.deploy-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.deploy-step:last-child{border-bottom:none}
+.step-number{min-width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step-info{flex:1;min-width:0}
+.step-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.step-desc{font-size:11px;color:var(--text-secondary)}
+.step-cmd-count{font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--bg-base);color:var(--text-secondary)}
+/* KQL output */
+.kql-block{margin-bottom:12px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.kql-block .block-title{font-size:12px;font-weight:600}
+.kql-block textarea{width:100%;min-height:50px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5}
+/* Sections */
+.deploy-section{margin-top:16px}
+.deploy-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;user-select:none;transition:background .15s}
+.deploy-section-header:hover{background:var(--bg-hover)}
+.deploy-section-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.deploy-section-badge{font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:1px 8px;border-radius:10px}
+.deploy-section-chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s}
+.deploy-section.collapsed .deploy-section-chevron{transform:rotate(-90deg)}
+.deploy-section.collapsed .deploy-section-body{display:none}
+.deploy-section-body{padding-top:8px}
+/* Verification results */
+.verify-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.verify-grid{grid-template-columns:1fr}}
+.verify-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-raised);border-radius:var(--radius-md);font-size:12px}
+.verify-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.verify-icon.pass{background:rgba(34,197,94,.15);color:var(--color-success)}
+.verify-icon.fail{background:rgba(239,68,68,.15);color:var(--color-error)}
+.verify-icon.pending{background:rgba(139,148,158,.15);color:var(--text-secondary)}
+.verify-name{flex:1;font-family:var(--font-mono)}
+.verify-detail{font-size:10px;color:var(--text-secondary)}
+/* Paste area */
+.paste-area{width:100%;min-height:120px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5}
+.paste-area:focus{border-color:var(--border-focus)}
+/* Summary bar */
+.summary-bar{display:flex;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px}
+.summary-stat{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — Deployment & Verification panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:1100px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Deployment &amp; Verification</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Full deployment runbook in execution order, plus verification queries to confirm everything applied correctly.</p>
+
+  <!-- Deployment Runbook -->
+  <div class="card" id="cardRunbook">
+    <div class="card-title collapsible" onclick="toggleCard('cardRunbook')">
+      <span class="dot" style="background:var(--color-info)"></span> Deployment Runbook
+      <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="runbookCmdCount"></span>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="text-sm text-muted" style="margin-bottom:8px">All commands in correct execution order. Run each command one at a time in ADX Web UI. <strong style="color:var(--text-primary)">Copy All</strong> gives you the full script with separators.</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="btn btn-sm" id="runbookCopyAllBtn" onclick="copyAllRunbook()">Copy All</button>
+        <button class="btn btn-sm" onclick="generateRunbook()">Refresh</button>
+      </div>
+      <div id="runbookOutput"></div>
+    </div>
+  </div>
+
+  <!-- Verification Queries -->
+  <div class="card" id="cardVerifyQueries">
+    <div class="card-title collapsible" onclick="toggleCard('cardVerifyQueries')">
+      <span class="dot" style="background:var(--color-teal)"></span> Verification Queries
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="card-body">
+      <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="btn btn-sm" onclick="copyAllVerifyQueries(this)">Copy All Queries</button>
+        <button class="btn btn-sm" onclick="generateVerifyQueries()">Refresh</button>
+      </div>
+      <div id="verifyQueriesOutput"></div>
+    </div>
+  </div>
+
+  <!-- Verification Results -->
+  <div class="card" id="cardVerifyResults">
+    <div class="card-title">
+      <span class="dot" style="background:var(--color-success)"></span> Verification Results
+    </div>
+    <div class="text-sm text-muted" style="margin-bottom:8px">Paste the output from each verification query. The tool will parse it and show pass/fail for each check.</div>
+    <div id="verifySummary" class="summary-bar" style="display:none">
+      <div class="summary-stat"><span style="color:var(--color-success)">&#10003;</span> <span id="passCount">0</span> passed</div>
+      <div class="summary-stat"><span style="color:var(--color-error)">&#10007;</span> <span id="failCount">0</span> failed</div>
+      <div class="summary-stat"><span style="color:var(--text-secondary)">&#9679;</span> <span id="pendingCount">0</span> pending</div>
+    </div>
+    <textarea class="paste-area" id="verifyPasteArea" placeholder="Paste .show command results here (one or more)...&#10;&#10;Supports output from:&#10;  .show table T schema as json&#10;  .show table T policy retention&#10;  .show table T policy caching&#10;  .show table T policy row_level_security&#10;  .show table T policy update&#10;  .show function RLS_T&#10;  .show table T ingestion json mapping"></textarea>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn btn-sm" onclick="parseVerifyResults()">Analyze Results</button>
+      <button class="btn btn-sm" onclick="clearVerifyResults()">Clear</button>
+    </div>
+    <div id="verifyResultsGrid" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// Schema pack + mock state (preprod only)
+// ═══════════════════════════════════════════════════════════════════
+var SCHEMA_PACKS = {netskope:{name:"Netskope N2Av2",stagingTable:"Netskope_Raw",stagingSchema:"TimeGenerated:datetime, StreamType:string, RawData:dynamic",mappingName:"Netskope_Raw_Mapping",mappingDef:'[{"column":"TimeGenerated","path":"$.TimeGenerated","transform":"DateTimeFromUnixMilliseconds"},{"column":"StreamType","path":"$.StreamType"},{"column":"RawData","path":"$"}]',userEmailField:"user",baseTypedSchema:"TimeGenerated:datetime, RawData:dynamic",tables:[{name:"NetskopeEventsPage_CL",stream:"events_page",cat:"event"},{name:"NetskopeEventsApplication_CL",stream:"events_application",cat:"event"},{name:"NetskopeEventsAudit_CL",stream:"events_audit",cat:"event"},{name:"NetskopeEventsInfrastructure_CL",stream:"events_infrastructure",cat:"event"},{name:"NetskopeEventsNetwork_CL",stream:"events_network",cat:"event"},{name:"NetskopeEventsConnection_CL",stream:"events_connection",cat:"event"},{name:"NetskopeEventsEndpoint_CL",stream:"events_endpoint",cat:"event"},{name:"NetskopeEventsIncident_CL",stream:"events_incident",cat:"event"},{name:"NetskopeAlertsPolicy_CL",stream:"alerts_policy",cat:"alert"},{name:"NetskopeAlertsUba_CL",stream:"alerts_uba",cat:"alert"},{name:"NetskopeAlertsCompromisedCredential_CL",stream:"alerts_compromisedcredential",cat:"alert"},{name:"NetskopeAlertsRemediation_CL",stream:"alerts_remediation",cat:"alert"},{name:"NetskopeAlertsSecurityAssessment_CL",stream:"alerts_securityassessment",cat:"alert"},{name:"NetskopeAlertsQuarantine_CL",stream:"alerts_quarantine",cat:"alert"},{name:"NetskopeAlertsMalware_CL",stream:"alerts_malware",cat:"alert"},{name:"NetskopeAlertsMalsite_CL",stream:"alerts_malsite",cat:"alert"},{name:"NetskopeAlertsDlp_CL",stream:"alerts_dlp",cat:"alert"},{name:"NetskopeAlertsCtep_CL",stream:"alerts_ctep",cat:"alert"},{name:"NetskopeAlertsWatchlist_CL",stream:"alerts_watchlist",cat:"alert"},{name:"NetskopeAlertsDevice_CL",stream:"alerts_device",cat:"alert"},{name:"NetskopeAlertsContent_CL",stream:"alerts_content",cat:"alert"}],folder:"Netskope"}};
+
+var state = {
+  globalConfig: { clusterUri:"https://testcluster.westus2.kusto.windows.net", database:"NetskopeDB", tenantId:"" },
+  activePack: "netskope",
+  tableBuilder: { selectedTables:["NetskopeEventsPage_CL","NetskopeEventsApplication_CL","NetskopeEventsAudit_CL","NetskopeEventsInfrastructure_CL","NetskopeEventsNetwork_CL","NetskopeEventsConnection_CL","NetskopeEventsEndpoint_CL","NetskopeEventsIncident_CL","NetskopeAlertsPolicy_CL","NetskopeAlertsUba_CL","NetskopeAlertsCompromisedCredential_CL","NetskopeAlertsRemediation_CL","NetskopeAlertsSecurityAssessment_CL","NetskopeAlertsQuarantine_CL","NetskopeAlertsMalware_CL","NetskopeAlertsMalsite_CL","NetskopeAlertsDlp_CL","NetskopeAlertsCtep_CL","NetskopeAlertsWatchlist_CL","NetskopeAlertsDevice_CL","NetskopeAlertsContent_CL"] },
+  rls: { rlsFunction:true, applyPolicies:true, selectedTables:["NetskopeEventsPage_CL","NetskopeAlertsPolicy_CL"] },
+  retention: {
+    storageProfile:"custom", enableRetention:true, enableCaching:true,
+    staging:"10d", events:"180d", alerts:"365d", recoverability:false, overrides:{},
+    cache:{ staging:"10d", events:"30d", alerts:"30d", overrides:{} },
+    batching:{ enabled:false, maxTimeSpan:"00:00:30", maxItems:"", maxRawDataSize:"", overrides:{} }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Utilities
+// ═══════════════════════════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function getPack(){return SCHEMA_PACKS[state.activePack]||null}
+function toggleCard(id){document.getElementById(id).classList.toggle("collapsed")}
+function toggleSection(el){el.closest(".deploy-section").classList.toggle("collapsed")}
+
+function copyToClipboard(btn,taId){
+  var ta=document.getElementById(taId);if(!ta)return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500);
+  });
+}
+
+function resolveRet(t,cat){
+  if(state.retention.overrides[t])return state.retention.overrides[t];
+  if(cat==="staging")return state.retention.staging;
+  if(cat==="event")return state.retention.events;
+  if(cat==="alert")return state.retention.alerts;
+  return"365d";
+}
+function resolveCache(t,cat){
+  if(state.retention.cache.overrides[t])return state.retention.cache.overrides[t];
+  if(cat==="staging")return state.retention.cache.staging;
+  if(cat==="event")return state.retention.cache.events;
+  if(cat==="alert")return state.retention.cache.alerts;
+  return"30d";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Deployment Runbook generation
+// ═══════════════════════════════════════════════════════════════════
+var _runbookBlocks=[];
+
+function generateRunbook(){
+  var out=document.getElementById("runbookOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var db=state.globalConfig.database||"{database}";
+  var cluster=state.globalConfig.clusterUri||"{cluster}";
+  var recover=state.retention.recoverability?"enabled":"disabled";
+  var blocks=[];
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+
+  // ── Phase 1: Staging table ──
+  blocks.push({
+    section:"Phase 1 — Staging Table",sectionColor:"var(--color-info)",
+    title:"Create staging table: "+pack.stagingTable,
+    kql:".create-merge table "+pack.stagingTable+" ("+pack.stagingSchema+")\n    with (folder=\""+pack.folder+"\")"
+  });
+  blocks.push({
+    title:"Create ingestion mapping: "+pack.mappingName,
+    kql:".create-or-alter table "+pack.stagingTable+" ingestion json mapping \""+pack.mappingName+"\" '"+pack.mappingDef+"'"
+  });
+
+  // ── Phase 2: Typed tables (schema only — no function/policy since those depend on field config) ──
+  if(selectedTyped.length){
+    var first=true;
+    for(var i=0;i<selectedTyped.length;i++){
+      var tName=selectedTyped[i];
+      var tDef=null;
+      for(var j=0;j<pack.tables.length;j++){if(pack.tables[j].name===tName){tDef=pack.tables[j];break}}
+      if(!tDef)continue;
+      var cat=tDef.cat==="event"?"Events":"Alerts";
+      blocks.push({
+        section:first?"Phase 2 — Typed Tables + Transform Functions + Update Policies":undefined,
+        sectionColor:first?"var(--color-success)":undefined,
+        title:"Create table: "+tName,
+        kql:"// Run these 3 commands for "+tName+" in order:\n\n"+
+          "// Step 1: Create table\n"+
+          ".create-merge table "+tName+" ("+pack.baseTypedSchema+")\n    with (folder=\""+pack.folder+"/"+cat+"\")\n\n"+
+          "// Step 2: Create transform function\n"+
+          "// (Use the full function from Table Builder — includes field extraction)\n"+
+          ".create-or-alter function\n    with (folder=\""+pack.folder+"/Functions/"+cat+"\", skipvalidation=\"true\")\nfn_"+tName.replace(/_CL$/,"")+"() {\n    "+pack.stagingTable+"\n    | where StreamType == \""+tDef.stream+"\"\n    // ... extend + project from Table Builder output\n}\n\n"+
+          "// Step 3: Attach update policy\n"+
+          ".alter table "+tName+" policy update\n@'[{\"IsEnabled\": true, \"Source\": \""+pack.stagingTable+"\", \"Query\": \"fn_"+tName.replace(/_CL$/,"")+"()\", \"IsTransactional\": false}]'"
+      });
+      first=false;
+    }
+  }
+
+  // ── Phase 3: RLS ──
+  var rlsTables=state.rls.selectedTables||[];
+  if(state.rls.rlsFunction&&rlsTables.length){
+    var first=true;
+    for(var i=0;i<rlsTables.length;i++){
+      blocks.push({
+        section:first?"Phase 3 — Row-Level Security":undefined,
+        sectionColor:first?"var(--color-purple)":undefined,
+        title:"RLS function + policy: "+rlsTables[i],
+        kql:"// Step 1: Create RLS function\n"+
+          ".create-or-alter function\n    with (folder=\"Functions/RLS\", skipvalidation=\"true\")\nRLS_"+rlsTables[i]+"() {\n    "+rlsTables[i]+"\n    | where\n        // ... clauses from RLS Builder output\n}\n\n"+
+          "// Step 2: Enable RLS policy (run separately from Step 1)\n"+
+          ".alter table "+rlsTables[i]+" policy row_level_security enable \"RLS_"+rlsTables[i]+"()\""
+      });
+      first=false;
+    }
+  }
+
+  // ── Phase 4: Retention (batched) ──
+  if(state.retention.enableRetention){
+    var groups={};var order=[];
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i],val=resolveRet(t.name,t.cat);
+      if(!groups[val]){groups[val]=[];order.push(val)}
+      groups[val].push(t.name);
+    }
+    var first=true;
+    for(var v=0;v<order.length;v++){
+      var val=order[v],names=groups[val];
+      var cmd=names.length===1?
+        ".alter-merge table "+names[0]+" policy retention softdelete = "+val+" recoverability = "+recover:
+        ".alter-merge tables ("+names.join(", ")+")\n    policy retention softdelete = "+val+" recoverability = "+recover;
+      blocks.push({
+        section:first?"Phase 4 — Retention Policies":undefined,
+        sectionColor:first?"var(--color-warn)":undefined,
+        title:"Retention "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",
+        kql:cmd
+      });
+      first=false;
+    }
+  }
+
+  // ── Phase 5: Caching (batched) ──
+  if(state.retention.enableCaching){
+    var groups={};var order=[];
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i],val=resolveCache(t.name,t.cat);
+      if(!groups[val]){groups[val]=[];order.push(val)}
+      groups[val].push(t.name);
+    }
+    var first=true;
+    for(var v=0;v<order.length;v++){
+      var val=order[v],names=groups[val];
+      var cmd=names.length===1?
+        ".alter table "+names[0]+" policy caching hot = "+val:
+        ".alter tables ("+names.join(", ")+")\n    policy caching hot = "+val;
+      blocks.push({
+        section:first?"Phase 5 — Caching Policies (Hot Cache)":undefined,
+        sectionColor:first?"var(--color-info)":undefined,
+        title:"Cache hot "+val+" ("+names.length+" table"+(names.length>1?"s":"")+")",
+        kql:cmd
+      });
+      first=false;
+    }
+  }
+
+  // ── Phase 6: Batching ──
+  if(state.retention.batching.enabled){
+    var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
+    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
+    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    var json=JSON.stringify(batchObj);
+    var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
+    blocks.push({
+      section:"Phase 6 — Ingestion Batching",sectionColor:"var(--color-purple)",
+      title:"Batching ("+names.length+" tables)",
+      kql:names.length===1?
+        ".alter table "+names[0]+" policy ingestionbatching @'"+json+"'":
+        ".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+json+"'"
+    });
+  }
+
+  _runbookBlocks=blocks;
+  renderRunbook(out,blocks);
+  document.getElementById("runbookCmdCount").textContent="("+blocks.length+" commands)";
+}
+
+function renderRunbook(container,blocks){
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No commands.</div>';return}
+  var html="";var currentSection=null;var sectionBlocks=[];
+  // Group into sections
+  var sections=[];var cur=null;
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){cur={name:b.section,color:b.sectionColor||"var(--color-info)",blocks:[]};sections.push(cur)}
+    if(cur)cur.blocks.push({b:b,idx:i});
+  }
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    html+='<div class="deploy-section">';
+    html+='<div class="deploy-section-header" onclick="toggleSection(this)">';
+    html+='<span class="deploy-section-title" style="color:'+sec.color+'">'+esc(sec.name)+' <span class="deploy-section-badge">'+sec.blocks.length+' command'+(sec.blocks.length>1?"s":"")+'</span></span>';
+    html+='<span class="deploy-section-chevron">&#9660;</span>';
+    html+='</div><div class="deploy-section-body">';
+    for(var j=0;j<sec.blocks.length;j++){
+      var b=sec.blocks[j].b,id="run_kql_"+sec.blocks[j].idx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,3),20);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    }
+    html+='</div></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllRunbook(){
+  var sep="////////////////////////////////////////";
+  var parts=[];
+  for(var i=0;i<_runbookBlocks.length;i++){
+    var b=_runbookBlocks[i];
+    var header=b.section?"\n"+sep+"\n// "+b.section+"\n"+sep:"";
+    parts.push(header+"\n// "+b.title+"\n// Run this command in ADX Web UI\n"+b.kql);
+  }
+  var btn=document.getElementById("runbookCopyAllBtn");
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Verification query generation
+// ═══════════════════════════════════════════════════════════════════
+var _verifyBlocks=[];
+var _expectedState={};
+
+function generateVerifyQueries(){
+  var out=document.getElementById("verifyQueriesOutput");if(!out)return;
+  var pack=getPack();if(!pack){out.innerHTML='<div class="text-sm text-muted">No schema pack.</div>';return}
+  var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  var allTableNames=[pack.stagingTable].concat(selectedTyped);
+  var blocks=[];
+  _expectedState={tables:{},functions:{},policies:{}};
+
+  // 1. Table existence + schema
+  var tableList=allTableNames.map(function(t){return"'"+t+"'"}).join(", ");
+  blocks.push({
+    section:"Schema Verification",sectionColor:"var(--color-info)",
+    title:"Verify all tables exist",
+    kql:".show tables\n| where TableName in ("+tableList+")\n| project TableName, Folder\n| order by TableName asc"
+  });
+  for(var i=0;i<allTableNames.length;i++){
+    _expectedState.tables[allTableNames[i]]={exists:true};
+  }
+
+  // 2. Ingestion mapping
+  blocks.push({
+    title:"Verify ingestion mapping",
+    kql:".show table "+pack.stagingTable+" ingestion json mapping\n| where Name == '"+pack.mappingName+"'\n| project Name, Mapping"
+  });
+
+  // 3. Update policies
+  if(selectedTyped.length){
+    blocks.push({
+      section:"Update Policy Verification",sectionColor:"var(--color-success)",
+      title:"Verify update policies (all typed tables)",
+      kql:".show tables ("+selectedTyped.join(", ")+") policy update\n| project TableName, IsEnabled, Source, Query\n| order by TableName asc"
+    });
+    for(var i=0;i<selectedTyped.length;i++){
+      _expectedState.policies[selectedTyped[i]+"_update"]={table:selectedTyped[i],type:"update",expected:true};
+    }
+  }
+
+  // 4. RLS functions + policies
+  var rlsTables=state.rls.selectedTables||[];
+  if(rlsTables.length){
+    var funcNames=rlsTables.map(function(t){return"'RLS_"+t+"'"}).join(", ");
+    blocks.push({
+      section:"RLS Verification",sectionColor:"var(--color-purple)",
+      title:"Verify RLS functions exist",
+      kql:".show functions\n| where Name in ("+funcNames+")\n| project Name, Folder, Body\n| order by Name asc"
+    });
+    if(state.rls.applyPolicies){
+      blocks.push({
+        title:"Verify RLS policies enabled",
+        kql:".show tables ("+rlsTables.join(", ")+") policy row_level_security\n| project TableName, IsEnabled, Query\n| order by TableName asc"
+      });
+    }
+    for(var i=0;i<rlsTables.length;i++){
+      _expectedState.functions["RLS_"+rlsTables[i]]={exists:true};
+      if(state.rls.applyPolicies)_expectedState.policies[rlsTables[i]+"_rls"]={table:rlsTables[i],type:"rls",expected:true};
+    }
+  }
+
+  // 5. Retention policies
+  if(state.retention.enableRetention){
+    blocks.push({
+      section:"Retention & Caching Verification",sectionColor:"var(--color-warn)",
+      title:"Verify retention policies",
+      kql:".show tables ("+allTableNames.join(", ")+") policy retention\n| project TableName, SoftDeletePeriod, Recoverability\n| order by TableName asc"
+    });
+    for(var i=0;i<allTables.length;i++){
+      _expectedState.policies[allTables[i].name+"_retention"]={table:allTables[i].name,type:"retention",expected:resolveRet(allTables[i].name,allTables[i].cat)};
+    }
+  }
+
+  // 6. Caching policies
+  if(state.retention.enableCaching){
+    blocks.push({
+      title:"Verify caching policies",
+      kql:".show tables ("+allTableNames.join(", ")+") policy caching\n| project TableName, DataHotSpan\n| order by TableName asc"
+    });
+    for(var i=0;i<allTables.length;i++){
+      _expectedState.policies[allTables[i].name+"_caching"]={table:allTables[i].name,type:"caching",expected:resolveCache(allTables[i].name,allTables[i].cat)};
+    }
+  }
+
+  // 7. Batching
+  if(state.retention.batching.enabled){
+    blocks.push({
+      title:"Verify ingestion batching policies",
+      kql:".show tables ("+allTableNames.join(", ")+") policy ingestionbatching\n| project TableName, MaximumBatchingTimeSpan, MaximumNumberOfItems, MaximumRawDataSizeMB\n| order by TableName asc"
+    });
+  }
+
+  // 8. Quick health check — all in one
+  blocks.push({
+    section:"Quick Health Check",sectionColor:"var(--color-teal)",
+    title:"Full deployment summary (one query)",
+    kql:"// Run this single query to get a deployment summary\n"+
+      ".show tables ("+allTableNames.join(", ")+") details\n"+
+      "| project TableName, Folder, TotalRowCount, TotalExtentSize,\n"+
+      "    HotExtentSize, RetentionPolicy, CachingPolicy\n"+
+      "| order by TableName asc"
+  });
+
+  _verifyBlocks=blocks;
+  renderVerifyQueries(out,blocks);
+}
+
+function renderVerifyQueries(container,blocks){
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No queries.</div>';return}
+  var html="";var cur=null;var sections=[];
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){cur={name:b.section,color:b.sectionColor||"var(--color-info)",blocks:[]};sections.push(cur)}
+    if(cur)cur.blocks.push({b:b,idx:i});
+  }
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    html+='<div class="deploy-section">';
+    html+='<div class="deploy-section-header" onclick="toggleSection(this)">';
+    html+='<span class="deploy-section-title" style="color:'+sec.color+'">'+esc(sec.name)+' <span class="deploy-section-badge">'+sec.blocks.length+' quer'+(sec.blocks.length>1?"ies":"y")+'</span></span>';
+    html+='<span class="deploy-section-chevron">&#9660;</span>';
+    html+='</div><div class="deploy-section-body">';
+    for(var j=0;j<sec.blocks.length;j++){
+      var b=sec.blocks[j].b,id="vq_kql_"+sec.blocks[j].idx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,3),12);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    }
+    html+='</div></div>';
+  }
+  container.innerHTML=html;
+}
+
+function copyAllVerifyQueries(btnEl){
+  var sep="////////////////////////////////////////";
+  var parts=[];
+  for(var i=0;i<_verifyBlocks.length;i++){
+    var b=_verifyBlocks[i];
+    parts.push((b.section?"\n"+sep+"\n// "+b.section+"\n"+sep+"\n":"")+"\n// "+b.title+"\n"+b.kql);
+  }
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
+    btnEl.classList.add("btn-copied");btnEl.textContent="Copied!";
+    setTimeout(function(){btnEl.classList.remove("btn-copied");btnEl.textContent="Copy All Queries"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Verification result parser
+// ═══════════════════════════════════════════════════════════════════
+function parseVerifyResults(){
+  var text=document.getElementById("verifyPasteArea").value.trim();
+  if(!text){return}
+  var pack=getPack();if(!pack)return;
+  var allTableNames=[pack.stagingTable];
+  var selectedTyped=state.tableBuilder.selectedTables||[];
+  for(var i=0;i<selectedTyped.length;i++)allTableNames.push(selectedTyped[i]);
+  var rlsTables=state.rls.selectedTables||[];
+
+  var results=[];
+  var lines=text.split("\n");
+
+  // Check table existence
+  for(var i=0;i<allTableNames.length;i++){
+    var t=allTableNames[i];
+    var found=text.indexOf(t)>-1;
+    results.push({name:t,check:"Table exists",status:found?"pass":"fail",detail:found?"Found":"Not found in output"});
+  }
+
+  // Check ingestion mapping
+  if(text.indexOf(pack.mappingName)>-1){
+    results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pass",detail:"Found"});
+  }else{
+    results.push({name:pack.mappingName,check:"Ingestion mapping",status:"pending",detail:"Not found — run mapping verification query"});
+  }
+
+  // Check RLS functions
+  for(var i=0;i<rlsTables.length;i++){
+    var funcName="RLS_"+rlsTables[i];
+    var found=text.indexOf(funcName)>-1;
+    results.push({name:funcName,check:"RLS function",status:found?"pass":"pending",detail:found?"Found":"Not found — run RLS verification query"});
+  }
+
+  // Check RLS policy enabled
+  if(state.rls.applyPolicies){
+    for(var i=0;i<rlsTables.length;i++){
+      // Look for "True" or "true" near the table name for IsEnabled
+      var re=new RegExp(rlsTables[i]+"[\\s\\S]{0,100}(True|true|IsEnabled.*true)","i");
+      var match=re.test(text);
+      results.push({name:rlsTables[i],check:"RLS policy enabled",status:match?"pass":"pending",detail:match?"Enabled":"Check RLS policy query output"});
+    }
+  }
+
+  // Check retention values — parse actual SoftDeletePeriod from output
+  if(state.retention.enableRetention){
+    var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      var expected=resolveRet(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      // Look for table row with SoftDeletePeriod value (format: "10.00:00:00" or similar)
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        var status=(actualDays===expectedDays)?"pass":"fail";
+        var detail=(actualDays===expectedDays)?"Correct ("+actualDays+"d)":"Expected "+expectedDays+"d, got "+actualDays+"d";
+        results.push({name:t.name,check:"Retention = "+expected,status:status,detail:detail});
+      }else{
+        results.push({name:t.name,check:"Retention = "+expected,status:"pending",detail:"Run retention verification query"});
+      }
+    }
+  }
+
+  // Check caching values — parse actual DataHotSpan from output
+  if(state.retention.enableCaching){
+    var allTables=[{name:pack.stagingTable,cat:"staging"}].concat(pack.tables);
+    for(var i=0;i<allTables.length;i++){
+      var t=allTables[i];
+      var expected=resolveCache(t.name,t.cat);
+      var expectedDays=parseInt(expected,10);
+      // Look for table row with DataHotSpan value
+      var re=new RegExp(t.name+"[\\t|,;\\s]+(\\d+)\\.\\d{2}:\\d{2}:\\d{2}","i");
+      var match=re.exec(text);
+      if(match){
+        var actualDays=parseInt(match[1],10);
+        var status=(actualDays===expectedDays)?"pass":"fail";
+        var detail=(actualDays===expectedDays)?"Correct ("+actualDays+"d)":"Expected "+expectedDays+"d, got "+actualDays+"d";
+        results.push({name:t.name,check:"Cache hot = "+expected,status:status,detail:detail});
+      }else{
+        results.push({name:t.name,check:"Cache hot = "+expected,status:"pending",detail:"Run caching verification query"});
+      }
+    }
+  }
+
+  renderVerifyResults(results);
+}
+
+function renderVerifyResults(results){
+  var grid=document.getElementById("verifyResultsGrid");
+  var summary=document.getElementById("verifySummary");
+  var pass=0,fail=0,pending=0;
+  for(var i=0;i<results.length;i++){
+    if(results[i].status==="pass")pass++;
+    else if(results[i].status==="fail")fail++;
+    else pending++;
+  }
+  document.getElementById("passCount").textContent=pass;
+  document.getElementById("failCount").textContent=fail;
+  document.getElementById("pendingCount").textContent=pending;
+  summary.style.display="flex";
+
+  var html='<div class="verify-grid">';
+  for(var i=0;i<results.length;i++){
+    var r=results[i];
+    var icon=r.status==="pass"?"&#10003;":r.status==="fail"?"&#10007;":"?";
+    html+='<div class="verify-item">';
+    html+='<span class="verify-icon '+r.status+'">'+icon+'</span>';
+    html+='<span class="verify-name">'+esc(r.name)+'</span>';
+    html+='<span class="verify-detail">'+esc(r.check)+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+function clearVerifyResults(){
+  document.getElementById("verifyPasteArea").value="";
+  document.getElementById("verifyResultsGrid").innerHTML="";
+  document.getElementById("verifySummary").style.display="none";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  generateRunbook();
+  generateVerifyQueries();
+}
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>
