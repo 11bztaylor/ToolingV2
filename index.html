@@ -249,6 +249,29 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .uri-status.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--color-success)}
 .uri-status.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--color-warn)}
 .uri-status.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--color-error)}
+/* DB Overview dashboard */
+.ov-stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.ov-stat{flex:1;min-width:120px;padding:12px 16px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);text-align:center}
+.ov-stat-val{font-size:22px;font-weight:700;font-family:var(--font-mono)}
+.ov-stat-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.ov-table{width:100%;border-collapse:collapse;font-size:12px}
+.ov-table th{text-align:left;padding:8px 10px;background:var(--bg-base);color:var(--text-secondary);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ov-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ov-table tr:hover td{background:var(--bg-hover)}
+.ov-table .tname{font-family:var(--font-mono);font-weight:500;white-space:nowrap}
+.icon-pass{color:var(--color-success)}.icon-fail{color:var(--text-secondary)}.icon-active{color:var(--color-info)}
+.fn-row{padding:8px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:8px;cursor:pointer}
+.fn-row:hover{background:var(--bg-hover)}
+.fn-header{display:flex;align-items:center;gap:8px;font-size:12px}
+.fn-name{font-family:var(--font-mono);font-weight:600;color:var(--color-info)}
+.fn-folder{font-size:11px;color:var(--text-secondary)}
+.fn-body{display:none;margin-top:8px;padding:8px;background:var(--bg-base);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;color:var(--color-success);white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.fn-row.expanded .fn-body{display:block}
+.pol-group{margin-bottom:12px}
+.pol-group-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pol-row{display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:12px}
+.pol-val{font-family:var(--font-mono);font-weight:600;min-width:60px}
+.pol-tables{color:var(--text-secondary);font-size:11px}
 /* Policy toggle row */
 .policy-toggle-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-base);border-radius:var(--radius-md);margin-bottom:8px}
 .policy-toggle-row .toggle-switch{flex-shrink:0}
@@ -705,6 +728,58 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         </div>
         <div id="dvVerifyResultsGrid" style="margin-top:12px"></div>
       </div>
+
+      <!-- DB Overview: Discovery Commands -->
+      <div class="card" id="cardOvCommands">
+        <div class="card-title collapsible" onclick="toggleCard('cardOvCommands')">
+          <span class="dot" style="background:var(--color-teal)"></span> Database Discovery
+          <span class="text-sm text-muted" style="font-weight:400;margin-left:4px">Full database audit commands</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+        <div class="card-body">
+          <div class="text-sm text-muted" style="margin-bottom:10px">Run each command in ADX Web UI. After each result loads, select all rows and copy. Paste all output into the area below.</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="btn btn-sm" id="ovCopyAllCmdsBtn" onclick="copyAllOvCommands(this)">Copy All Commands</button>
+          </div>
+          <div id="ovCommandBlocks"></div>
+        </div>
+      </div>
+
+      <!-- DB Overview: Paste + Dashboard -->
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Database Overview</div>
+        <textarea style="width:100%;min-height:120px;max-height:400px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5" id="dbPasteArea" placeholder="Paste .show command output here...&#10;&#10;Supports tab-separated (copied from ADX Web UI results grid) or JSON format."></textarea>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze</button>
+          <button class="btn btn-sm" onclick="clearDBOverview()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Dashboard (shown after analysis) -->
+      <div id="dbDashboard" style="display:none">
+        <div class="ov-stats" id="ovSummaryStats"></div>
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Table Inventory</div>
+          <div style="overflow-x:auto">
+            <table class="ov-table" id="ovTableGrid"><thead id="ovTableHead"></thead><tbody id="ovTableBody"></tbody></table>
+          </div>
+        </div>
+        <div class="card" id="cardPolicySummary">
+          <div class="card-title collapsible" onclick="toggleCard('cardPolicySummary')">
+            <span class="dot" style="background:var(--color-warn)"></span> Policy Summary
+            <span class="chevron">&#9660;</span>
+          </div>
+          <div class="card-body" id="ovPolicySummary"></div>
+        </div>
+        <div class="card" id="cardFunctions">
+          <div class="card-title collapsible" onclick="toggleCard('cardFunctions')">
+            <span class="dot" style="background:var(--color-purple)"></span> Functions
+            <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="ovFnCount"></span>
+            <span class="chevron">&#9660;</span>
+          </div>
+          <div class="card-body" id="ovFunctionsList"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════════
@@ -972,7 +1047,7 @@ var TAB_REGISTRY=[
     id:"deploy",label:"Deploy & Verify",position:4,panelId:"tab-deploy",
     mappingDeps:[],
     init:function(){},
-    onShow:function(){generateDVRunbook();generateDVVerifyQueries()},
+    onShow:function(){generateDVRunbook();generateDVVerifyQueries();renderOvCommands()},
     generate:null,
     restoreState:function(s){}
   },
@@ -2607,6 +2682,171 @@ function clearDVVerifyResults(){
   document.getElementById("dvVerifyPasteArea").value="";
   document.getElementById("dvVerifyResultsGrid").innerHTML="";
   document.getElementById("dvVerifySummary").style.display="none";
+}
+
+// ── DB Overview (within Deploy & Verify) ──
+
+var OV_COMMANDS=[
+  {title:"Tables + Details",kql:".show tables details"},
+  {title:"Update Policies",kql:".show table * policy update"},
+  {title:"Row-Level Security",kql:".show table * policy row_level_security"},
+  {title:"Functions",kql:".show functions"},
+  {title:"Ingestion Batching",kql:".show table * policy ingestionbatching"}
+];
+
+function renderOvCommands(){
+  var cont=document.getElementById("ovCommandBlocks");if(!cont)return;
+  var html="";
+  for(var i=0;i<OV_COMMANDS.length;i++){
+    var c=OV_COMMANDS[i],id="ov_cmd_"+i;
+    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(c.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="1" style="min-height:30px">'+esc(c.kql)+'</textarea></div>';
+  }
+  cont.innerHTML=html;
+}
+function copyAllOvCommands(btn){
+  var parts=[];
+  for(var i=0;i<OV_COMMANDS.length;i++)parts.push("// "+OV_COMMANDS[i].title+"\n"+OV_COMMANDS[i].kql);
+  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Commands"},1500);
+  });
+}
+
+// Parsing helpers
+function parseTSVBlock(text){
+  var lines=text.trim().split("\n");if(lines.length<2)return null;
+  var headers=lines[0].split("\t"),rows=[];
+  for(var i=1;i<lines.length;i++){
+    var vals=lines[i].split("\t");if(vals.length<2)continue;
+    var row={};for(var j=0;j<headers.length;j++)row[headers[j].trim()]=j<vals.length?vals[j].trim():"";
+    rows.push(row);
+  }
+  return{headers:headers.map(function(h){return h.trim()}),rows:rows};
+}
+function detectBlockType(headers){
+  var h=headers.join("|").toLowerCase();
+  if(h.indexOf("totalextentsize")>-1||h.indexOf("totalrowcount")>-1||h.indexOf("hotextentsize")>-1)return"tables_details";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("body")>-1&&h.indexOf("source")>-1)return"update_policy";
+  if(h.indexOf("isenabl")>-1&&h.indexOf("query")>-1)return"rls_policy";
+  if(h.indexOf("body")>-1&&h.indexOf("parameters")>-1&&h.indexOf("folder")>-1)return"functions";
+  if(h.indexOf("maximumbatchingtimespan")>-1)return"batching";
+  return"unknown";
+}
+function splitOvBlocks(text){
+  var lines=text.split("\n"),blocks=[],current=[];
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(line.trim()===""&&current.length>0){
+      var nextLine=i+1<lines.length?lines[i+1]:"";
+      if(nextLine.trim()&&nextLine.indexOf("\t")>-1&&current.length>=2){blocks.push(current.join("\n"));current=[];continue}
+    }
+    if(line.trim())current.push(line);
+  }
+  if(current.length>0)blocks.push(current.join("\n"));
+  return blocks;
+}
+function ovFormatNum(n){n=parseInt(n,10)||0;if(n>=1000000)return(n/1000000).toFixed(1)+"M";if(n>=1000)return(n/1000).toFixed(1)+"K";return n.toString()}
+function ovFormatBytes(b){b=parseFloat(b)||0;if(b>=1073741824)return(b/1073741824).toFixed(1)+" GB";if(b>=1048576)return(b/1048576).toFixed(1)+" MB";if(b>=1024)return(b/1024).toFixed(1)+" KB";return b+" B"}
+function ovParseDuration(dur){if(!dur||dur==="-")return"--";var m=dur.match(/(\d+)\.(\d{2}):(\d{2}):(\d{2})/);if(m)return m[1]+"d";var m2=dur.match(/(\d+)/);if(m2)return m2[1]+"d";return dur}
+function ovGuessCategory(name){var n=name.toLowerCase();if(n.indexOf("_raw")>-1||n.indexOf("staging")>-1)return"staging";if(n.indexOf("alert")>-1)return"alert";if(n.indexOf("event")>-1)return"event";return"unknown"}
+
+function analyzeDBOutput(){
+  var text=document.getElementById("dbPasteArea").value.trim();
+  if(!text)return;
+  var parsed={tables:null,updatePolicies:null,rlsPolicies:null,functions:null,batching:null};
+  var rawBlocks=splitOvBlocks(text);
+  for(var i=0;i<rawBlocks.length;i++){
+    var block=parseTSVBlock(rawBlocks[i]);if(!block||!block.rows.length)continue;
+    var type=detectBlockType(block.headers);
+    if(type==="tables_details")parsed.tables=block;
+    else if(type==="update_policy")parsed.updatePolicies=block;
+    else if(type==="rls_policy")parsed.rlsPolicies=block;
+    else if(type==="functions")parsed.functions=block;
+    else if(type==="batching")parsed.batching=block;
+  }
+  if(!parsed.tables){try{var json=JSON.parse(text);if(Array.isArray(json)&&json.length>0){var h=Object.keys(json[0]);if(detectBlockType(h)==="tables_details")parsed.tables={headers:h,rows:json}}}catch(e){}}
+  renderOvDashboard(parsed);
+}
+
+function renderOvDashboard(parsed){
+  document.getElementById("dbDashboard").style.display="block";
+  var tableMap={};
+
+  if(parsed.tables){
+    for(var i=0;i<parsed.tables.rows.length;i++){
+      var r=parsed.tables.rows[i];
+      var name=r.TableName||r.tableName||r.Name||r.name||"";if(!name)continue;
+      var entry={name:name,cat:ovGuessCategory(name),rows:r.TotalRowCount||r.totalRowCount||r.RowCount||"0",
+        size:r.TotalExtentSize||r.totalExtentSize||r.TotalOriginalSize||"0",
+        retention:ovParseDuration(r.RetentionPolicy||""),caching:ovParseDuration(r.CachingPolicy||""),
+        folder:r.Folder||r.folder||"",updatePolicy:false,rlsEnabled:false,batchingCustom:false};
+      if(r.RetentionPolicy&&typeof r.RetentionPolicy==="string"){try{var rp=JSON.parse(r.RetentionPolicy);if(rp.SoftDeletePeriod)entry.retention=ovParseDuration(rp.SoftDeletePeriod)}catch(e){}}
+      if(r.CachingPolicy&&typeof r.CachingPolicy==="string"){try{var cp=JSON.parse(r.CachingPolicy);if(cp.DataHotSpan)entry.caching=ovParseDuration(cp.DataHotSpan)}catch(e){}}
+      tableMap[name]=entry;
+    }
+  }
+  if(parsed.updatePolicies){for(var i=0;i<parsed.updatePolicies.rows.length;i++){var r=parsed.updatePolicies.rows[i];var n=r.TableName||r.EntityName||"";var p=r.Policy||r.policy||"";if(n&&tableMap[n]&&p&&p!=="[]"&&p!=="null")tableMap[n].updatePolicy=true}}
+  if(parsed.rlsPolicies){for(var i=0;i<parsed.rlsPolicies.rows.length;i++){var r=parsed.rlsPolicies.rows[i];var n=r.TableName||r.EntityName||"";var e=r.IsEnabled||r.isEnabled||"";if(n&&tableMap[n])tableMap[n].rlsEnabled=(e==="true"||e==="True"||e===true)}}
+  if(parsed.batching){for(var i=0;i<parsed.batching.rows.length;i++){var r=parsed.batching.rows[i];var n=r.TableName||r.EntityName||"";var p=r.Policy||r.policy||"";if(n&&tableMap[n]&&p&&p!=="null"&&p!==""){tableMap[n].batchingCustom=true;try{var bp=JSON.parse(p);if(bp.MaximumBatchingTimeSpan)tableMap[n].batchingVal=bp.MaximumBatchingTimeSpan}catch(e){}}}}
+
+  var tables=[];for(var k in tableMap)tables.push(tableMap[k]);
+  tables.sort(function(a,b){var o={staging:0,event:1,alert:2,unknown:3};var ca=o[a.cat]||3,cb=o[b.cat]||3;return ca!==cb?ca-cb:a.name.localeCompare(b.name)});
+
+  var totalRows=0,totalSize=0,rlsCount=0,updCount=0;
+  for(var i=0;i<tables.length;i++){totalRows+=parseInt(tables[i].rows,10)||0;totalSize+=parseFloat(tables[i].size)||0;if(tables[i].rlsEnabled)rlsCount++;if(tables[i].updatePolicy)updCount++}
+
+  document.getElementById("ovSummaryStats").innerHTML=
+    '<div class="ov-stat"><div class="ov-stat-val">'+tables.length+'</div><div class="ov-stat-label">Tables</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+ovFormatNum(totalRows)+'</div><div class="ov-stat-label">Total Rows</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val">'+ovFormatBytes(totalSize)+'</div><div class="ov-stat-label">Total Size</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-success)">'+updCount+'</div><div class="ov-stat-label">Update Policies</div></div>'+
+    '<div class="ov-stat"><div class="ov-stat-val" style="color:var(--color-purple)">'+rlsCount+'</div><div class="ov-stat-label">RLS Enabled</div></div>';
+
+  document.getElementById("ovTableHead").innerHTML='<tr><th>Cat</th><th>Table</th><th style="text-align:right">Rows</th><th style="text-align:right">Size</th><th>Retention</th><th>Cache</th><th style="text-align:center">Upd</th><th style="text-align:center">RLS</th><th style="text-align:center">Batch</th></tr>';
+  var bHtml="";
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i],catCls="cat-"+(t.cat==="unknown"?"unknown":t.cat),catLbl=t.cat==="staging"?"STG":(t.cat==="event"?"EVT":(t.cat==="alert"?"ALT":"???"));
+    bHtml+='<tr><td><span class="cat '+catCls+'">'+catLbl+'</span></td><td class="tname">'+esc(t.name)+'</td>';
+    bHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+ovFormatNum(parseInt(t.rows,10)||0)+'</td>';
+    bHtml+='<td style="text-align:right;font-family:var(--font-mono)">'+ovFormatBytes(parseFloat(t.size)||0)+'</td>';
+    bHtml+='<td style="font-family:var(--font-mono)">'+esc(t.retention||"--")+'</td><td style="font-family:var(--font-mono)">'+esc(t.caching||"--")+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.updatePolicy?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.rlsEnabled?'<span class="icon-pass">&#10003;</span>':'<span class="icon-fail">&#10007;</span>')+'</td>';
+    bHtml+='<td style="text-align:center">'+(t.batchingCustom?'<span class="icon-active" title="'+(t.batchingVal||"custom")+'">&#10003;</span>':'<span class="icon-fail">\u2014</span>')+'</td></tr>';
+  }
+  document.getElementById("ovTableBody").innerHTML=bHtml;
+
+  // Policy summary
+  var retG={},cacheG={};
+  for(var i=0;i<tables.length;i++){var ret=tables[i].retention||"--",cache=tables[i].caching||"--";if(!retG[ret])retG[ret]=[];retG[ret].push(tables[i].name);if(!cacheG[cache])cacheG[cache]=[];cacheG[cache].push(tables[i].name)}
+  var pHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div class="pol-group"><div class="pol-group-title" style="color:var(--color-warn)">Retention by Value</div>';
+  for(var v in retG)pHtml+='<div class="pol-row"><span class="pol-val" style="color:var(--color-warn)">'+esc(v)+'</span><span class="pol-tables">'+retG[v].length+' table'+(retG[v].length>1?"s":"")+'</span></div>';
+  pHtml+='</div><div class="pol-group"><div class="pol-group-title" style="color:var(--color-info)">Hot Cache by Value</div>';
+  for(var v in cacheG)pHtml+='<div class="pol-row"><span class="pol-val" style="color:var(--color-info)">'+esc(v)+'</span><span class="pol-tables">'+cacheG[v].length+' table'+(cacheG[v].length>1?"s":"")+'</span></div>';
+  pHtml+='</div></div>';
+  document.getElementById("ovPolicySummary").innerHTML=pHtml;
+
+  // Functions
+  var fnEl=document.getElementById("ovFunctionsList"),fnCount=document.getElementById("ovFnCount");
+  if(parsed.functions&&parsed.functions.rows.length){
+    fnCount.textContent="("+parsed.functions.rows.length+" function"+(parsed.functions.rows.length>1?"s":"")+")";
+    var fHtml="";
+    for(var i=0;i<parsed.functions.rows.length;i++){
+      var f=parsed.functions.rows[i],nm=f.Name||f.name||"",fl=f.Folder||f.folder||"",bd=f.Body||f.body||"";
+      fHtml+='<div class="fn-row" onclick="this.classList.toggle(\'expanded\')"><div class="fn-header"><span class="fn-name">'+esc(nm)+'</span>';
+      if(fl)fHtml+='<span class="fn-folder">'+esc(fl)+'</span>';
+      fHtml+='</div><div class="fn-body">'+esc(bd)+'</div></div>';
+    }
+    fnEl.innerHTML=fHtml;
+  }else{
+    fnCount.textContent="";
+    fnEl.innerHTML='<div class="text-sm text-muted">No function data. Run <code style="color:var(--color-info)">.show functions</code> and include in paste.</div>';
+  }
+}
+
+function clearDBOverview(){
+  document.getElementById("dbPasteArea").value="";
+  document.getElementById("dbDashboard").style.display="none";
 }
 
 // ═══════════════════════════════════════════════════════════════════
