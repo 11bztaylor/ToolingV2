@@ -7,6 +7,9 @@ Set auto-refresh to 5-15 minutes for a live monitoring view.
 Recommended layout: Tiles 1-2 side by side on top, Tile 3 full-width below,
 Tiles 4-5 side by side, Tiles 6-7 side by side at bottom.
 
+Note: RetentionPolicy and CachingPolicy from .show tables details are JSON
+strings, not timespans. Queries below parse the JSON to extract values.
+
 
 Tile 1 — Table Inventory (table — MAIN TILE, full-width)
 ----------------------------------------------------------
@@ -16,18 +19,19 @@ Tile 1 — Table Inventory (table — MAIN TILE, full-width)
     Folder has "Alerts", "ALERT",
     Folder == "", "STAGING",
     "OTHER")
-| extend RetentionDays = format_timespan(totimespan(RetentionPolicy), "d")
-| extend CacheDays = format_timespan(totimespan(CachingPolicy), "d")
+| extend RetentionObj = todynamic(RetentionPolicy)
+| extend CachingObj = todynamic(CachingPolicy)
+| extend RetDays = toint(totimespan(tostring(RetentionObj.SoftDeletePeriod)) / 1d)
+| extend CacheDays = toint(totimespan(tostring(CachingObj.DataHotSpan)) / 1d)
 | extend SizeMB = round(TotalOriginalSize / 1024.0 / 1024.0, 1)
-| extend Rows = RowCount
 | project
     Category,
     Table = TableName,
-    Rows,
+    Rows = TotalRowCount,
     ['Size (MB)'] = SizeMB,
-    ['Retention'] = strcat(RetentionDays, "d"),
-    ['Hot Cache'] = strcat(CacheDays, "d"),
-    ['Extents'] = TotalExtentCount,
+    ['Retention'] = strcat(tostring(RetDays), "d"),
+    ['Hot Cache'] = strcat(tostring(CacheDays), "d"),
+    ['Extents'] = TotalExtents,
     Folder
 | order by Category asc, Table asc
 
@@ -44,7 +48,7 @@ Tile 2 — Storage by Table (bar chart)
 Tile 3 — Row Counts by Table (bar chart)
 ------------------------------------------
 .show tables details
-| project Table = TableName, Rows = RowCount
+| project Table = TableName, Rows = TotalRowCount
 | where Rows > 0
 | order by Rows desc
 | render barchart with (title="Row Counts by Table", legend=hidden)
@@ -53,37 +57,43 @@ Tile 3 — Row Counts by Table (bar chart)
 Tile 4 — Health Summary (stat tiles)
 --------------------------------------
 .show tables details
+| extend RetentionObj = todynamic(RetentionPolicy)
+| extend CachingObj = todynamic(CachingPolicy)
+| extend RetDays = toint(totimespan(tostring(RetentionObj.SoftDeletePeriod)) / 1d)
+| extend CacheDays = toint(totimespan(tostring(CachingObj.DataHotSpan)) / 1d)
 | summarize
     Tables = count(),
-    ['Total Rows'] = sum(RowCount),
+    ['Total Rows'] = sum(TotalRowCount),
     ['Total Size (MB)'] = round(sum(TotalOriginalSize) / 1024.0 / 1024.0, 1),
-    ['Total Extents'] = sum(TotalExtentCount),
-    ['Avg Retention (days)'] = round(avg(totimespan(RetentionPolicy) / 1d), 0),
-    ['Avg Cache (days)'] = round(avg(totimespan(CachingPolicy) / 1d), 0)
+    ['Total Extents'] = sum(TotalExtents),
+    ['Avg Retention (days)'] = round(avg(RetDays), 0),
+    ['Avg Cache (days)'] = round(avg(CacheDays), 0)
 
 
 Tile 5 — RLS Status (table)
 -----------------------------
 .show table * policy row_level_security
+| extend PolicyObj = todynamic(Policy)
+| extend IsEnabled = tobool(PolicyObj.IsEnabled)
+| extend RlsQuery = tostring(PolicyObj.Query)
 | extend Status = iff(IsEnabled, "ENABLED", "DISABLED")
-| project Table = TableName, ['RLS Status'] = Status, ['RLS Function'] = Query
+| project Table = EntityName, ['RLS Status'] = Status, ['RLS Function'] = RlsQuery
 | order by Status desc, Table asc
 
 
 Tile 6 — Update Policies (table)
 ----------------------------------
 .show table * policy update
+| where strlen(Policy) > 2
+| extend PolicyArr = todynamic(Policy)
+| mv-expand PolicyArr
+| extend IsEnabled = tobool(PolicyArr.IsEnabled)
 | where IsEnabled == true
-| extend PolicyObj = todynamic(Policy)
-| mv-expand PolicyObj
-| extend Source = tostring(PolicyObj.Source),
-         Function = tostring(PolicyObj.Query),
-         Transactional = tostring(PolicyObj.IsTransactional)
 | project
     Table = EntityName,
-    ['Source Table'] = Source,
-    ['Transform Function'] = Function,
-    Transactional
+    ['Source Table'] = tostring(PolicyArr.Source),
+    ['Transform Function'] = tostring(PolicyArr.Query),
+    Transactional = tostring(PolicyArr.IsTransactional)
 | order by Table asc
 
 
@@ -118,8 +128,9 @@ Tile 8 — Ingestion Batching (table)
 Tile 9 — Retention Distribution (pie chart)
 ----------------------------------------------
 .show tables details
-| extend RetentionDays = toint(totimespan(RetentionPolicy) / 1d)
-| extend RetentionLabel = strcat(tostring(RetentionDays), " days")
+| extend RetentionObj = todynamic(RetentionPolicy)
+| extend RetDays = toint(totimespan(tostring(RetentionObj.SoftDeletePeriod)) / 1d)
+| extend RetentionLabel = strcat(tostring(RetDays), " days")
 | summarize Tables = count() by RetentionLabel
 | order by Tables desc
 | render piechart with (title="Tables by Retention Period")
@@ -128,7 +139,8 @@ Tile 9 — Retention Distribution (pie chart)
 Tile 10 — Cache Distribution (pie chart)
 -------------------------------------------
 .show tables details
-| extend CacheDays = toint(totimespan(CachingPolicy) / 1d)
+| extend CachingObj = todynamic(CachingPolicy)
+| extend CacheDays = toint(totimespan(tostring(CachingObj.DataHotSpan)) / 1d)
 | extend CacheLabel = strcat(tostring(CacheDays), " days")
 | summarize Tables = count() by CacheLabel
 | order by Tables desc
