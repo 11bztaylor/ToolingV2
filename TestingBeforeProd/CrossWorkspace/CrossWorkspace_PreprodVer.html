@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREPROD — Cross-Workspace Queries</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0d1117;--bg-surface:#161b22;--bg-raised:#21262d;--bg-hover:#292e36;
+  --border:#30363d;--border-focus:#4a9eed;
+  --text-primary:#e6edf3;--text-secondary:#8b949e;
+  --color-info:#4a9eed;--color-success:#22c55e;--color-warn:#f59e0b;--color-error:#ef4444;
+  --color-muted:#8b949e;--color-purple:#a78bfa;--color-teal:#2dd4bf;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:8px;
+  --font-ui:system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;padding:20px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;max-width:1100px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);color:var(--text-primary);font-size:13px;font-family:var(--font-ui);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-copied{background:var(--color-success)!important;border-color:var(--color-success)!important;color:#fff!important}
+.text-muted{color:var(--text-secondary)}.text-sm{font-size:12px}.text-mono{font-family:var(--font-mono)}
+.hidden{display:none!important}
+.test-banner{background:var(--color-warn);color:#000;padding:8px 16px;font-weight:700;font-size:13px;border-radius:var(--radius-md);margin-bottom:16px;max-width:1100px}
+/* Collapsible cards */
+.card-title.collapsible{cursor:pointer;user-select:none}
+.card-title.collapsible:hover{opacity:.85}
+.card-title .chevron{font-size:16px;color:var(--text-secondary);transition:transform .2s;margin-left:auto;line-height:1}
+.card.collapsed .chevron{transform:rotate(-90deg)}
+.card.collapsed .card-body{display:none}
+/* KQL blocks */
+.kql-block{margin-bottom:12px}
+.kql-block .block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.kql-block .block-title{font-size:12px;font-weight:600}
+.kql-block textarea{width:100%;min-height:50px;max-height:600px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5}
+/* Sections */
+.kql-section{margin-bottom:14px}
+.kql-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-raised);border-radius:var(--radius-md);cursor:pointer;user-select:none;margin-bottom:8px}
+.kql-section-header:hover{background:var(--bg-hover)}
+.kql-section-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.kql-section-badge{font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--bg-base);color:var(--text-secondary)}
+.kql-section-chevron{font-size:14px;color:var(--text-secondary);transition:transform .2s}
+.kql-section.collapsed .kql-section-chevron{transform:rotate(-90deg)}
+.kql-section.collapsed .kql-section-body{display:none}
+/* URI status */
+.uri-status{padding:10px 14px;border-radius:var(--radius-md);font-size:12px;margin-bottom:14px}
+.uri-status.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--color-success)}
+.uri-status.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--color-warn)}
+.uri-status.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--color-error)}
+</style>
+</head>
+<body>
+<div class="test-banner">PREPROD — Cross-Workspace Queries panel. Edit here, merge to index.html when stable.</div>
+<div style="max-width:1100px">
+  <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Cross-Workspace Queries</h2>
+  <p class="text-sm text-muted" style="margin-bottom:20px">Generate <code style="color:var(--color-info)">adx()</code> proxy queries for use in Log Analytics / Sentinel workspaces.</p>
+
+  <!-- Explainer card -->
+  <div class="card" id="cardCWExplainer" style="border-color:rgba(74,158,237,.3)">
+    <div class="card-title collapsible" onclick="toggleCard('cardCWExplainer')"><span class="dot" style="background:var(--color-info)"></span> What Are Cross-Workspace Queries? <span class="chevron">&#9660;</span></div>
+    <div class="card-body text-sm" style="line-height:1.8;color:var(--text-secondary)">
+      <div style="margin-bottom:10px">
+        The <code style="color:var(--color-info)">adx()</code> function lets Sentinel / Log Analytics users query data that lives in an ADX cluster without moving it. Your analysts run these queries from their LA workspace and get back results from ADX tables in real time.
+      </div>
+      <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:10px;border-left:3px solid var(--color-info)">
+        <strong style="color:var(--text-primary)">How it works:</strong> LA sends the query to ADX via a cross-service proxy. The ADX cluster executes it and returns results to the LA workspace. No data replication, no data movement &mdash; just a remote query.
+      </div>
+      <div style="padding:10px 12px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:10px;border-left:3px solid var(--color-warn)">
+        <strong style="color:var(--color-warn)">Prerequisite:</strong> The ADX cluster must be linked to the LA workspace. In Azure Portal: Log Analytics workspace &rarr; Settings &rarr; Linked services &rarr; add your ADX cluster. Without this, <code style="color:var(--color-info)">adx()</code> calls will fail with a permissions error.
+      </div>
+      <div style="font-size:11px;padding:6px 8px;background:var(--bg-base);border-radius:var(--radius-sm);font-family:var(--font-mono)">
+        <strong style="color:var(--text-primary)">Format:</strong> <code style="color:var(--color-success)">adx("https://{cluster}.{region}.kusto.windows.net/{database}").{TableName}</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- URI Status -->
+  <div id="cwUriStatus"></div>
+
+  <!-- Generated Queries card -->
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--color-success)"></span> Generated Queries</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" id="cwCopyAllBtn" style="display:none" onclick="copyAllCWQueries()">Copy All</button>
+        <button class="btn btn-sm" onclick="generateCrossWorkspace()">Refresh</button>
+      </div>
+    </div>
+    <div id="cwOutput"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MOCK STATE (preprod only — replaced by shared state in index.html)
+// ═══════════════════════════════════════════════════════════════════
+var state = {
+  globalConfig: {
+    clusterUri: "https://adxprodcluster.westus2.kusto.windows.net",
+    database: "NetskopeDB",
+    tenantId: ""
+  },
+  tableBuilder: {
+    selectedTables: [
+      "NetskopeEventsPage_CL",
+      "NetskopeEventsApplication_CL",
+      "NetskopeEventsNetwork_CL",
+      "NetskopeEventsAudit_CL",
+      "NetskopeEventsInfrastructure_CL",
+      "NetskopeAlertsPolicy_CL",
+      "NetskopeAlertsDLP_CL",
+      "NetskopeAlertsMalware_CL",
+      "NetskopeAlertsCompromisedCredential_CL",
+      "NetskopeAlertsRemediation_CL"
+    ]
+  }
+};
+
+// Mock pack data (preprod only)
+var MOCK_PACK = {
+  tables: [
+    {name:"NetskopeEventsPage_CL",cat:"event"},
+    {name:"NetskopeEventsApplication_CL",cat:"event"},
+    {name:"NetskopeEventsNetwork_CL",cat:"event"},
+    {name:"NetskopeEventsAudit_CL",cat:"event"},
+    {name:"NetskopeEventsInfrastructure_CL",cat:"event"},
+    {name:"NetskopeEventsConnection_CL",cat:"event"},
+    {name:"NetskopeEventsIncident_CL",cat:"event"},
+    {name:"NetskopeEventsCloud_CL",cat:"event"},
+    {name:"NetskopeAlertsPolicy_CL",cat:"alert"},
+    {name:"NetskopeAlertsDLP_CL",cat:"alert"},
+    {name:"NetskopeAlertsMalware_CL",cat:"alert"},
+    {name:"NetskopeAlertsMalsite_CL",cat:"alert"},
+    {name:"NetskopeAlertsCompromisedCredential_CL",cat:"alert"},
+    {name:"NetskopeAlertsUBA_CL",cat:"alert"},
+    {name:"NetskopeAlertsRemediation_CL",cat:"alert"},
+    {name:"NetskopeAlertsQuarantine_CL",cat:"alert"},
+    {name:"NetskopeAlertsLegalHold_CL",cat:"alert"},
+    {name:"NetskopeAlertsSecurityAssessment_CL",cat:"alert"},
+    {name:"NetskopeAlertsWatchlist_CL",cat:"alert"},
+    {name:"NetskopeAlertsCTEP_CL",cat:"alert"},
+    {name:"NetskopeAlertsNPA_CL",cat:"alert"}
+  ]
+};
+function getPack(){return MOCK_PACK}
+
+// ═══════════════════════════════════════════════════════════════════
+// SHARED UTILITIES (copied from index.html for standalone testing)
+// ═══════════════════════════════════════════════════════════════════
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function toggleCard(id){var card=document.getElementById(id);if(card)card.classList.toggle("collapsed")}
+function toggleKqlSection(el){var s=el.closest(".kql-section");if(s)s.classList.toggle("collapsed")}
+function copyToClipboard(btn,id){
+  var ta=document.getElementById(id);if(!ta)return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy"},1500);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CROSS-WORKSPACE QUERIES
+// ═══════════════════════════════════════════════════════════════════
+
+function parseClusterUri(uri){
+  if(!uri)return null;
+  var m=uri.match(/https?:\/\/([^.]+)\.([^.]+)\.kusto\.windows\.net/i);
+  return m?{name:m[1],region:m[2],full:"https://"+m[1]+"."+m[2]+".kusto.windows.net"}:null;
+}
+
+function getCWTables(){
+  var selected=state.tableBuilder.selectedTables;
+  if(selected&&selected.length>0)return selected;
+  var pack=getPack();
+  return pack?pack.tables.map(function(t){return t.name}):[];
+}
+
+function buildAdxUri(){
+  var parsed=parseClusterUri(state.globalConfig.clusterUri);
+  var db=state.globalConfig.database;
+  if(!parsed)return null;
+  return parsed.full+"/"+(db||"{database}");
+}
+
+function updateUriStatus(){
+  var el=document.getElementById("cwUriStatus");if(!el)return;
+  var parsed=parseClusterUri(state.globalConfig.clusterUri);
+  var db=state.globalConfig.database;
+  if(!state.globalConfig.clusterUri||!state.globalConfig.clusterUri.trim()){
+    el.innerHTML='<div class="uri-status error">No Cluster URI configured. Set it in the header: <code style="color:var(--text-primary)">https://yourcluster.region.kusto.windows.net</code></div>';
+    return;
+  }
+  if(!parsed){
+    el.innerHTML='<div class="uri-status warn">Could not parse Cluster URI. Expected format: <code style="color:var(--text-primary)">https://{clusterName}.{region}.kusto.windows.net</code></div>';
+    return;
+  }
+  if(!db||!db.trim()){
+    el.innerHTML='<div class="uri-status warn">Cluster parsed: <strong>'+esc(parsed.name)+'</strong> in <strong>'+esc(parsed.region)+'</strong>. Set a database name in the header to complete the URI.</div>';
+    return;
+  }
+  el.innerHTML='<div class="uri-status ok">ADX proxy URI: <code style="color:var(--text-primary)">adx("'+esc(parsed.full)+'/'+esc(db)+'")</code></div>';
+}
+
+var _lastCWBlocks=[];
+
+function generateCrossWorkspace(){
+  var out=document.getElementById("cwOutput");if(!out)return;
+  updateUriStatus();
+
+  var adxUri=buildAdxUri();
+  var tables=getCWTables();
+
+  if(!adxUri){
+    out.innerHTML='<div class="text-sm text-muted">Configure the Cluster URI in the header to generate queries.</div>';
+    document.getElementById("cwCopyAllBtn").style.display="none";
+    return;
+  }
+  if(!tables.length){
+    out.innerHTML='<div class="text-sm text-muted">No tables selected. Select tables in the Table Builder tab first.</div>';
+    document.getElementById("cwCopyAllBtn").style.display="none";
+    return;
+  }
+
+  var blocks=[];
+
+  // Per-table queries
+  for(var i=0;i<tables.length;i++){
+    var t=tables[i];
+    var kql='adx("'+adxUri+'").'+t+'\n| project-away RawData';
+    blocks.push({
+      section:i===0?"\u2500\u2500 Per-Table Queries ("+tables.length+") \u2500\u2500":undefined,
+      title:t,
+      kql:kql
+    });
+  }
+
+  // Union query
+  if(tables.length>1){
+    var parts=[];
+    for(var i=0;i<tables.length;i++){
+      parts.push('  adx("'+adxUri+'").'+tables[i]);
+    }
+    var unionKql="union\n"+parts.join(",\n")+"\n| project-away RawData";
+    blocks.push({
+      section:"\u2500\u2500 Combined Union Query \u2500\u2500",
+      title:"All "+tables.length+" tables",
+      kql:unionKql
+    });
+  }
+
+  renderCWBlocks(out,blocks);
+}
+
+function renderCWBlocks(container,blocks){
+  _lastCWBlocks=blocks;
+  var copyAllBtn=document.getElementById("cwCopyAllBtn");
+  if(copyAllBtn)copyAllBtn.style.display=blocks.length>1?"inline-flex":"none";
+  if(!blocks.length){container.innerHTML='<div class="text-sm text-muted">No queries generated.</div>';return}
+
+  var sections=[],currentSection=null;
+  for(var i=0;i<blocks.length;i++){
+    var b=blocks[i];
+    if(b.section){currentSection={name:b.section,blocks:[]};sections.push(currentSection)}
+    if(currentSection)currentSection.blocks.push({block:b,globalIdx:i});
+    else sections.push({name:null,blocks:[{block:b,globalIdx:i}]});
+  }
+
+  var html="";
+  for(var s=0;s<sections.length;s++){
+    var sec=sections[s];
+    if(!sec.name){
+      var b=sec.blocks[0].block,id="cw_kql_"+sec.blocks[0].globalIdx;
+      var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,2),15);
+      html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+    }else{
+      html+='<div class="kql-section"><div class="kql-section-header" onclick="toggleKqlSection(this)"><span class="kql-section-title">'+esc(sec.name)+' <span class="kql-section-badge">'+sec.blocks.length+' quer'+(sec.blocks.length>1?"ies":"y")+'</span></span><span class="kql-section-chevron">&#9660;</span></div><div class="kql-section-body">';
+      for(var j=0;j<sec.blocks.length;j++){
+        var b=sec.blocks[j].block,id="cw_kql_"+sec.blocks[j].globalIdx;
+        var lines=b.kql.split("\n").length,rows=Math.min(Math.max(lines+1,2),15);
+        html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(b.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="'+rows+'">'+esc(b.kql)+'</textarea></div>';
+      }
+      html+='</div></div>';
+    }
+  }
+  container.innerHTML=html;
+}
+
+function copyAllCWQueries(){
+  var sep="////////////////////////////////////////";var parts=[];
+  for(var i=0;i<_lastCWBlocks.length;i++){
+    parts.push("\n"+sep+"\n// "+_lastCWBlocks[i].title+"\n"+sep+"\n"+_lastCWBlocks[i].kql);
+  }
+  var btn=document.getElementById("cwCopyAllBtn");
+  navigator.clipboard.writeText(parts.join("\n")).then(function(){
+    btn.classList.add("btn-copied");btn.textContent="Copied All!";
+    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All"},1500);
+  });
+}
+
+// Init
+generateCrossWorkspace();
+</script>
+</body>
+</html>
