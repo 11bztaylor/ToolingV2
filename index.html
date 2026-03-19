@@ -737,21 +737,12 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
           <span class="chevron">&#9660;</span>
         </div>
         <div class="card-body">
-          <div class="text-sm text-muted" style="margin-bottom:10px">Run each command in ADX Web UI. After each result loads, select all rows and copy. Paste all output into the area below.</div>
-          <div style="display:flex;gap:6px;margin-bottom:12px">
-            <button class="btn btn-sm" id="ovCopyAllCmdsBtn" onclick="copyAllOvCommands(this)">Copy All Commands</button>
+          <div class="text-sm text-muted" style="margin-bottom:12px">Run each command in ADX Web UI. Copy the results and paste into the corresponding box below.</div>
+          <div id="ovCommandPasteBlocks"></div>
+          <div style="display:flex;gap:6px;margin-top:12px">
+            <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze All</button>
+            <button class="btn btn-sm" onclick="clearDBOverview()">Clear All</button>
           </div>
-          <div id="ovCommandBlocks"></div>
-        </div>
-      </div>
-
-      <!-- DB Overview: Paste + Dashboard -->
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Database Overview</div>
-        <textarea style="width:100%;min-height:120px;max-height:400px;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px;resize:vertical;outline:none;line-height:1.5" id="dbPasteArea" placeholder="Paste .show command output here...&#10;&#10;Supports tab-separated (copied from ADX Web UI results grid) or JSON format."></textarea>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze</button>
-          <button class="btn btn-sm" onclick="clearDBOverview()">Clear</button>
         </div>
       </div>
 
@@ -2694,21 +2685,20 @@ var OV_COMMANDS=[
 ];
 
 function renderOvCommands(){
-  var cont=document.getElementById("ovCommandBlocks");if(!cont)return;
+  var cont=document.getElementById("ovCommandPasteBlocks");if(!cont)return;
   var html="";
   for(var i=0;i<OV_COMMANDS.length;i++){
-    var c=OV_COMMANDS[i],id="ov_cmd_"+i;
-    html+='<div class="kql-block"><div class="block-header"><span class="block-title">'+esc(c.title)+'</span><button class="btn btn-sm" onclick="copyToClipboard(this,\''+id+'\')">Copy</button></div><textarea id="'+id+'" readonly rows="1" style="min-height:30px">'+esc(c.kql)+'</textarea></div>';
+    var c=OV_COMMANDS[i],cmdId="ov_cmd_"+i,pasteId="ov_paste_"+i;
+    html+='<div style="margin-bottom:14px;padding:12px;background:var(--bg-base);border-radius:var(--radius-md)">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+    html+='<span style="font-size:12px;font-weight:600">'+esc(c.title)+'</span>';
+    html+='<button class="btn btn-sm" onclick="copyToClipboard(this,\''+cmdId+'\')">Copy Command</button>';
+    html+='</div>';
+    html+='<textarea id="'+cmdId+'" readonly rows="1" style="width:100%;min-height:28px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--color-success);font-family:var(--font-mono);font-size:12px;padding:6px 10px;resize:none;outline:none">'+esc(c.kql)+'</textarea>';
+    html+='<textarea id="'+pasteId+'" rows="3" style="width:100%;margin-top:6px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:11px;padding:8px 10px;resize:vertical;outline:none" placeholder="Paste '+esc(c.title)+' output here..."></textarea>';
+    html+='</div>';
   }
   cont.innerHTML=html;
-}
-function copyAllOvCommands(btn){
-  var parts=[];
-  for(var i=0;i<OV_COMMANDS.length;i++)parts.push("// "+OV_COMMANDS[i].title+"\n"+OV_COMMANDS[i].kql);
-  navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
-    btn.classList.add("btn-copied");btn.textContent="Copied All!";
-    setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Commands"},1500);
-  });
 }
 
 // Parsing helpers
@@ -2749,21 +2739,26 @@ function ovFormatBytes(b){b=parseFloat(b)||0;if(b>=1073741824)return(b/107374182
 function ovParseDuration(dur){if(!dur||dur==="-")return"--";var m=dur.match(/(\d+)\.(\d{2}):(\d{2}):(\d{2})/);if(m)return m[1]+"d";var m2=dur.match(/(\d+)/);if(m2)return m2[1]+"d";return dur}
 function ovGuessCategory(name){var n=name.toLowerCase();if(n.indexOf("_raw")>-1||n.indexOf("staging")>-1)return"staging";if(n.indexOf("alert")>-1)return"alert";if(n.indexOf("event")>-1)return"event";return"unknown"}
 
+function parseOvPasteArea(idx){
+  var el=document.getElementById("ov_paste_"+idx);
+  if(!el)return null;
+  var text=el.value.trim();if(!text)return null;
+  var block=parseTSVBlock(text);
+  if(block&&block.rows.length)return block;
+  // Try JSON fallback
+  try{var json=JSON.parse(text);if(Array.isArray(json)&&json.length>0)return{headers:Object.keys(json[0]),rows:json}}catch(e){}
+  return null;
+}
+
 function analyzeDBOutput(){
-  var text=document.getElementById("dbPasteArea").value.trim();
-  if(!text)return;
   var parsed={tables:null,updatePolicies:null,rlsPolicies:null,functions:null,batching:null};
-  var rawBlocks=splitOvBlocks(text);
-  for(var i=0;i<rawBlocks.length;i++){
-    var block=parseTSVBlock(rawBlocks[i]);if(!block||!block.rows.length)continue;
-    var type=detectBlockType(block.headers);
-    if(type==="tables_details")parsed.tables=block;
-    else if(type==="update_policy")parsed.updatePolicies=block;
-    else if(type==="rls_policy")parsed.rlsPolicies=block;
-    else if(type==="functions")parsed.functions=block;
-    else if(type==="batching")parsed.batching=block;
+  var keys=["tables","updatePolicies","rlsPolicies","functions","batching"];
+  var hasAny=false;
+  for(var i=0;i<OV_COMMANDS.length;i++){
+    var block=parseOvPasteArea(i);
+    if(block){parsed[keys[i]]=block;hasAny=true}
   }
-  if(!parsed.tables){try{var json=JSON.parse(text);if(Array.isArray(json)&&json.length>0){var h=Object.keys(json[0]);if(detectBlockType(h)==="tables_details")parsed.tables={headers:h,rows:json}}}catch(e){}}
+  if(!hasAny)return;
   renderOvDashboard(parsed);
 }
 
@@ -2844,7 +2839,7 @@ function renderOvDashboard(parsed){
 }
 
 function clearDBOverview(){
-  document.getElementById("dbPasteArea").value="";
+  for(var i=0;i<OV_COMMANDS.length;i++){var el=document.getElementById("ov_paste_"+i);if(el)el.value=""}
   document.getElementById("dbDashboard").style.display="none";
 }
 
