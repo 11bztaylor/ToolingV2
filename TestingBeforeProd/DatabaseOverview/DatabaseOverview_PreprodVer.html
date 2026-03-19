@@ -95,7 +95,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     <div class="card-body">
       <div class="text-sm text-muted" style="margin-bottom:10px">Run each command one at a time in ADX Web UI. After each result loads, select all rows, copy, then paste all output into the text area below.</div>
       <div style="display:flex;gap:6px;margin-bottom:12px">
-        <button class="btn btn-sm" onclick="copyAllOvCommands()">Copy All Commands</button>
+        <button class="btn btn-sm" onclick="copyAllOvCommands(this)">Copy All Commands</button>
       </div>
       <div id="ovCommandBlocks"></div>
     </div>
@@ -185,12 +185,11 @@ function renderOvCommands(){
   }
   cont.innerHTML=html;
 }
-function copyAllOvCommands(){
+function copyAllOvCommands(btn){
   var parts=[];
   for(var i=0;i<OV_COMMANDS.length;i++){
     parts.push("// "+OV_COMMANDS[i].title+"\n"+OV_COMMANDS[i].kql);
   }
-  var btn=event.target;
   navigator.clipboard.writeText(parts.join("\n\n")).then(function(){
     btn.classList.add("btn-copied");btn.textContent="Copied All!";
     setTimeout(function(){btn.classList.remove("btn-copied");btn.textContent="Copy All Commands"},1500);
@@ -361,7 +360,7 @@ function renderDashboard(parsed){
         rows:r.TotalRowCount||r.totalRowCount||r.RowCount||"0",
         size:r.TotalExtentSize||r.totalExtentSize||r.TotalOriginalSize||"0",
         hotSize:r.HotExtentSize||r.hotExtentSize||"0",
-        retention:parseDuration(r.RetentionPolicy||r.retentionPolicy||r.CachingPolicy&&""),
+        retention:parseDuration(r.RetentionPolicy||r.retentionPolicy||""),
         caching:parseDuration(r.CachingPolicy||r.cachingPolicy||""),
         folder:r.Folder||r.folder||"",
         updatePolicy:false,

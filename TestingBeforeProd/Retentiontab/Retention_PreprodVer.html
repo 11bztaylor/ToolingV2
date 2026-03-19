@@ -745,8 +745,8 @@ function generateStoragePolicies(){
   // ── Batching (all tables get same config unless overridden) ──
   if(batchOn){
     var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
-    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
-    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    if(state.retention.batching.maxItems){var mi=parseInt(state.retention.batching.maxItems,10);if(isFinite(mi)&&mi>0)batchObj.MaximumNumberOfItems=mi}
+    if(state.retention.batching.maxRawDataSize){var ms=parseInt(state.retention.batching.maxRawDataSize,10);if(isFinite(ms)&&ms>0)batchObj.MaximumRawDataSizeMB=ms}
     var batchJson=JSON.stringify(batchObj);
 
     // Group: tables with no override all share the same JSON

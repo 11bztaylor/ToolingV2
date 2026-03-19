@@ -936,7 +936,7 @@ var TAB_REGISTRY=[
     onShow:function(){},
     generate:null,
     restoreState:function(s){
-      if(s.files)state.files=s.files;
+      if(s.files){state.files=s.files;var maxId=0;for(var fi=0;fi<state.files.length;fi++){var num=parseInt((state.files[fi].id||"").replace("file_",""),10);if(num>maxId)maxId=num}fileIdCounter=maxId+1}
       if(s.mapping)Object.assign(state.mapping,s.mapping);
       renderFileChips();updateMappingDropdowns();syncMappingDropdownSelections();renderMappingSummary();
     }
@@ -1080,8 +1080,7 @@ function showTab(tabName){
   for(var i=0;i<tabs.length;i++)tabs[i].classList.remove("active");
   document.getElementById("tab-"+tabName).classList.add("active");
   var btns=document.querySelectorAll(".nav-btn");
-  for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
-  event.target.classList.add("active");
+  for(var i=0;i<btns.length;i++){btns[i].classList.remove("active");if(btns[i].getAttribute("data-tab")===tabName)btns[i].classList.add("active")}
   var entry=getTabEntry(tabName);
   if(entry&&entry.onShow)entry.onShow();
 }
@@ -1092,7 +1091,7 @@ function buildNav(){
   var html="";
   for(var i=0;i<sorted.length;i++){
     var t=sorted[i];
-    html+='<button class="nav-btn'+(i===0?" active":"")+'" onclick="showTab(\''+t.id+'\')">'+esc(t.label)+'</button>';
+    html+='<button class="nav-btn'+(i===0?" active":"")+'" data-tab="'+t.id+'" onclick="showTab(\''+t.id+'\')">'+esc(t.label)+'</button>';
   }
   container.innerHTML=html;
 }
@@ -2413,8 +2412,8 @@ function generateStoragePolicies(){
   // Batching
   if(batchOn){
     var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
-    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
-    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    if(state.retention.batching.maxItems){var mi=parseInt(state.retention.batching.maxItems,10);if(isFinite(mi)&&mi>0)batchObj.MaximumNumberOfItems=mi}
+    if(state.retention.batching.maxRawDataSize){var ms=parseInt(state.retention.batching.maxRawDataSize,10);if(isFinite(ms)&&ms>0)batchObj.MaximumRawDataSizeMB=ms}
     var batchJson=JSON.stringify(batchObj);
     var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
     var kql=names.length===1?
@@ -2494,8 +2493,8 @@ function generateDVRunbook(){
   // Phase 6: Batching
   if(state.retention.batching&&state.retention.batching.enabled){
     var batchObj={MaximumBatchingTimeSpan:state.retention.batching.maxTimeSpan||"00:00:30"};
-    if(state.retention.batching.maxItems)batchObj.MaximumNumberOfItems=parseInt(state.retention.batching.maxItems,10);
-    if(state.retention.batching.maxRawDataSize)batchObj.MaximumRawDataSizeMB=parseInt(state.retention.batching.maxRawDataSize,10);
+    if(state.retention.batching.maxItems){var mi=parseInt(state.retention.batching.maxItems,10);if(isFinite(mi)&&mi>0)batchObj.MaximumNumberOfItems=mi}
+    if(state.retention.batching.maxRawDataSize){var ms=parseInt(state.retention.batching.maxRawDataSize,10);if(isFinite(ms)&&ms>0)batchObj.MaximumRawDataSizeMB=ms}
     var json=JSON.stringify(batchObj);var names=[];for(var i=0;i<allTables.length;i++)names.push(allTables[i].name);
     blocks.push({section:"Phase 6 \u2014 Ingestion Batching",sectionColor:"var(--color-purple)",title:"Batching ("+names.length+" tables)",kql:names.length===1?".alter table "+names[0]+" policy ingestionbatching @'"+json+"'":".alter tables ("+names.join(", ")+")\n    policy ingestionbatching @'"+json+"'"});
   }
@@ -2635,7 +2634,7 @@ function parseDVVerifyResults(){
       }
     }
   }
-  if(state.retention.enableCaching){
+  if(state.retention.enableCaching===true){
     for(var i=0;i<allTables.length;i++){
       var t=allTables[i];
       var expected=resolveCache(t.name,t.cat);
