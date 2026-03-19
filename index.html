@@ -728,21 +728,23 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         </div>
         <div id="dvVerifyResultsGrid" style="margin-top:12px"></div>
       </div>
+    </section>
 
-      <!-- DB Overview: Discovery Commands -->
-      <div class="card" id="cardOvCommands">
-        <div class="card-title collapsible" onclick="toggleCard('cardOvCommands')">
-          <span class="dot" style="background:var(--color-teal)"></span> Database Discovery
-          <span class="text-sm text-muted" style="font-weight:400;margin-left:4px">Full database audit commands</span>
-          <span class="chevron">&#9660;</span>
-        </div>
-        <div class="card-body">
-          <div class="text-sm text-muted" style="margin-bottom:12px">Run each command in ADX Web UI. Copy the results and paste into the corresponding box below.</div>
-          <div id="ovCommandPasteBlocks"></div>
-          <div style="display:flex;gap:6px;margin-top:12px">
-            <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze All</button>
-            <button class="btn btn-sm" onclick="clearDBOverview()">Clear All</button>
-          </div>
+    <!-- ══════════════════════════════════════════════════════════════
+         TAB: DB Overview
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="tab" id="tab-overview">
+      <div class="tab-title">Database Overview</div>
+      <div class="tab-subtitle">Run <code style="color:var(--color-info)">.show</code> commands, paste the output, and get a complete view of your database.</div>
+
+      <!-- Discovery Commands + Paste Areas -->
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--color-teal)"></span> Discovery Commands</div>
+        <div class="text-sm text-muted" style="margin-bottom:12px">Run each command in ADX Web UI. Copy the results and paste into the corresponding box below.</div>
+        <div id="ovCommandPasteBlocks"></div>
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <button class="btn btn-sm" style="background:var(--color-info);border-color:var(--color-info);color:#fff" onclick="analyzeDBOutput()">Analyze All</button>
+          <button class="btn btn-sm" onclick="clearDBOverview()">Clear All</button>
         </div>
       </div>
 
@@ -1038,12 +1040,20 @@ var TAB_REGISTRY=[
     id:"deploy",label:"Deploy & Verify",position:4,panelId:"tab-deploy",
     mappingDeps:[],
     init:function(){},
-    onShow:function(){generateDVRunbook();generateDVVerifyQueries();renderOvCommands()},
+    onShow:function(){generateDVRunbook();generateDVVerifyQueries()},
     generate:null,
     restoreState:function(s){}
   },
   {
-    id:"crossworkspace",label:"Cross-Workspace",position:5,panelId:"tab-crossworkspace",
+    id:"overview",label:"DB Overview",position:5,panelId:"tab-overview",
+    mappingDeps:[],
+    init:function(){},
+    onShow:function(){renderOvCommands()},
+    generate:null,
+    restoreState:function(s){}
+  },
+  {
+    id:"crossworkspace",label:"Cross-Workspace",position:6,panelId:"tab-crossworkspace",
     mappingDeps:[],
     init:function(){},
     onShow:function(){generateCrossWorkspace()},
