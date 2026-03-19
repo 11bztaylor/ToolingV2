@@ -40,7 +40,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .tab.active{display:block}
 .dv-collapsed .dv-body{display:none}
 .dv-collapsed .dv-chev{transform:rotate(-90deg)}
-.collapsed .dv-chevron{transform:rotate(-90deg)}
+.collapsed .dv-chev{transform:rotate(-90deg)}
 .card.collapsed .card-body{display:none}
 .tab-title{font-size:20px;font-weight:600;margin-bottom:4px}
 .tab-subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:20px}
@@ -650,7 +650,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
         <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
           <span class="dot" style="background:var(--color-info)"></span> Deployment Runbook
           <span class="text-sm text-muted" style="font-weight:400;margin-left:4px" id="runbookCmdCount"></span>
-          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chevron">&#9660;</span>
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chev">&#9660;</span>
         </div>
         <div class="card-body">
           <div class="text-sm text-muted" style="margin-bottom:8px">All commands in correct execution order. Run each command one at a time in ADX Web UI.</div>
@@ -665,7 +665,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="card" id="cardVerifyQueries">
         <div class="card-title" style="cursor:pointer;user-select:none" onclick="this.parentElement.classList.toggle('collapsed')">
           <span class="dot" style="background:var(--color-teal)"></span> Verification Queries
-          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chevron">&#9660;</span>
+          <span style="font-size:16px;color:var(--text-secondary);margin-left:auto;transition:transform .2s" class="dv-chev">&#9660;</span>
         </div>
         <div class="card-body">
           <div class="text-sm text-muted" style="margin-bottom:8px">Copy and run these queries after deployment. Paste the results below to see a pass/fail dashboard.</div>
@@ -680,7 +680,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--color-success)"></span> Verification Results</div>
         <div class="text-sm text-muted" style="margin-bottom:8px">Paste the output from each verification query. The tool will parse it and show pass/fail for each check.</div>
-        <div id="dvVerifySummary" style="display:none;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px">
+        <div id="dvVerifySummary" style="display:none;gap:16px;padding:10px 14px;background:var(--bg-raised);border-radius:var(--radius-md);margin-bottom:12px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-success)">&#10003;</span> <span id="dvPassCount">0</span> passed</div>
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--color-error)">&#10007;</span> <span id="dvFailCount">0</span> failed</div>
           <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="color:var(--text-secondary)">&#9679;</span> <span id="dvPendingCount">0</span> pending</div>
@@ -2342,9 +2342,9 @@ function generateDVRunbook(){
     }
   }
   // Phase 5: Caching
-  if(state.retention.enableCaching!==false){
+  if(state.retention.enableCaching===true){
     var cg={};var co=[];
-    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveCache?resolveCache(t.name,t.cat):"30d";if(!cg[val]){cg[val]=[];co.push(val)}cg[val].push(t.name)}
+    for(var i=0;i<allTables.length;i++){var t=allTables[i],val=resolveCache(t.name,t.cat);if(!cg[val]){cg[val]=[];co.push(val)}cg[val].push(t.name)}
     var first=true;
     for(var v=0;v<co.length;v++){
       var val=co[v],names=cg[val];
@@ -2391,10 +2391,10 @@ function generateDVVerifyQueries(){
     }
   }
   // Retention + Caching
-  if(state.retention.enableRetention!==false){
+  if(state.retention.enableRetention===true){
     blocks.push({section:"Retention & Caching Verification",sectionColor:"var(--color-warn)",title:"Verify retention policies",kql:".show tables ("+allTableNames.join(", ")+") policy retention\n| project TableName, SoftDeletePeriod, Recoverability\n| order by TableName asc"});
   }
-  if(state.retention.enableCaching!==false){
+  if(state.retention.enableCaching===true){
     blocks.push({title:"Verify caching policies",kql:".show tables ("+allTableNames.join(", ")+") policy caching\n| project TableName, DataHotSpan\n| order by TableName asc"});
   }
   if(state.retention.batching&&state.retention.batching.enabled){
@@ -2482,7 +2482,7 @@ function parseDVVerifyResults(){
       results.push({name:rlsTables[i],check:"RLS policy enabled",status:re.test(text)?"pass":"pending"});
     }
   }
-  if(state.retention.enableRetention!==false){
+  if(state.retention.enableRetention===true){
     for(var i=0;i<allTables.length;i++){
       var t=allTables[i];
       var expected=resolveRet(t.name,t.cat);
