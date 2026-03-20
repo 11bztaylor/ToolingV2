@@ -74,9 +74,11 @@ Tile 5 — RLS Status (table)
 -----------------------------
 .show table * policy row_level_security
 | extend PolicyObj = todynamic(Policy)
-| extend IsEnabled = tobool(PolicyObj.IsEnabled)
 | extend RlsQuery = tostring(PolicyObj.Query)
-| extend Status = iff(IsEnabled, "ENABLED", "DISABLED")
+| extend Status = case(
+    tobool(PolicyObj.IsEnabled) == true, "ENABLED",
+    isnotempty(Policy) and strlen(Policy) > 2, "DISABLED",
+    "NONE")
 | project Table = EntityName, ['RLS Status'] = Status, ['RLS Function'] = RlsQuery
 | order by Status desc, Table asc
 
